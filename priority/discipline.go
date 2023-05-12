@@ -295,7 +295,13 @@ func (dsc *Discipline[Type]) calcTactic() {
 		dsc.opts.Divider(dsc.uncrowded, remainder, dsc.tactic)
 
 		if !dsc.isTacticFilled(dsc.uncrowded) {
-			dsc.decreaseActual(<-dsc.opts.Feedback)
+			select {
+			case <-dsc.breaker:
+				return
+			case priority := <-dsc.opts.Feedback:
+				dsc.decreaseActual(priority)
+			}
+
 			continue
 		}
 
