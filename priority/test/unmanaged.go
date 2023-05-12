@@ -30,7 +30,7 @@ func NewUnmanaged[Type any](opts UnmanagedOpts[Type]) (*Unmanaged[Type], error) 
 		return nil, ErrEmptyOutput
 	}
 
-	dsc := &Unmanaged[Type]{
+	nmn := &Unmanaged[Type]{
 		opts: opts,
 
 		breaker:   make(chan bool),
@@ -38,60 +38,60 @@ func NewUnmanaged[Type any](opts UnmanagedOpts[Type]) (*Unmanaged[Type], error) 
 		stopMutex: &sync.Mutex{},
 	}
 
-	go dsc.main()
+	go nmn.main()
 
-	return dsc, nil
+	return nmn, nil
 }
 
-func (dsc *Unmanaged[Type]) Stop() {
-	dsc.stopMutex.Lock()
-	defer dsc.stopMutex.Unlock()
+func (nmn *Unmanaged[Type]) Stop() {
+	nmn.stopMutex.Lock()
+	defer nmn.stopMutex.Unlock()
 
-	if dsc.stopped {
+	if nmn.stopped {
 		return
 	}
 
-	dsc.stop()
+	nmn.stop()
 
-	dsc.stopped = true
+	nmn.stopped = true
 }
 
-func (dsc *Unmanaged[Type]) stop() {
-	close(dsc.breaker)
-	<-dsc.completer
+func (nmn *Unmanaged[Type]) stop() {
+	close(nmn.breaker)
+	<-nmn.completer
 }
 
-func (dsc *Unmanaged[Type]) main() {
-	defer close(dsc.completer)
+func (nmn *Unmanaged[Type]) main() {
+	defer close(nmn.completer)
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	for priority, channel := range dsc.opts.Inputs {
+	for priority, channel := range nmn.opts.Inputs {
 		wg.Add(1)
 
-		go dsc.io(wg, priority, channel)
+		go nmn.io(wg, priority, channel)
 	}
 }
 
-func (dsc *Unmanaged[Type]) io(wg *sync.WaitGroup, priority uint, channel <-chan Type) {
+func (nmn *Unmanaged[Type]) io(wg *sync.WaitGroup, priority uint, channel <-chan Type) {
 	defer wg.Done()
 
 	for {
 		select {
-		case <-dsc.breaker:
+		case <-nmn.breaker:
 			return
-		case item, opened := <-dsc.opts.Inputs[priority]:
+		case item, opened := <-nmn.opts.Inputs[priority]:
 			if !opened {
 				return
 			}
 
-			dsc.send(item, priority)
+			nmn.send(item, priority)
 		}
 	}
 }
 
-func (dsc *Unmanaged[Type]) send(item Type, priority uint) {
+func (nmn *Unmanaged[Type]) send(item Type, priority uint) {
 	prioritized := types.Prioritized[Type]{
 		Priority: priority,
 		Item:     item,
@@ -99,9 +99,9 @@ func (dsc *Unmanaged[Type]) send(item Type, priority uint) {
 
 	for {
 		select {
-		case <-dsc.breaker:
+		case <-nmn.breaker:
 			return
-		case dsc.opts.Output <- prioritized:
+		case nmn.opts.Output <- prioritized:
 			return
 		}
 	}
