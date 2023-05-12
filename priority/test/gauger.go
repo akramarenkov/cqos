@@ -44,6 +44,7 @@ type Gauge struct {
 
 type GaugerOpts struct {
 	HandlersQuantity uint
+	NoFeedback       bool
 }
 
 type Gauger struct {
@@ -275,7 +276,9 @@ func (gg *Gauger) handler() {
 
 			batch = append(batch, processed)
 
-			gg.feedback <- prioritized.Priority
+			if !gg.opts.NoFeedback {
+				gg.feedback <- prioritized.Priority
+			}
 
 			completed := Gauge{
 				Duration: time.Since(gg.startedAt),
