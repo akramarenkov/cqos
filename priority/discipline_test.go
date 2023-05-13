@@ -63,25 +63,36 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
 	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wfl, wflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
 
 	dqotChart := charts.NewLine()
-	wflChart := charts.NewBar()
+	wtflChart := charts.NewBar()
+	ipotChart := charts.NewLine()
 
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: time.Now().Format(time.RFC3339),
+				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
 			},
 		),
 	)
 
-	wflChart.SetGlobalOptions(
+	wtflChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Write to feedback latency",
-				Subtitle: time.Now().Format(time.RFC3339),
+				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
 			},
 		),
 	)
@@ -91,20 +102,30 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 		AddSeries("2", dqot[2]).
 		AddSeries("1", dqot[1])
 
+	wtflChart.SetXAxis(wtflX).
+		AddSeries("3", wtfl[3]).
+		AddSeries("2", wtfl[2]).
+		AddSeries("1", wtfl[1])
+
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
 	dqotFile, err := os.Create("graph_rate_even_data_retrieval.html")
 	require.NoError(t, err)
 
 	dqotChart.Render(dqotFile)
 
-	wflChart.SetXAxis(wflX).
-		AddSeries("3", wfl[3]).
-		AddSeries("2", wfl[2]).
-		AddSeries("1", wfl[1])
-
-	wflFile, err := os.Create("graph_rate_even_write_feedback_latency.html")
+	wtflFile, err := os.Create("graph_rate_even_write_feedback_latency.html")
 	require.NoError(t, err)
 
-	wflChart.Render(wflFile)
+	wtflChart.Render(wtflFile)
+
+	ipotFile, err := os.Create("graph_rate_even_in_processing.html")
+	require.NoError(t, err)
+
+	ipotChart.Render(ipotFile)
 }
 
 func TestDisciplineFairEvenProcessingTime(t *testing.T) {
@@ -157,25 +178,36 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
 	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wfl, wflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
 
 	dqotChart := charts.NewLine()
-	wflChart := charts.NewBar()
+	wtflChart := charts.NewBar()
+	ipotChart := charts.NewLine()
 
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: time.Now().Format(time.RFC3339),
+				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
 			},
 		),
 	)
 
-	wflChart.SetGlobalOptions(
+	wtflChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Write to feedback latency",
-				Subtitle: time.Now().Format(time.RFC3339),
+				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
 			},
 		),
 	)
@@ -185,20 +217,30 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 		AddSeries("2", dqot[2]).
 		AddSeries("1", dqot[1])
 
+	wtflChart.SetXAxis(wtflX).
+		AddSeries("3", wtfl[3]).
+		AddSeries("2", wtfl[2]).
+		AddSeries("1", wtfl[1])
+
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
 	dqotFile, err := os.Create("graph_fair_even_data_retrieval.html")
 	require.NoError(t, err)
 
 	dqotChart.Render(dqotFile)
 
-	wflChart.SetXAxis(wflX).
-		AddSeries("3", wfl[3]).
-		AddSeries("2", wfl[2]).
-		AddSeries("1", wfl[1])
-
-	wflFile, err := os.Create("graph_fair_even_write_feedback_latency.html")
+	wtflFile, err := os.Create("graph_fair_even_write_feedback_latency.html")
 	require.NoError(t, err)
 
-	wflChart.Render(wflFile)
+	wtflChart.Render(wtflFile)
+
+	ipotFile, err := os.Create("graph_fair_even_in_processing.html")
+	require.NoError(t, err)
+
+	ipotChart.Render(ipotFile)
 }
 
 func TestUnmanaged(t *testing.T) {
@@ -239,24 +281,35 @@ func TestUnmanaged(t *testing.T) {
 		Output: gauger.GetOutput(),
 	}
 
-	discipline, err := test.NewUnmanaged(unmanagedOpts)
+	unmanaged, err := test.NewUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	defer unmanaged.Stop()
 
 	gauges := gauger.Play()
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
 	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
 
 	dqotChart := charts.NewLine()
+	ipotChart := charts.NewLine()
 
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: time.Now().Format(time.RFC3339),
+				Subtitle: "Unmanaged, even time processing: " + time.Now().Format(time.RFC3339),
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: "Unmanaged, even time processing: " + time.Now().Format(time.RFC3339),
 			},
 		),
 	)
@@ -266,8 +319,18 @@ func TestUnmanaged(t *testing.T) {
 		AddSeries("2", dqot[2]).
 		AddSeries("1", dqot[1])
 
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
 	dqotFile, err := os.Create("graph_unmanaged_data_retrieval.html")
 	require.NoError(t, err)
 
 	dqotChart.Render(dqotFile)
+
+	ipotFile, err := os.Create("graph_unmanaged_in_processing.html")
+	require.NoError(t, err)
+
+	ipotChart.Render(ipotFile)
 }

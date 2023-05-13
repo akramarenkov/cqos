@@ -256,3 +256,91 @@ func ProcessLatencies(
 
 	return serieses, sequences
 }
+
+func CalcInProcessingOverTime(
+	gauges []Gauge,
+	resolution time.Duration,
+	unit time.Duration,
+) (map[uint][]chartsopts.LineData, []time.Duration) {
+	if len(gauges) == 0 {
+		return nil, nil
+	}
+
+	SortByDuration(gauges)
+
+	maxDuration := gauges[len(gauges)-1].Duration
+	seriesesSize := maxDuration / resolution
+
+	serieses := make(map[uint][]chartsopts.LineData)
+	intervals := make([]time.Duration, 0, seriesesSize)
+
+	for _, gauge := range gauges {
+		if _, exists := serieses[gauge.Priority]; exists {
+			continue
+		}
+
+		serieses[gauge.Priority] = make([]chartsopts.LineData, 0, seriesesSize)
+	}
+
+	intervalEdge := 0
+
+	for duration := time.Duration(0); duration <= maxDuration; duration += resolution {
+		intervals = append(intervals, duration/unit)
+
+		receivedQuantities := make(map[uint]map[uint]uint)
+		completedQuantities := make(map[uint]map[uint]uint)
+
+		for priority := range serieses {
+			receivedQuantities[priority] = make(map[uint]uint)
+			completedQuantities[priority] = make(map[uint]uint)
+		}
+
+		for id, gauge := range gauges[intervalEdge:] {
+			if gauge.Duration > duration {
+				intervalEdge += id
+				break
+			}
+
+			switch gauge.Kind {
+			case GaugeKindReceived:
+				receivedQuantities[gauge.Priority][gauge.Data]++
+			case GaugeKindCompleted:
+				completedQuantities[gauge.Priority][gauge.Data]++
+			}
+		}
+
+		for priority, subset := range receivedQuantities {
+			quantity := uint(0)
+
+			for data, amount := range subset {
+				if _, exists := completedQuantities[priority][data]; exists {
+					continue
+				}
+
+				quantity += amount
+			}
+
+			item := chartsopts.LineData{
+				Name:  duration.String(),
+				Value: quantity,
+			}
+
+			serieses[priority] = append(serieses[priority], item)
+		}
+
+		for priority := range serieses {
+			if _, exists := receivedQuantities[priority]; exists {
+				continue
+			}
+
+			item := chartsopts.LineData{
+				Name:  duration.String(),
+				Value: 0,
+			}
+
+			serieses[priority] = append(serieses[priority], item)
+		}
+	}
+
+	return serieses, intervals
+}
