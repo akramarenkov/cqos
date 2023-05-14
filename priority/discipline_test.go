@@ -115,17 +115,20 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	dqotFile, err := os.Create("graph_rate_even_data_retrieval.html")
 	require.NoError(t, err)
 
-	dqotChart.Render(dqotFile)
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
 
 	wtflFile, err := os.Create("graph_rate_even_write_feedback_latency.html")
 	require.NoError(t, err)
 
-	wtflChart.Render(wtflFile)
+	err = wtflChart.Render(wtflFile)
+	require.NoError(t, err)
 
 	ipotFile, err := os.Create("graph_rate_even_in_processing.html")
 	require.NoError(t, err)
 
-	ipotChart.Render(ipotFile)
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
 }
 
 func TestDisciplineFairEvenProcessingTime(t *testing.T) {
@@ -230,17 +233,20 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	dqotFile, err := os.Create("graph_fair_even_data_retrieval.html")
 	require.NoError(t, err)
 
-	dqotChart.Render(dqotFile)
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
 
 	wtflFile, err := os.Create("graph_fair_even_write_feedback_latency.html")
 	require.NoError(t, err)
 
-	wtflChart.Render(wtflFile)
+	err = wtflChart.Render(wtflFile)
+	require.NoError(t, err)
 
 	ipotFile, err := os.Create("graph_fair_even_in_processing.html")
 	require.NoError(t, err)
 
-	ipotChart.Render(ipotFile)
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
 }
 
 func TestUnmanaged(t *testing.T) {
@@ -327,12 +333,14 @@ func TestUnmanaged(t *testing.T) {
 	dqotFile, err := os.Create("graph_unmanaged_data_retrieval.html")
 	require.NoError(t, err)
 
-	dqotChart.Render(dqotFile)
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
 
 	ipotFile, err := os.Create("graph_unmanaged_in_processing.html")
 	require.NoError(t, err)
 
-	ipotChart.Render(ipotFile)
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
 }
 
 func BenchmarkDisciplineFair(b *testing.B) {
