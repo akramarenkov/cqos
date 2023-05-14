@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	defaultIdleDelay = 1 * time.Millisecond
+	defaultIdleDelay = 1 * time.Nanosecond
 )
 
 type input[Type any] struct {
