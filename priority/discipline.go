@@ -311,6 +311,7 @@ func (dsc *Discipline[Type]) pickUpTactic(remainder uint) bool {
 	}
 
 	dsc.resetTactic()
+
 	if picked := dsc.pickUpTacticNaively(remainder); picked {
 		return true
 	}
