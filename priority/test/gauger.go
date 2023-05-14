@@ -36,10 +36,10 @@ type action struct {
 }
 
 type Gauge struct {
-	Data     uint
-	Duration time.Duration
-	Kind     GaugeKind
-	Priority uint
+	Data         uint
+	Kind         GaugeKind
+	Priority     uint
+	RelativeTime time.Duration
 }
 
 type GaugerOpts struct {
@@ -265,10 +265,10 @@ func (ggr *Gauger) handler() {
 			batch := make([]Gauge, 0, batchSize)
 
 			received := Gauge{
-				Duration: time.Since(ggr.startedAt),
-				Priority: prioritized.Priority,
-				Kind:     GaugeKindReceived,
-				Data:     prioritized.Item,
+				RelativeTime: time.Since(ggr.startedAt),
+				Priority:     prioritized.Priority,
+				Kind:         GaugeKindReceived,
+				Data:         prioritized.Item,
 			}
 
 			batch = append(batch, received)
@@ -276,10 +276,10 @@ func (ggr *Gauger) handler() {
 			time.Sleep(ggr.delays[prioritized.Priority])
 
 			processed := Gauge{
-				Duration: time.Since(ggr.startedAt),
-				Priority: prioritized.Priority,
-				Kind:     GaugeKindProcessed,
-				Data:     prioritized.Item,
+				RelativeTime: time.Since(ggr.startedAt),
+				Priority:     prioritized.Priority,
+				Kind:         GaugeKindProcessed,
+				Data:         prioritized.Item,
 			}
 
 			batch = append(batch, processed)
@@ -289,10 +289,10 @@ func (ggr *Gauger) handler() {
 			}
 
 			completed := Gauge{
-				Duration: time.Since(ggr.startedAt),
-				Priority: prioritized.Priority,
-				Kind:     GaugeKindCompleted,
-				Data:     prioritized.Item,
+				RelativeTime: time.Since(ggr.startedAt),
+				Priority:     prioritized.Priority,
+				Kind:         GaugeKindCompleted,
+				Data:         prioritized.Item,
 			}
 
 			batch = append(batch, completed)

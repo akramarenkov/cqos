@@ -64,18 +64,18 @@ func (nmn *Unmanaged[Type]) stop() {
 func (nmn *Unmanaged[Type]) main() {
 	defer close(nmn.completer)
 
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
+	waiter := &sync.WaitGroup{}
+	defer waiter.Wait()
 
 	for priority, channel := range nmn.opts.Inputs {
-		wg.Add(1)
+		waiter.Add(1)
 
-		go nmn.io(wg, priority, channel)
+		go nmn.io(waiter, priority, channel)
 	}
 }
 
-func (nmn *Unmanaged[Type]) io(wg *sync.WaitGroup, priority uint, channel <-chan Type) {
-	defer wg.Done()
+func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint, channel <-chan Type) {
+	defer waiter.Done()
 
 	for {
 		select {

@@ -43,9 +43,9 @@ func SortByData(gauges []Gauge) {
 	sort.SliceStable(gauges, less)
 }
 
-func SortByDuration(gauges []Gauge) {
+func SortByRelativeTime(gauges []Gauge) {
 	less := func(i int, j int) bool {
-		return gauges[i].Duration < gauges[j].Duration
+		return gauges[i].RelativeTime < gauges[j].RelativeTime
 	}
 
 	sort.SliceStable(gauges, less)
@@ -68,10 +68,10 @@ func CalcDataQuantityOverTime(
 		return nil, nil
 	}
 
-	SortByDuration(gauges)
+	SortByRelativeTime(gauges)
 
-	maxDuration := gauges[len(gauges)-1].Duration
-	seriesesSize := maxDuration / resolution
+	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+	seriesesSize := maxRelativeTime / resolution
 
 	serieses := make(map[uint][]chartsopts.LineData)
 	intervals := make([]time.Duration, 0, seriesesSize)
@@ -86,13 +86,13 @@ func CalcDataQuantityOverTime(
 
 	intervalEdge := 0
 
-	for duration := time.Duration(0); duration <= maxDuration; duration += resolution {
-		intervals = append(intervals, duration/unit)
+	for relativeTime := time.Duration(0); relativeTime <= maxRelativeTime; relativeTime += resolution {
+		intervals = append(intervals, relativeTime/unit)
 
 		intervalQuantities := make(map[uint]uint)
 
 		for id, gauge := range gauges[intervalEdge:] {
-			if gauge.Duration > duration {
+			if gauge.RelativeTime > relativeTime {
 				intervalEdge += id
 				break
 			}
@@ -102,7 +102,7 @@ func CalcDataQuantityOverTime(
 
 		for priority, quantity := range intervalQuantities {
 			item := chartsopts.LineData{
-				Name:  duration.String(),
+				Name:  relativeTime.String(),
 				Value: quantity,
 			}
 
@@ -115,7 +115,7 @@ func CalcDataQuantityOverTime(
 			}
 
 			item := chartsopts.LineData{
-				Name:  duration.String(),
+				Name:  relativeTime.String(),
 				Value: 0,
 			}
 
@@ -147,7 +147,7 @@ func CalcWriteToFeedbackLatency(
 				continue
 			}
 
-			latency := gauge.Duration - pairs[gauge.Priority].Duration
+			latency := gauge.RelativeTime - pairs[gauge.Priority].RelativeTime
 
 			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
 
@@ -158,7 +158,7 @@ func CalcWriteToFeedbackLatency(
 				continue
 			}
 
-			latency := pairs[gauge.Priority].Duration - gauge.Duration
+			latency := pairs[gauge.Priority].RelativeTime - gauge.RelativeTime
 
 			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
 
@@ -266,10 +266,10 @@ func CalcInProcessingOverTime(
 		return nil, nil
 	}
 
-	SortByDuration(gauges)
+	SortByRelativeTime(gauges)
 
-	maxDuration := gauges[len(gauges)-1].Duration
-	seriesesSize := maxDuration / resolution
+	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+	seriesesSize := maxRelativeTime / resolution
 
 	serieses := make(map[uint][]chartsopts.LineData)
 	intervals := make([]time.Duration, 0, seriesesSize)
@@ -284,8 +284,8 @@ func CalcInProcessingOverTime(
 
 	intervalEdge := 0
 
-	for duration := time.Duration(0); duration <= maxDuration; duration += resolution {
-		intervals = append(intervals, duration/unit)
+	for relativeTime := time.Duration(0); relativeTime <= maxRelativeTime; relativeTime += resolution {
+		intervals = append(intervals, relativeTime/unit)
 
 		receivedQuantities := make(map[uint]map[uint]uint)
 		completedQuantities := make(map[uint]map[uint]uint)
@@ -296,7 +296,7 @@ func CalcInProcessingOverTime(
 		}
 
 		for id, gauge := range gauges[intervalEdge:] {
-			if gauge.Duration > duration {
+			if gauge.RelativeTime > relativeTime {
 				intervalEdge += id
 				break
 			}
@@ -321,7 +321,7 @@ func CalcInProcessingOverTime(
 			}
 
 			item := chartsopts.LineData{
-				Name:  duration.String(),
+				Name:  relativeTime.String(),
 				Value: quantity,
 			}
 
@@ -334,7 +334,7 @@ func CalcInProcessingOverTime(
 			}
 
 			item := chartsopts.LineData{
-				Name:  duration.String(),
+				Name:  relativeTime.String(),
 				Value: 0,
 			}
 
