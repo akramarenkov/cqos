@@ -45,6 +45,7 @@ type Gauge struct {
 type GaugerOpts struct {
 	HandlersQuantity uint
 	NoFeedback       bool
+	NoResults        bool
 }
 
 type Gauger struct {
@@ -254,6 +255,13 @@ func (gg *Gauger) handler() {
 		case <-gg.breaker:
 			return
 		case prioritized := <-gg.output:
+			if gg.opts.NoResults {
+				gg.feedback <- prioritized.Priority
+				gg.results <- nil
+
+				continue
+			}
+
 			batch := make([]Gauge, 0, batchSize)
 
 			received := Gauge{
@@ -301,11 +309,17 @@ func (gg *Gauger) Play() []Gauge {
 		return nil
 	}
 
+	resultsCapacity := expectedResultsQuantity
+
+	if gg.opts.NoResults {
+		resultsCapacity = 0
+	}
+
 	gg.breaker = make(chan bool)
 	gg.results = make(chan []Gauge, expectedResultsQuantity)
 
 	received := uint(0)
-	results := make([]Gauge, 0, expectedResultsQuantity)
+	results := make([]Gauge, 0, resultsCapacity)
 
 	gg.runWriters()
 	gg.runHandlers()
@@ -315,7 +329,9 @@ func (gg *Gauger) Play() []Gauge {
 	defer close(gg.breaker)
 
 	for batch := range gg.results {
-		results = append(results, batch...)
+		if !gg.opts.NoResults {
+			results = append(results, batch...)
+		}
 
 		received++
 

@@ -334,3 +334,34 @@ func TestUnmanaged(t *testing.T) {
 
 	ipotChart.Render(ipotFile)
 }
+
+func BenchmarkDisciplineFair(b *testing.B) {
+	handlersQuantity := uint(600)
+
+	gaugerOpts := test.GaugerOpts{
+		HandlersQuantity: handlersQuantity,
+		NoResults:        true,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 5000000)
+	gauger.AddWrite(2, 5000000)
+	gauger.AddWrite(3, 5000000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Fair,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(b, err)
+
+	defer discipline.Stop()
+
+	_ = gauger.Play()
+}
