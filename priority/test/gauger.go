@@ -68,7 +68,7 @@ type Gauger struct {
 }
 
 func NewGauger(opts GaugerOpts) *Gauger {
-	gg := &Gauger{
+	ggr := &Gauger{
 		opts: opts,
 
 		ready: &sync.WaitGroup{},
@@ -83,22 +83,22 @@ func NewGauger(opts GaugerOpts) *Gauger {
 		waiter: &sync.WaitGroup{},
 	}
 
-	return gg
+	return ggr
 }
 
-func (gg *Gauger) Finalize() {
-	close(gg.feedback)
+func (ggr *Gauger) Finalize() {
+	close(ggr.feedback)
 
-	for _, channel := range gg.inputs {
+	for _, channel := range ggr.inputs {
 		close(channel)
 	}
 
-	close(gg.output)
+	close(ggr.output)
 }
 
-func (gg *Gauger) AddWrite(priority uint, quantity uint) {
-	if _, exists := gg.inputs[priority]; !exists {
-		gg.inputs[priority] = make(chan uint, defaultChannelCapacity)
+func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
+	if _, exists := ggr.inputs[priority]; !exists {
+		ggr.inputs[priority] = make(chan uint, defaultChannelCapacity)
 	}
 
 	action := action{
@@ -106,12 +106,12 @@ func (gg *Gauger) AddWrite(priority uint, quantity uint) {
 		quantity: quantity,
 	}
 
-	gg.actions[priority] = append(gg.actions[priority], action)
+	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (gg *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
-	if _, exists := gg.inputs[priority]; !exists {
-		gg.inputs[priority] = make(chan uint, defaultChannelCapacity)
+func (ggr *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
+	if _, exists := ggr.inputs[priority]; !exists {
+		ggr.inputs[priority] = make(chan uint, defaultChannelCapacity)
 	}
 
 	action := action{
@@ -120,30 +120,30 @@ func (gg *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Dur
 		delay:    delay,
 	}
 
-	gg.actions[priority] = append(gg.actions[priority], action)
+	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (gg *Gauger) AddWaitDevastation(priority uint) {
+func (ggr *Gauger) AddWaitDevastation(priority uint) {
 	action := action{
 		kind: actionKindWaitDevastation,
 	}
 
-	gg.actions[priority] = append(gg.actions[priority], action)
+	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (gg *Gauger) AddDelay(priority uint, delay time.Duration) {
+func (ggr *Gauger) AddDelay(priority uint, delay time.Duration) {
 	action := action{
 		kind:  actionKindDelay,
 		delay: delay,
 	}
 
-	gg.actions[priority] = append(gg.actions[priority], action)
+	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (gg *Gauger) calcExpectedResultsQuantity() uint {
+func (ggr *Gauger) calcExpectedResultsQuantity() uint {
 	quantity := uint(0)
 
-	for _, actions := range gg.actions {
+	for _, actions := range ggr.actions {
 		for _, action := range actions {
 			switch action.kind {
 			case actionKindWrite:
@@ -157,52 +157,52 @@ func (gg *Gauger) calcExpectedResultsQuantity() uint {
 	return quantity
 }
 
-func (gg *Gauger) SetProcessDelay(priority uint, delay time.Duration) {
-	gg.delays[priority] = delay
+func (ggr *Gauger) SetProcessDelay(priority uint, delay time.Duration) {
+	ggr.delays[priority] = delay
 }
 
-func (gg *Gauger) GetInputs() map[uint]<-chan uint {
-	out := make(map[uint]<-chan uint, len(gg.inputs))
+func (ggr *Gauger) GetInputs() map[uint]<-chan uint {
+	out := make(map[uint]<-chan uint, len(ggr.inputs))
 
-	for priority, channel := range gg.inputs {
+	for priority, channel := range ggr.inputs {
 		out[priority] = channel
 	}
 
 	return out
 }
 
-func (gg *Gauger) GetOutput() chan<- types.Prioritized[uint] {
-	return gg.output
+func (ggr *Gauger) GetOutput() chan<- types.Prioritized[uint] {
+	return ggr.output
 }
 
-func (gg *Gauger) GetFeedback() <-chan uint {
-	return gg.feedback
+func (ggr *Gauger) GetFeedback() <-chan uint {
+	return ggr.feedback
 }
 
-func (gg *Gauger) runWriters() {
-	for priority := range gg.inputs {
-		gg.waiter.Add(1)
+func (ggr *Gauger) runWriters() {
+	for priority := range ggr.inputs {
+		ggr.waiter.Add(1)
 
-		go gg.writer(priority)
+		go ggr.writer(priority)
 	}
 }
 
-func (gg *Gauger) writer(priority uint) {
-	defer gg.waiter.Done()
+func (ggr *Gauger) writer(priority uint) {
+	defer ggr.waiter.Done()
 
 	written := uint(0)
 
-	for _, action := range gg.actions[priority] {
+	for _, action := range ggr.actions[priority] {
 		switch action.kind {
 		case actionKindWrite:
 			for id := uint(0); id < action.quantity; id++ {
-				gg.inputs[priority] <- written
+				ggr.inputs[priority] <- written
 
 				written++
 			}
 		case actionKindWriteWithDelay:
 			for id := uint(0); id < action.quantity; id++ {
-				gg.inputs[priority] <- written
+				ggr.inputs[priority] <- written
 
 				time.Sleep(action.delay)
 
@@ -214,7 +214,7 @@ func (gg *Gauger) writer(priority uint) {
 				defer ticker.Stop()
 
 				for range ticker.C {
-					if len(gg.inputs[priority]) == 0 {
+					if len(ggr.inputs[priority]) == 0 {
 						break
 					}
 				}
@@ -225,39 +225,39 @@ func (gg *Gauger) writer(priority uint) {
 	}
 }
 
-func (gg *Gauger) runHandlers() {
-	gg.start = make(chan bool)
-	defer close(gg.start)
+func (ggr *Gauger) runHandlers() {
+	ggr.start = make(chan bool)
+	defer close(ggr.start)
 
-	for counter := uint(0); counter < gg.opts.HandlersQuantity; counter++ {
-		gg.ready.Add(1)
-		gg.waiter.Add(1)
+	for counter := uint(0); counter < ggr.opts.HandlersQuantity; counter++ {
+		ggr.ready.Add(1)
+		ggr.waiter.Add(1)
 
-		go gg.handler()
+		go ggr.handler()
 	}
 
-	gg.ready.Wait()
+	ggr.ready.Wait()
 
-	gg.startedAt = time.Now()
+	ggr.startedAt = time.Now()
 }
 
-func (gg *Gauger) handler() {
-	defer gg.waiter.Done()
+func (ggr *Gauger) handler() {
+	defer ggr.waiter.Done()
 
-	gg.ready.Done()
+	ggr.ready.Done()
 
-	<-gg.start
+	<-ggr.start
 
 	const batchSize = 3
 
 	for {
 		select {
-		case <-gg.breaker:
+		case <-ggr.breaker:
 			return
-		case prioritized := <-gg.output:
-			if gg.opts.NoResults {
-				gg.feedback <- prioritized.Priority
-				gg.results <- nil
+		case prioritized := <-ggr.output:
+			if ggr.opts.NoResults {
+				ggr.feedback <- prioritized.Priority
+				ggr.results <- nil
 
 				continue
 			}
@@ -265,7 +265,7 @@ func (gg *Gauger) handler() {
 			batch := make([]Gauge, 0, batchSize)
 
 			received := Gauge{
-				Duration: time.Since(gg.startedAt),
+				Duration: time.Since(ggr.startedAt),
 				Priority: prioritized.Priority,
 				Kind:     GaugeKindReceived,
 				Data:     prioritized.Item,
@@ -273,10 +273,10 @@ func (gg *Gauger) handler() {
 
 			batch = append(batch, received)
 
-			time.Sleep(gg.delays[prioritized.Priority])
+			time.Sleep(ggr.delays[prioritized.Priority])
 
 			processed := Gauge{
-				Duration: time.Since(gg.startedAt),
+				Duration: time.Since(ggr.startedAt),
 				Priority: prioritized.Priority,
 				Kind:     GaugeKindProcessed,
 				Data:     prioritized.Item,
@@ -284,12 +284,12 @@ func (gg *Gauger) handler() {
 
 			batch = append(batch, processed)
 
-			if !gg.opts.NoFeedback {
-				gg.feedback <- prioritized.Priority
+			if !ggr.opts.NoFeedback {
+				ggr.feedback <- prioritized.Priority
 			}
 
 			completed := Gauge{
-				Duration: time.Since(gg.startedAt),
+				Duration: time.Since(ggr.startedAt),
 				Priority: prioritized.Priority,
 				Kind:     GaugeKindCompleted,
 				Data:     prioritized.Item,
@@ -297,13 +297,13 @@ func (gg *Gauger) handler() {
 
 			batch = append(batch, completed)
 
-			gg.results <- batch
+			ggr.results <- batch
 		}
 	}
 }
 
-func (gg *Gauger) Play() []Gauge {
-	expectedResultsQuantity := gg.calcExpectedResultsQuantity()
+func (ggr *Gauger) Play() []Gauge {
+	expectedResultsQuantity := ggr.calcExpectedResultsQuantity()
 
 	if expectedResultsQuantity == 0 {
 		return nil
@@ -311,25 +311,25 @@ func (gg *Gauger) Play() []Gauge {
 
 	resultsCapacity := expectedResultsQuantity
 
-	if gg.opts.NoResults {
+	if ggr.opts.NoResults {
 		resultsCapacity = 0
 	}
 
-	gg.breaker = make(chan bool)
-	gg.results = make(chan []Gauge, expectedResultsQuantity)
+	ggr.breaker = make(chan bool)
+	ggr.results = make(chan []Gauge, expectedResultsQuantity)
 
 	received := uint(0)
 	results := make([]Gauge, 0, resultsCapacity)
 
-	gg.runWriters()
-	gg.runHandlers()
+	ggr.runWriters()
+	ggr.runHandlers()
 
-	defer close(gg.results)
-	defer gg.waiter.Wait()
-	defer close(gg.breaker)
+	defer close(ggr.results)
+	defer ggr.waiter.Wait()
+	defer close(ggr.breaker)
 
-	for batch := range gg.results {
-		if !gg.opts.NoResults {
+	for batch := range ggr.results {
+		if !ggr.opts.NoResults {
 			results = append(results, batch...)
 		}
 
