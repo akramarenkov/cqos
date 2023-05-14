@@ -290,11 +290,9 @@ func (dsc *Discipline[Type]) calcTactic() {
 	for {
 		remainder := dsc.calcVacants()
 
-		dsc.resetTactic()
 		dsc.updateUncrowded()
-		dsc.opts.Divider(dsc.uncrowded, remainder, dsc.tactic)
 
-		if !dsc.isTacticFilled(dsc.uncrowded) {
+		if !dsc.pickUpTactic(remainder) {
 			select {
 			case <-dsc.breaker:
 				return
@@ -307,6 +305,17 @@ func (dsc *Discipline[Type]) calcTactic() {
 
 		return
 	}
+}
+
+func (dsc *Discipline[Type]) pickUpTactic(remainder uint) bool {
+	if remainder == 0 {
+		return false
+	}
+
+	dsc.resetTactic()
+	dsc.opts.Divider(dsc.uncrowded, remainder, dsc.tactic)
+
+	return dsc.isTacticFilled(dsc.uncrowded)
 }
 
 func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
