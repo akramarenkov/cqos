@@ -314,6 +314,10 @@ func (dsc *Discipline[Type]) pickUpTactic() bool {
 		return true
 	}
 
+	return dsc.pickUpTacticBase(vacants)
+}
+
+func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
 	dsc.resetTactic()
 	dsc.updateUncrowded()
 	dsc.opts.Divider(dsc.uncrowded, vacants, dsc.tactic)
