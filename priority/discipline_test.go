@@ -1,6 +1,7 @@
 package priority
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -70,11 +71,17 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	wtflChart := charts.NewBar()
 	ipotChart := charts.NewLine()
 
+	subtitle := fmt.Sprintf(
+		"Rate divider, even time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -83,7 +90,7 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Write to feedback latency",
-				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -92,7 +99,7 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "In processing graph",
-				Subtitle: "Rate divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -188,11 +195,17 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	wtflChart := charts.NewBar()
 	ipotChart := charts.NewLine()
 
+	subtitle := fmt.Sprintf(
+		"Fair divider, even time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -201,7 +214,7 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Write to feedback latency",
-				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -210,7 +223,7 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "In processing graph",
-				Subtitle: "Fair divider, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -302,11 +315,17 @@ func TestUnmanaged(t *testing.T) {
 	dqotChart := charts.NewLine()
 	ipotChart := charts.NewLine()
 
+	subtitle := fmt.Sprintf(
+		"Unmanaged, even time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
 	dqotChart.SetGlobalOptions(
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "Data retrieval graph",
-				Subtitle: "Unmanaged, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
@@ -315,7 +334,7 @@ func TestUnmanaged(t *testing.T) {
 		charts.WithTitleOpts(
 			chartsopts.Title{
 				Title:    "In processing graph",
-				Subtitle: "Unmanaged, even time processing: " + time.Now().Format(time.RFC3339),
+				Subtitle: subtitle,
 			},
 		),
 	)
