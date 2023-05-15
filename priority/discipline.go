@@ -310,7 +310,7 @@ func (dsc *Discipline[Type]) pickUpTactic() bool {
 		return false
 	}
 
-	if picked := dsc.pickUpTacticNaively(vacants); picked {
+	if picked := dsc.pickUpTacticSimpleAddition(vacants); picked {
 		return true
 	}
 
@@ -325,10 +325,10 @@ func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
 	return dsc.isTacticFilled(dsc.uncrowded)
 }
 
-func (dsc *Discipline[Type]) pickUpTacticNaively(vacants uint) bool {
+func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
 	dsc.resetTactic()
 
-	naive := uint(0)
+	picked := uint(0)
 
 	for priority := range dsc.actual {
 		if dsc.actual[priority] > dsc.strategic[priority] {
@@ -337,10 +337,10 @@ func (dsc *Discipline[Type]) pickUpTacticNaively(vacants uint) bool {
 
 		dsc.tactic[priority] = dsc.strategic[priority] - dsc.actual[priority]
 
-		naive += dsc.tactic[priority]
+		picked += dsc.tactic[priority]
 	}
 
-	return naive != 0 && naive <= vacants
+	return picked != 0 && picked <= vacants
 }
 
 func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
