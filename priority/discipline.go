@@ -321,7 +321,7 @@ func (dsc *Discipline[Type]) pickUpTactic() bool {
 	return dsc.isTacticFilled(dsc.uncrowded)
 }
 
-func (dsc *Discipline[Type]) pickUpTacticNaively(remainder uint) bool {
+func (dsc *Discipline[Type]) pickUpTacticNaively(vacants uint) bool {
 	dsc.resetTactic()
 
 	naive := uint(0)
@@ -336,7 +336,7 @@ func (dsc *Discipline[Type]) pickUpTacticNaively(remainder uint) bool {
 		naive += dsc.tactic[priority]
 	}
 
-	return naive != 0 && naive <= remainder
+	return naive != 0 && naive <= vacants
 }
 
 func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
