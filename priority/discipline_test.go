@@ -740,3 +740,63 @@ func BenchmarkDisciplineFair(b *testing.B) {
 
 	_ = gauger.Play()
 }
+
+func TestOverQuantity(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := test.GaugerOpts{
+		HandlersQuantity: 2 * handlersQuantity,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 500000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 500000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 500000)
+
+	gauger.AddWrite(2, 500000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 500000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 500000)
+
+	gauger.AddWrite(3, 500000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 500000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 500000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Rate,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	serieses, _ := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+
+	for _, values := range serieses {
+		for _, value := range values {
+			quantity, casted := value.Value.(uint)
+			require.Equal(t, true, casted)
+			require.LessOrEqual(t, quantity, handlersQuantity)
+		}
+	}
+}
