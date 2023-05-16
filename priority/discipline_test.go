@@ -138,6 +138,130 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := test.GaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 430)
+
+	gauger.AddWrite(2, 250)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 100)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 4*time.Second)
+	gauger.AddWrite(2, 150)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 300)
+
+	gauger.AddWrite(3, 1000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 8*time.Second)
+	gauger.AddWrite(3, 3500)
+
+	gauger.SetProcessDelay(1, 100*time.Millisecond)
+	gauger.SetProcessDelay(2, 50*time.Millisecond)
+	gauger.SetProcessDelay(3, 10*time.Millisecond)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Rate,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+
+	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
+	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+
+	dqotChart := charts.NewLine()
+	wtflChart := charts.NewBar()
+	ipotChart := charts.NewLine()
+
+	subtitle := fmt.Sprintf(
+		"Rate divider, uneven time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
+	dqotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Data retrieval graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	wtflChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Write to feedback latency",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	dqotChart.SetXAxis(dqotX).
+		AddSeries("3", dqot[3]).
+		AddSeries("2", dqot[2]).
+		AddSeries("1", dqot[1])
+
+	wtflChart.SetXAxis(wtflX).
+		AddSeries("3", wtfl[3]).
+		AddSeries("2", wtfl[2]).
+		AddSeries("1", wtfl[1])
+
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
+	dqotFile, err := os.Create("graph_rate_uneven_data_retrieval.html")
+	require.NoError(t, err)
+
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
+
+	wtflFile, err := os.Create("graph_rate_uneven_write_feedback_latency.html")
+	require.NoError(t, err)
+
+	err = wtflChart.Render(wtflFile)
+	require.NoError(t, err)
+
+	ipotFile, err := os.Create("graph_rate_uneven_in_processing.html")
+	require.NoError(t, err)
+
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
+}
+
 func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	handlersQuantity := uint(6)
 
@@ -262,7 +386,131 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUnmanaged(t *testing.T) {
+func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := test.GaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 450)
+
+	gauger.AddWrite(2, 100)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 100)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 4*time.Second)
+	gauger.AddWrite(2, 200)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 400)
+
+	gauger.AddWrite(3, 500)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 6*time.Second)
+	gauger.AddWrite(3, 3000)
+
+	gauger.SetProcessDelay(1, 100*time.Millisecond)
+	gauger.SetProcessDelay(2, 50*time.Millisecond)
+	gauger.SetProcessDelay(3, 10*time.Millisecond)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Fair,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+
+	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
+	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+
+	dqotChart := charts.NewLine()
+	wtflChart := charts.NewBar()
+	ipotChart := charts.NewLine()
+
+	subtitle := fmt.Sprintf(
+		"Fair divider, uneven time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
+	dqotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Data retrieval graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	wtflChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Write to feedback latency",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	dqotChart.SetXAxis(dqotX).
+		AddSeries("3", dqot[3]).
+		AddSeries("2", dqot[2]).
+		AddSeries("1", dqot[1])
+
+	wtflChart.SetXAxis(wtflX).
+		AddSeries("3", wtfl[3]).
+		AddSeries("2", wtfl[2]).
+		AddSeries("1", wtfl[1])
+
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
+	dqotFile, err := os.Create("graph_fair_uneven_data_retrieval.html")
+	require.NoError(t, err)
+
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
+
+	wtflFile, err := os.Create("graph_fair_uneven_write_feedback_latency.html")
+	require.NoError(t, err)
+
+	err = wtflChart.Render(wtflFile)
+	require.NoError(t, err)
+
+	ipotFile, err := os.Create("graph_fair_uneven_in_processing.html")
+	require.NoError(t, err)
+
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
+}
+
+func TestUnmanagedEven(t *testing.T) {
 	handlersQuantity := uint(6)
 
 	gaugerOpts := test.GaugerOpts{
@@ -349,13 +597,113 @@ func TestUnmanaged(t *testing.T) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	dqotFile, err := os.Create("graph_unmanaged_data_retrieval.html")
+	dqotFile, err := os.Create("graph_unmanaged_even_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_unmanaged_in_processing.html")
+	ipotFile, err := os.Create("graph_unmanaged_even_in_processing.html")
+	require.NoError(t, err)
+
+	err = ipotChart.Render(ipotFile)
+	require.NoError(t, err)
+}
+
+func TestUnmanagedUneven(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := test.GaugerOpts{
+		HandlersQuantity: handlersQuantity,
+		NoFeedback:       true,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 500)
+
+	gauger.AddWrite(2, 100)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 100)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 200)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 400)
+
+	gauger.AddWrite(3, 100)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 6*time.Second)
+	gauger.AddWrite(3, 1350)
+
+	gauger.SetProcessDelay(1, 100*time.Millisecond)
+	gauger.SetProcessDelay(2, 50*time.Millisecond)
+	gauger.SetProcessDelay(3, 10*time.Millisecond)
+
+	unmanagedOpts := test.UnmanagedOpts[uint]{
+		Inputs: gauger.GetInputs(),
+		Output: gauger.GetOutput(),
+	}
+
+	unmanaged, err := test.NewUnmanaged(unmanagedOpts)
+	require.NoError(t, err)
+
+	defer unmanaged.Stop()
+
+	gauges := gauger.Play()
+
+	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+
+	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
+	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+
+	dqotChart := charts.NewLine()
+	ipotChart := charts.NewLine()
+
+	subtitle := fmt.Sprintf(
+		"Unmanaged, uneven time processing, handlers quantity: %d, time: %s",
+		handlersQuantity,
+		time.Now().Format(time.RFC3339),
+	)
+
+	dqotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Data retrieval graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	ipotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "In processing graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	dqotChart.SetXAxis(dqotX).
+		AddSeries("3", dqot[3]).
+		AddSeries("2", dqot[2]).
+		AddSeries("1", dqot[1])
+
+	ipotChart.SetXAxis(ipotX).
+		AddSeries("3", ipot[3]).
+		AddSeries("2", ipot[2]).
+		AddSeries("1", ipot[1])
+
+	dqotFile, err := os.Create("graph_unmanaged_uneven_data_retrieval.html")
+	require.NoError(t, err)
+
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
+
+	ipotFile, err := os.Create("graph_unmanaged_uneven_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
