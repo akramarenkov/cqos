@@ -43,9 +43,9 @@ type Gauge struct {
 }
 
 type GaugerOpts struct {
+	DisableGauges    bool
 	HandlersQuantity uint
 	NoFeedback       bool
-	NoResults        bool
 }
 
 type Gauger struct {
@@ -58,7 +58,7 @@ type Gauger struct {
 
 	actions map[uint][]action
 	delays  map[uint]time.Duration
-	results chan []Gauge
+	gauges  chan []Gauge
 
 	feedback chan uint
 	inputs   map[uint]chan uint
@@ -140,7 +140,7 @@ func (ggr *Gauger) AddDelay(priority uint, delay time.Duration) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *Gauger) calcExpectedResultsQuantity() uint {
+func (ggr *Gauger) calcExpectedGuagesQuantity() uint {
 	quantity := uint(0)
 
 	for _, actions := range ggr.actions {
@@ -255,9 +255,9 @@ func (ggr *Gauger) handler() {
 		case <-ggr.breaker:
 			return
 		case prioritized := <-ggr.output:
-			if ggr.opts.NoResults {
+			if ggr.opts.DisableGauges {
 				ggr.feedback <- prioritized.Priority
-				ggr.results <- nil
+				ggr.gauges <- nil
 
 				continue
 			}
@@ -297,46 +297,46 @@ func (ggr *Gauger) handler() {
 
 			batch = append(batch, completed)
 
-			ggr.results <- batch
+			ggr.gauges <- batch
 		}
 	}
 }
 
 func (ggr *Gauger) Play() []Gauge {
-	expectedResultsQuantity := ggr.calcExpectedResultsQuantity()
+	expectedGaugesQuantity := ggr.calcExpectedGuagesQuantity()
 
-	if expectedResultsQuantity == 0 {
+	if expectedGaugesQuantity == 0 {
 		return nil
 	}
 
-	resultsCapacity := expectedResultsQuantity
+	gaugesCapacity := expectedGaugesQuantity
 
-	if ggr.opts.NoResults {
-		resultsCapacity = 0
+	if ggr.opts.DisableGauges {
+		gaugesCapacity = 0
 	}
 
 	ggr.breaker = make(chan bool)
-	ggr.results = make(chan []Gauge, expectedResultsQuantity)
+	ggr.gauges = make(chan []Gauge, expectedGaugesQuantity)
 
 	received := uint(0)
-	results := make([]Gauge, 0, resultsCapacity)
+	gauges := make([]Gauge, 0, gaugesCapacity)
 
 	ggr.runWriters()
 	ggr.runHandlers()
 
-	defer close(ggr.results)
+	defer close(ggr.gauges)
 	defer ggr.waiter.Wait()
 	defer close(ggr.breaker)
 
-	for batch := range ggr.results {
-		if !ggr.opts.NoResults {
-			results = append(results, batch...)
+	for batch := range ggr.gauges {
+		if !ggr.opts.DisableGauges {
+			gauges = append(gauges, batch...)
 		}
 
 		received++
 
-		if received == expectedResultsQuantity {
-			return results
+		if received == expectedGaugesQuantity {
+			return gauges
 		}
 	}
 

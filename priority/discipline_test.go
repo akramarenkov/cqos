@@ -714,8 +714,8 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	handlersQuantity := uint(600)
 
 	gaugerOpts := test.GaugerOpts{
+		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
-		NoResults:        true,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
