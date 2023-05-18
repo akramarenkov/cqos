@@ -266,7 +266,7 @@ func ProcessLatencies(
 		SortDurations(latencies[priority])
 	}
 
-	minlatency := time.Duration(0)
+	minLatency := time.Duration(0)
 	maxLatency := time.Duration(0)
 
 	for priority := range latencies {
@@ -281,7 +281,7 @@ func ProcessLatencies(
 		}
 	}
 
-	quantitiesCapacity := (maxLatency - minlatency) / interval
+	quantitiesCapacity := (maxLatency - minLatency) / interval
 
 	quantities := make(map[uint][]QuantityOverTime)
 
@@ -293,15 +293,15 @@ func ProcessLatencies(
 		quantities[priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
 	}
 
-	intervalEdge := make(map[uint]int)
+	latenciesEdge := make(map[uint]int)
 
-	for intervalLatency := minlatency; intervalLatency <= maxLatency; intervalLatency += interval {
+	for intervalLatency := minLatency; intervalLatency <= maxLatency; intervalLatency += interval {
 		intervalQuantities := make(map[uint]uint)
 
 		for priority := range latencies {
-			for id, latency := range latencies[priority][intervalEdge[priority]:] {
+			for id, latency := range latencies[priority][latenciesEdge[priority]:] {
 				if latency > intervalLatency {
-					intervalEdge[priority] += id
+					latenciesEdge[priority] += id
 					break
 				}
 
