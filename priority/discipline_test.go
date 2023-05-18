@@ -63,9 +63,19 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
+		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	wtflChart := charts.NewBar()
@@ -187,9 +197,19 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
+		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	wtflChart := charts.NewBar()
@@ -311,9 +331,19 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
+		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	wtflChart := charts.NewBar()
@@ -435,9 +465,19 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	wtfl, wtflX := test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
+		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	wtflChart := charts.NewBar()
@@ -557,8 +597,15 @@ func TestUnmanagedEven(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	ipotChart := charts.NewLine()
@@ -657,8 +704,15 @@ func TestUnmanagedUneven(t *testing.T) {
 
 	received := test.FilterByKind(gauges, test.GaugeKindReceived)
 
-	dqot, dqotX := test.CalcDataQuantityOverTime(received, 100*time.Millisecond, 1*time.Second)
-	ipot, ipotX := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
+		test.CalcInProcessing(gauges, 100*time.Millisecond),
+		1*time.Second,
+	)
 
 	dqotChart := charts.NewLine()
 	ipotChart := charts.NewLine()
@@ -790,13 +844,11 @@ func TestOverQuantity(t *testing.T) {
 
 	gauges := gauger.Play()
 
-	serieses, _ := test.CalcInProcessingOverTime(gauges, 100*time.Millisecond, 1*time.Second)
+	quantities := test.CalcInProcessing(gauges, 100*time.Millisecond)
 
-	for _, values := range serieses {
-		for _, value := range values {
-			quantity, casted := value.Value.(uint)
-			require.Equal(t, true, casted)
-			require.LessOrEqual(t, quantity, handlersQuantity)
+	for priority := range quantities {
+		for id := range quantities[priority] {
+			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
 		}
 	}
 }

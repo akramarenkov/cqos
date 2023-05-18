@@ -7,6 +7,11 @@ import (
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
 
+type QuantityOverTime struct {
+	Quantity     uint
+	RelativeTime time.Duration
+}
+
 func FilterByKind(gauges []Gauge, kind GaugeKind) []Gauge {
 	out := make([]Gauge, 0, len(gauges))
 
@@ -59,79 +64,12 @@ func SortDurations(durations []time.Duration) {
 	sort.SliceStable(durations, less)
 }
 
-func CalcDataQuantityOverTime(
-	gauges []Gauge,
-	resolution time.Duration,
-	unit time.Duration,
-) (map[uint][]chartsopts.LineData, []time.Duration) {
-	if len(gauges) == 0 {
-		return nil, nil
-	}
-
-	SortByRelativeTime(gauges)
-
-	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
-	seriesesSize := maxRelativeTime / resolution
-
-	serieses := make(map[uint][]chartsopts.LineData)
-	intervals := make([]time.Duration, 0, seriesesSize)
-
-	for _, gauge := range gauges {
-		if _, exists := serieses[gauge.Priority]; exists {
-			continue
-		}
-
-		serieses[gauge.Priority] = make([]chartsopts.LineData, 0, seriesesSize)
-	}
-
-	intervalEdge := 0
-
-	for relativeTime := time.Duration(0); relativeTime <= maxRelativeTime; relativeTime += resolution {
-		intervals = append(intervals, relativeTime/unit)
-
-		intervalQuantities := make(map[uint]uint)
-
-		for id, gauge := range gauges[intervalEdge:] {
-			if gauge.RelativeTime > relativeTime {
-				intervalEdge += id
-				break
-			}
-
-			intervalQuantities[gauge.Priority]++
-		}
-
-		for priority, quantity := range intervalQuantities {
-			item := chartsopts.LineData{
-				Name:  relativeTime.String(),
-				Value: quantity,
-			}
-
-			serieses[priority] = append(serieses[priority], item)
-		}
-
-		for priority := range serieses {
-			if _, exists := intervalQuantities[priority]; exists {
-				continue
-			}
-
-			item := chartsopts.LineData{
-				Name:  relativeTime.String(),
-				Value: 0,
-			}
-
-			serieses[priority] = append(serieses[priority], item)
-		}
-	}
-
-	return serieses, intervals
-}
-
 func CalcWriteToFeedbackLatency(
 	gauges []Gauge,
 	interval time.Duration,
-) (map[uint][]chartsopts.BarData, []int) {
+) map[uint][]QuantityOverTime {
 	if len(gauges) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	SortByData(gauges)
@@ -172,13 +110,13 @@ func CalcWriteToFeedbackLatency(
 func ProcessLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
-) (map[uint][]chartsopts.BarData, []int) {
+) map[uint][]QuantityOverTime {
 	for priority := range latencies {
 		SortDurations(latencies[priority])
 	}
 
-	maxLatency := time.Duration(0)
 	minlatency := time.Duration(0)
+	maxLatency := time.Duration(0)
 
 	for priority := range latencies {
 		if len(latencies[priority]) == 0 {
@@ -190,32 +128,23 @@ func ProcessLatencies(
 		if latency > maxLatency {
 			maxLatency = latency
 		}
-
-		if latency < minlatency {
-			minlatency = latency
-		}
 	}
 
-	seriesesSize := (maxLatency - minlatency) / interval
+	quantitiesCapacity := (maxLatency - minlatency) / interval
 
-	serieses := make(map[uint][]chartsopts.BarData)
-	sequences := make([]int, 0, seriesesSize)
+	quantities := make(map[uint][]QuantityOverTime)
 
 	for priority := range latencies {
-		if _, exists := serieses[priority]; exists {
+		if _, exists := quantities[priority]; exists {
 			continue
 		}
 
-		serieses[priority] = make([]chartsopts.BarData, 0, seriesesSize)
+		quantities[priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
 	}
 
-	sequence := 0
 	intervalEdge := make(map[uint]int)
 
 	for intervalLatency := minlatency; intervalLatency <= maxLatency; intervalLatency += interval {
-		sequences = append(sequences, sequence)
-		sequence++
-
 		intervalQuantities := make(map[uint]uint)
 
 		for priority := range latencies {
@@ -230,74 +159,70 @@ func ProcessLatencies(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := chartsopts.BarData{
-				Name:    intervalLatency.String(),
-				Tooltip: &chartsopts.Tooltip{Show: true},
-				Value:   quantity,
+			item := QuantityOverTime{
+				RelativeTime: intervalLatency,
+				Quantity:     quantity,
 			}
 
-			serieses[priority] = append(serieses[priority], item)
+			quantities[priority] = append(quantities[priority], item)
 		}
 
-		for priority := range serieses {
+		for priority := range quantities {
 			if _, exists := intervalQuantities[priority]; exists {
 				continue
 			}
 
-			item := chartsopts.BarData{
-				Name:    intervalLatency.String(),
-				Tooltip: &chartsopts.Tooltip{Show: true},
-				Value:   0,
+			item := QuantityOverTime{
+				RelativeTime: intervalLatency,
+				Quantity:     0,
 			}
 
-			serieses[priority] = append(serieses[priority], item)
+			quantities[priority] = append(quantities[priority], item)
 		}
 	}
 
-	return serieses, sequences
+	return quantities
 }
 
-func CalcInProcessingOverTime(
+func CalcInProcessing(
 	gauges []Gauge,
 	resolution time.Duration,
-	unit time.Duration,
-) (map[uint][]chartsopts.LineData, []time.Duration) {
+) map[uint][]QuantityOverTime {
 	if len(gauges) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	SortByRelativeTime(gauges)
 
+	minRelativeTime := time.Duration(0)
 	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
-	seriesesSize := maxRelativeTime / resolution
 
-	serieses := make(map[uint][]chartsopts.LineData)
-	intervals := make([]time.Duration, 0, seriesesSize)
+	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
+
+	quantities := make(map[uint][]QuantityOverTime)
 
 	for _, gauge := range gauges {
-		if _, exists := serieses[gauge.Priority]; exists {
+		if _, exists := quantities[gauge.Priority]; exists {
 			continue
 		}
 
-		serieses[gauge.Priority] = make([]chartsopts.LineData, 0, seriesesSize)
+		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
 	}
 
-	intervalEdge := 0
+	gaugesEdge := 0
 
-	for relativeTime := time.Duration(0); relativeTime <= maxRelativeTime; relativeTime += resolution {
-		intervals = append(intervals, relativeTime/unit)
-
+	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
 		receivedQuantities := make(map[uint]map[uint]uint)
 		completedQuantities := make(map[uint]map[uint]uint)
 
-		for priority := range serieses {
+		for priority := range quantities {
 			receivedQuantities[priority] = make(map[uint]uint)
 			completedQuantities[priority] = make(map[uint]uint)
 		}
 
-		for id, gauge := range gauges[intervalEdge:] {
+		for id, gauge := range gauges[gaugesEdge:] {
 			if gauge.RelativeTime > relativeTime {
-				intervalEdge += id
+				gaugesEdge += id
 				break
 			}
 
@@ -320,27 +245,95 @@ func CalcInProcessingOverTime(
 				quantity += amount
 			}
 
-			item := chartsopts.LineData{
-				Name:  relativeTime.String(),
-				Value: quantity,
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     quantity,
 			}
 
-			serieses[priority] = append(serieses[priority], item)
+			quantities[priority] = append(quantities[priority], item)
 		}
 
-		for priority := range serieses {
+		for priority := range quantities {
 			if _, exists := receivedQuantities[priority]; exists {
 				continue
 			}
 
-			item := chartsopts.LineData{
-				Name:  relativeTime.String(),
-				Value: 0,
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     0,
 			}
 
-			serieses[priority] = append(serieses[priority], item)
+			quantities[priority] = append(quantities[priority], item)
 		}
 	}
 
-	return serieses, intervals
+	return quantities
+}
+
+func ConvertQuantityOverTimeToLineEcharts(
+	quantities map[uint][]QuantityOverTime,
+	relativeTimeUnit time.Duration,
+) (map[uint][]chartsopts.LineData, []uint) {
+	serieses := make(map[uint][]chartsopts.LineData)
+	xaxis := []uint(nil)
+
+	for priority := range quantities {
+		if _, exists := serieses[priority]; !exists {
+			serieses[priority] = make([]chartsopts.LineData, 0, len(quantities[priority]))
+
+			if xaxis == nil {
+				xaxis = make([]uint, 0, len(quantities[priority]))
+			}
+		}
+
+		for _, quantity := range quantities[priority] {
+			item := chartsopts.LineData{
+				Name:  quantity.RelativeTime.String(),
+				Value: quantity.Quantity,
+			}
+
+			serieses[priority] = append(serieses[priority], item)
+
+			if len(xaxis) < len(quantities[priority]) {
+				xaxis = append(xaxis, uint(quantity.RelativeTime/relativeTimeUnit))
+			}
+		}
+	}
+
+	return serieses, xaxis
+}
+
+func ConvertQuantityOverTimeToBarEcharts(
+	quantities map[uint][]QuantityOverTime,
+) (map[uint][]chartsopts.BarData, []uint) {
+	serieses := make(map[uint][]chartsopts.BarData)
+	xaxis := []uint(nil)
+
+	for priority := range quantities {
+		if _, exists := serieses[priority]; !exists {
+			serieses[priority] = make([]chartsopts.BarData, 0, len(quantities[priority]))
+
+			if xaxis == nil {
+				xaxis = make([]uint, 0, len(quantities[priority]))
+			}
+		}
+
+		for id, quantity := range quantities[priority] {
+			item := chartsopts.BarData{
+				Name: quantity.RelativeTime.String(),
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: quantity.Quantity,
+			}
+
+			serieses[priority] = append(serieses[priority], item)
+
+			if len(xaxis) < len(quantities[priority]) {
+				xaxis = append(xaxis, uint(id))
+			}
+		}
+	}
+
+	return serieses, xaxis
 }
