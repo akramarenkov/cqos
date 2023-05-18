@@ -64,6 +64,157 @@ func SortDurations(durations []time.Duration) {
 	sort.SliceStable(durations, less)
 }
 
+func CalcDataQuantity(
+	gauges []Gauge,
+	resolution time.Duration,
+) map[uint][]QuantityOverTime {
+	if len(gauges) == 0 {
+		return nil
+	}
+
+	SortByRelativeTime(gauges)
+
+	minRelativeTime := time.Duration(0)
+	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+
+	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
+
+	quantities := make(map[uint][]QuantityOverTime)
+
+	for _, gauge := range gauges {
+		if _, exists := quantities[gauge.Priority]; exists {
+			continue
+		}
+
+		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
+	}
+
+	gaugesEdge := 0
+
+	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
+		intervalQuantities := make(map[uint]uint)
+
+		for id, gauge := range gauges[gaugesEdge:] {
+			if gauge.RelativeTime > relativeTime {
+				gaugesEdge += id
+				break
+			}
+
+			intervalQuantities[gauge.Priority]++
+		}
+
+		for priority, quantity := range intervalQuantities {
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     quantity,
+			}
+
+			quantities[priority] = append(quantities[priority], item)
+		}
+
+		for priority := range quantities {
+			if _, exists := intervalQuantities[priority]; exists {
+				continue
+			}
+
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     0,
+			}
+
+			quantities[priority] = append(quantities[priority], item)
+		}
+	}
+
+	return quantities
+}
+
+func CalcInProcessing(
+	gauges []Gauge,
+	resolution time.Duration,
+) map[uint][]QuantityOverTime {
+	if len(gauges) == 0 {
+		return nil
+	}
+
+	SortByRelativeTime(gauges)
+
+	minRelativeTime := time.Duration(0)
+	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+
+	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
+
+	quantities := make(map[uint][]QuantityOverTime)
+
+	for _, gauge := range gauges {
+		if _, exists := quantities[gauge.Priority]; exists {
+			continue
+		}
+
+		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
+	}
+
+	gaugesEdge := 0
+
+	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
+		receivedQuantities := make(map[uint]map[uint]uint)
+		completedQuantities := make(map[uint]map[uint]uint)
+
+		for priority := range quantities {
+			receivedQuantities[priority] = make(map[uint]uint)
+			completedQuantities[priority] = make(map[uint]uint)
+		}
+
+		for id, gauge := range gauges[gaugesEdge:] {
+			if gauge.RelativeTime > relativeTime {
+				gaugesEdge += id
+				break
+			}
+
+			switch gauge.Kind {
+			case GaugeKindReceived:
+				receivedQuantities[gauge.Priority][gauge.Data]++
+			case GaugeKindCompleted:
+				completedQuantities[gauge.Priority][gauge.Data]++
+			}
+		}
+
+		for priority, subset := range receivedQuantities {
+			quantity := uint(0)
+
+			for data, amount := range subset {
+				if _, exists := completedQuantities[priority][data]; exists {
+					continue
+				}
+
+				quantity += amount
+			}
+
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     quantity,
+			}
+
+			quantities[priority] = append(quantities[priority], item)
+		}
+
+		for priority := range quantities {
+			if _, exists := receivedQuantities[priority]; exists {
+				continue
+			}
+
+			item := QuantityOverTime{
+				RelativeTime: relativeTime,
+				Quantity:     0,
+			}
+
+			quantities[priority] = append(quantities[priority], item)
+		}
+	}
+
+	return quantities
+}
+
 func CalcWriteToFeedbackLatency(
 	gauges []Gauge,
 	interval time.Duration,
@@ -174,92 +325,6 @@ func ProcessLatencies(
 
 			item := QuantityOverTime{
 				RelativeTime: intervalLatency,
-				Quantity:     0,
-			}
-
-			quantities[priority] = append(quantities[priority], item)
-		}
-	}
-
-	return quantities
-}
-
-func CalcInProcessing(
-	gauges []Gauge,
-	resolution time.Duration,
-) map[uint][]QuantityOverTime {
-	if len(gauges) == 0 {
-		return nil
-	}
-
-	SortByRelativeTime(gauges)
-
-	minRelativeTime := time.Duration(0)
-	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
-
-	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
-
-	quantities := make(map[uint][]QuantityOverTime)
-
-	for _, gauge := range gauges {
-		if _, exists := quantities[gauge.Priority]; exists {
-			continue
-		}
-
-		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
-	}
-
-	gaugesEdge := 0
-
-	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
-		receivedQuantities := make(map[uint]map[uint]uint)
-		completedQuantities := make(map[uint]map[uint]uint)
-
-		for priority := range quantities {
-			receivedQuantities[priority] = make(map[uint]uint)
-			completedQuantities[priority] = make(map[uint]uint)
-		}
-
-		for id, gauge := range gauges[gaugesEdge:] {
-			if gauge.RelativeTime > relativeTime {
-				gaugesEdge += id
-				break
-			}
-
-			switch gauge.Kind {
-			case GaugeKindReceived:
-				receivedQuantities[gauge.Priority][gauge.Data]++
-			case GaugeKindCompleted:
-				completedQuantities[gauge.Priority][gauge.Data]++
-			}
-		}
-
-		for priority, subset := range receivedQuantities {
-			quantity := uint(0)
-
-			for data, amount := range subset {
-				if _, exists := completedQuantities[priority][data]; exists {
-					continue
-				}
-
-				quantity += amount
-			}
-
-			item := QuantityOverTime{
-				RelativeTime: relativeTime,
-				Quantity:     quantity,
-			}
-
-			quantities[priority] = append(quantities[priority], item)
-		}
-
-		for priority := range quantities {
-			if _, exists := receivedQuantities[priority]; exists {
-				continue
-			}
-
-			item := QuantityOverTime{
-				RelativeTime: relativeTime,
 				Quantity:     0,
 			}
 
