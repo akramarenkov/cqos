@@ -389,6 +389,10 @@ func (dsc *Discipline[Type]) recalcTactic() bool {
 	remainder := dsc.updateUseful()
 
 	dsc.resetTactic()
+	dsc.opts.Divider(dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
+
+	dsc.updateUseful2()
+	dsc.resetTactic()
 	dsc.opts.Divider(dsc.useful, remainder, dsc.tactic)
 
 	return dsc.isTacticFilled(dsc.useful)
@@ -409,4 +413,16 @@ func (dsc *Discipline[Type]) updateUseful() uint {
 	}
 
 	return remainder
+}
+
+func (dsc *Discipline[Type]) updateUseful2() {
+	dsc.useful = dsc.useful[:0]
+
+	for _, priority := range dsc.priorities {
+		if dsc.actual[priority] >= dsc.tactic[priority] {
+			continue
+		}
+
+		dsc.useful = append(dsc.useful, priority)
+	}
 }
