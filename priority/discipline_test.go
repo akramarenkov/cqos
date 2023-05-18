@@ -3,6 +3,7 @@ package priority
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -14,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDisciplineRateEvenProcessingTime(t *testing.T) {
-	handlersQuantity := uint(6)
+func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -24,23 +25,23 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 4100)
+	gauger.AddWrite(1, 4100*factor)
 
-	gauger.AddWrite(2, 1500)
+	gauger.AddWrite(2, 1500*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 750)
+	gauger.AddWrite(2, 750*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 700)
+	gauger.AddWrite(2, 700*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 3*time.Second)
-	gauger.AddWrite(2, 1200)
+	gauger.AddWrite(2, 1200*factor)
 
-	gauger.AddWrite(3, 1000)
+	gauger.AddWrite(3, 1000*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 8*time.Second)
-	gauger.AddWrite(3, 3700)
+	gauger.AddWrite(3, 3700*factor)
 
 	gauger.SetProcessDelay(1, 10*time.Millisecond)
 	gauger.SetProcessDelay(2, 10*time.Millisecond)
@@ -129,27 +130,34 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	dqotFile, err := os.Create("graph_rate_even_data_retrieval.html")
+	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_rate_even_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
 
-	wtflFile, err := os.Create("graph_rate_even_write_feedback_latency.html")
+	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
 	require.NoError(t, err)
 
 	err = wtflChart.Render(wtflFile)
 	require.NoError(t, err)
 }
 
-func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
-	handlersQuantity := uint(6)
+func TestDisciplineRateEvenProcessingTime(t *testing.T) {
+	testDisciplineRateEvenProcessingTime(t, 1)
+	testDisciplineRateEvenProcessingTime(t, 10)
+}
+
+func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -158,23 +166,23 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 430)
+	gauger.AddWrite(1, 430*factor)
 
-	gauger.AddWrite(2, 250)
+	gauger.AddWrite(2, 250*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100)
+	gauger.AddWrite(2, 100*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 150)
+	gauger.AddWrite(2, 150*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 300)
+	gauger.AddWrite(2, 300*factor)
 
-	gauger.AddWrite(3, 1000)
+	gauger.AddWrite(3, 1000*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 8*time.Second)
-	gauger.AddWrite(3, 3500)
+	gauger.AddWrite(3, 3500*factor)
 
 	gauger.SetProcessDelay(1, 100*time.Millisecond)
 	gauger.SetProcessDelay(2, 50*time.Millisecond)
@@ -263,27 +271,34 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	dqotFile, err := os.Create("graph_rate_uneven_data_retrieval.html")
+	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_rate_uneven_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
 
-	wtflFile, err := os.Create("graph_rate_uneven_write_feedback_latency.html")
+	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
 	require.NoError(t, err)
 
 	err = wtflChart.Render(wtflFile)
 	require.NoError(t, err)
 }
 
-func TestDisciplineFairEvenProcessingTime(t *testing.T) {
-	handlersQuantity := uint(6)
+func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
+	testDisciplineRateUnevenProcessingTime(t, 1)
+	testDisciplineRateUnevenProcessingTime(t, 10)
+}
+
+func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -292,23 +307,23 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 4000)
+	gauger.AddWrite(1, 4000*factor)
 
-	gauger.AddWrite(2, 500)
+	gauger.AddWrite(2, 500*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 500)
+	gauger.AddWrite(2, 500*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 1000)
+	gauger.AddWrite(2, 1000*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 2000)
+	gauger.AddWrite(2, 2000*factor)
 
-	gauger.AddWrite(3, 500)
+	gauger.AddWrite(3, 500*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 5*time.Second)
-	gauger.AddWrite(3, 4000)
+	gauger.AddWrite(3, 4000*factor)
 
 	gauger.SetProcessDelay(1, 10*time.Millisecond)
 	gauger.SetProcessDelay(2, 10*time.Millisecond)
@@ -397,27 +412,34 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	dqotFile, err := os.Create("graph_fair_even_data_retrieval.html")
+	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_fair_even_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
 
-	wtflFile, err := os.Create("graph_fair_even_write_feedback_latency.html")
+	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
 	require.NoError(t, err)
 
 	err = wtflChart.Render(wtflFile)
 	require.NoError(t, err)
 }
 
-func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
-	handlersQuantity := uint(6)
+func TestDisciplineFairEvenProcessingTime(t *testing.T) {
+	testDisciplineFairEvenProcessingTime(t, 1)
+	testDisciplineFairEvenProcessingTime(t, 10)
+}
+
+func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -426,23 +448,23 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 450)
+	gauger.AddWrite(1, 450*factor)
 
-	gauger.AddWrite(2, 100)
+	gauger.AddWrite(2, 100*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100)
+	gauger.AddWrite(2, 100*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 200)
+	gauger.AddWrite(2, 200*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 400)
+	gauger.AddWrite(2, 400*factor)
 
-	gauger.AddWrite(3, 500)
+	gauger.AddWrite(3, 500*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 6*time.Second)
-	gauger.AddWrite(3, 3000)
+	gauger.AddWrite(3, 3000*factor)
 
 	gauger.SetProcessDelay(1, 100*time.Millisecond)
 	gauger.SetProcessDelay(2, 50*time.Millisecond)
@@ -531,27 +553,34 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	dqotFile, err := os.Create("graph_fair_uneven_data_retrieval.html")
+	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_fair_uneven_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
 
-	wtflFile, err := os.Create("graph_fair_uneven_write_feedback_latency.html")
+	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
 	require.NoError(t, err)
 
 	err = wtflChart.Render(wtflFile)
 	require.NoError(t, err)
 }
 
-func TestUnmanagedEven(t *testing.T) {
-	handlersQuantity := uint(6)
+func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
+	testDisciplineFairUnevenProcessingTime(t, 1)
+	testDisciplineFairUnevenProcessingTime(t, 10)
+}
+
+func testUnmanagedEven(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -561,23 +590,23 @@ func TestUnmanagedEven(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 4000)
+	gauger.AddWrite(1, 4000*factor)
 
-	gauger.AddWrite(2, 500)
+	gauger.AddWrite(2, 500*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 500)
+	gauger.AddWrite(2, 500*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 1000)
+	gauger.AddWrite(2, 1000*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 2000)
+	gauger.AddWrite(2, 2000*factor)
 
-	gauger.AddWrite(3, 500)
+	gauger.AddWrite(3, 500*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 5*time.Second)
-	gauger.AddWrite(3, 4000)
+	gauger.AddWrite(3, 4000*factor)
 
 	gauger.SetProcessDelay(1, 10*time.Millisecond)
 	gauger.SetProcessDelay(2, 10*time.Millisecond)
@@ -644,21 +673,28 @@ func TestUnmanagedEven(t *testing.T) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	dqotFile, err := os.Create("graph_unmanaged_even_data_retrieval.html")
+	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_unmanaged_even_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
 }
 
-func TestUnmanagedUneven(t *testing.T) {
-	handlersQuantity := uint(6)
+func TestUnmanagedEven(t *testing.T) {
+	testUnmanagedEven(t, 1)
+	testUnmanagedEven(t, 10)
+}
+
+func testUnmanagedUneven(t *testing.T, factor uint) {
+	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
@@ -668,23 +704,23 @@ func TestUnmanagedUneven(t *testing.T) {
 	gauger := test.NewGauger(gaugerOpts)
 	defer gauger.Finalize()
 
-	gauger.AddWrite(1, 500)
+	gauger.AddWrite(1, 500*factor)
 
-	gauger.AddWrite(2, 100)
+	gauger.AddWrite(2, 100*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100)
+	gauger.AddWrite(2, 100*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 200)
+	gauger.AddWrite(2, 200*factor)
 	gauger.AddWaitDevastation(2)
 	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 400)
+	gauger.AddWrite(2, 400*factor)
 
-	gauger.AddWrite(3, 100)
+	gauger.AddWrite(3, 100*factor)
 	gauger.AddWaitDevastation(3)
 	gauger.AddDelay(3, 6*time.Second)
-	gauger.AddWrite(3, 1350)
+	gauger.AddWrite(3, 1350*factor)
 
 	gauger.SetProcessDelay(1, 100*time.Millisecond)
 	gauger.SetProcessDelay(2, 50*time.Millisecond)
@@ -751,17 +787,24 @@ func TestUnmanagedUneven(t *testing.T) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	dqotFile, err := os.Create("graph_unmanaged_uneven_data_retrieval.html")
+	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity))
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
 
 	err = dqotChart.Render(dqotFile)
 	require.NoError(t, err)
 
-	ipotFile, err := os.Create("graph_unmanaged_uneven_in_processing.html")
+	ipotFile, err := os.Create(baseName + "_in_processing.html")
 	require.NoError(t, err)
 
 	err = ipotChart.Render(ipotFile)
 	require.NoError(t, err)
+}
+
+func TestUnmanagedUneven(t *testing.T) {
+	testUnmanagedUneven(t, 1)
+	testUnmanagedUneven(t, 10)
 }
 
 func BenchmarkDisciplineFair(b *testing.B) {
