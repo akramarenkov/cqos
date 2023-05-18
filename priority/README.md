@@ -18,11 +18,16 @@ Equaling:
 
 ## Comparison with unmanaged distribution
 
-If different times are spent processing data of different priorities, then we will get different processing speeds in the case of using the priority discipline and without it:
+If different times are spent processing data of different priorities, then we will get different processing speeds in the case of using the priority discipline and without it.
+
+For example, suppose that data from channel of priority 3 is processed in time **T**, data from channel of priority 2 is processed in time 5\***T**, and data from channel of priority 1 is processed in time 10\***T**, then we will get the following results:
 
 Equaling by priority discipline:
 
-![Equaling by priority discipline](./doc/different-processing-time-equaling.svg)
+![Equaling by priority discipline](./doc/different-processing-time-equaling.png)
 
 Unmanaged distribution:
-![Unmanaged distribution](./doc/different-processing-time-unmanagement.svg)
+
+![Unmanaged distribution](./doc/different-processing-time-unmanagement.png)
+
+It can be seen that with unmanaged distribution, the processing speed is limited by the slowest processed data
