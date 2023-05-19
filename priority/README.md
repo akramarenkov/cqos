@@ -8,13 +8,13 @@ Also may be used to equaling distribution of data with different processing time
 
 ## Principle of operation
 
-Prioritization:
+* Prioritization:
 
-![Principle of operation, prioritization](./doc/operation-principle-321.svg)
+  ![Principle of operation, prioritization](./doc/operation-principle-321.svg)
 
-Equaling:
+* Equaling:
 
-![Principle of operation, equaling](./doc/operation-principle-222.svg)
+  ![Principle of operation, equaling](./doc/operation-principle-222.svg)
 
 ## Comparison with unmanaged distribution
 
@@ -22,12 +22,12 @@ If different times are spent processing data of different priorities, then we wi
 
 For example, suppose that data from channel of priority 3 is processed in time **T**, data from channel of priority 2 is processed in time 5\***T**, and data from channel of priority 1 is processed in time 10\***T**, then we will get the following results:
 
-Equaling by priority discipline:
+* equaling by priority discipline:
 
-![Equaling by priority discipline](./doc/different-processing-time-equaling.png)
+  ![Equaling by priority discipline](./doc/different-processing-time-equaling.png)
 
-Unmanaged distribution:
+* unmanaged distribution:
 
-![Unmanaged distribution](./doc/different-processing-time-unmanagement.png)
+  ![Unmanaged distribution](./doc/different-processing-time-unmanagement.png)
 
 It can be seen that with unmanaged distribution, the processing speed is limited by the slowest processed data
