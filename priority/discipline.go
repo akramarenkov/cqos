@@ -16,7 +16,8 @@ var (
 )
 
 const (
-	defaultIdleDelay = 1 * time.Nanosecond
+	defaultIdleDelay        = 1 * time.Nanosecond
+	defaultInterruptTimeout = 1 * time.Nanosecond
 )
 
 type input[Type any] struct {
@@ -52,6 +53,9 @@ type Discipline[Type any] struct {
 
 	uncrowded []uint
 	useful    []uint
+
+	interrupter *time.Ticker
+	unbuffered  map[uint]bool
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
@@ -85,6 +89,9 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
 		actual:    make(map[uint]uint),
+
+		interrupter: time.NewTicker(defaultInterruptTimeout),
+		unbuffered:  make(map[uint]bool),
 	}
 
 	dsc.updateInputs(opts.Inputs)
@@ -118,6 +125,10 @@ func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
 	_, exists := dsc.inputs[priority]
 
 	dsc.inputs[priority] = channel
+
+	if cap(channel) == 0 {
+		dsc.unbuffered[priority] = true
+	}
 
 	if exists {
 		return
@@ -160,6 +171,7 @@ func (dsc *Discipline[Type]) RemoveInput(priority uint) {
 func (dsc *Discipline[Type]) removeInput(priority uint) {
 	delete(dsc.inputs, priority)
 	delete(dsc.tactic, priority)
+	delete(dsc.unbuffered, priority)
 
 	dsc.priorities = removePriority(dsc.priorities, priority)
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
@@ -222,7 +234,11 @@ func (dsc *Discipline[Type]) prioritize() uint {
 	processed := uint(0)
 
 	for _, priority := range dsc.priorities {
-		processed += dsc.io(priority)
+		if !dsc.unbuffered[priority] {
+			processed += dsc.io(priority)
+		} else {
+			processed += dsc.iou(priority)
+		}
 	}
 
 	return processed
@@ -249,6 +265,37 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			dsc.decreaseActual(precedency)
 		default:
 			return processed
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) iou(priority uint) uint {
+	processed := uint(0)
+
+	interrupt := false
+
+	for {
+		if dsc.tactic[priority] == 0 {
+			return processed
+		}
+
+		select {
+		case <-dsc.breaker:
+			return processed
+		case item, opened := <-dsc.inputs[priority]:
+			if !opened {
+				return processed
+			}
+
+			processed += dsc.send(item, priority)
+		case precedency := <-dsc.opts.Feedback:
+			dsc.decreaseActual(precedency)
+		case <-dsc.interrupter.C:
+			if interrupt {
+				return processed
+			}
+
+			interrupt = true
 		}
 	}
 }
