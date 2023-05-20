@@ -119,6 +119,7 @@ func (dsc *Discipline[Type]) stop() {
 	<-dsc.completer
 	close(dsc.inputAdds)
 	close(dsc.inputRmvs)
+	dsc.interrupter.Stop()
 }
 
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
