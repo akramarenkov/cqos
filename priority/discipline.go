@@ -29,7 +29,6 @@ type Opts[Type any] struct {
 	Divider          divider.Divider
 	Feedback         <-chan uint
 	HandlersQuantity uint
-	IdleDelay        time.Duration
 	Inputs           map[uint]<-chan Type
 	Output           chan<- types.Prioritized[Type]
 }
@@ -58,21 +57,25 @@ type Discipline[Type any] struct {
 	unbuffered  map[uint]bool
 }
 
-func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
+func (opts Opts[Type]) isValid() error {
 	if opts.Divider == nil {
-		return nil, ErrEmptyDivider
+		return ErrEmptyDivider
 	}
 
 	if opts.Feedback == nil {
-		return nil, ErrEmptyFeedback
+		return ErrEmptyFeedback
 	}
 
 	if opts.Output == nil {
-		return nil, ErrEmptyOutput
+		return ErrEmptyOutput
 	}
 
-	if opts.IdleDelay == 0 {
-		opts.IdleDelay = defaultIdleDelay
+	return nil
+}
+
+func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
+	if err := opts.isValid(); err != nil {
+		return nil, err
 	}
 
 	dsc := &Discipline[Type]{
@@ -197,7 +200,7 @@ func (dsc *Discipline[Type]) loop() {
 		dsc.clearActual()
 
 		if processed := dsc.main(); processed == 0 {
-			time.Sleep(dsc.opts.IdleDelay)
+			time.Sleep(defaultIdleDelay)
 		}
 	}
 }
