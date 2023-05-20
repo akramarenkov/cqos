@@ -106,7 +106,9 @@ func main() {
 
             for prioritized := range output {
                 feedback <- prioritized.Priority
+                
                 measurements <- true
+                
                 fmt.Println(prioritized.Item)
             }
         }()
@@ -122,6 +124,7 @@ func main() {
 
             for id := 0; id < itemsQuantity; id++ {
                 item := base + ":" + strconv.Itoa(id)
+                
                 channel <- item
             }
         }(priority, input)
