@@ -67,14 +67,14 @@ func (nmn *Unmanaged[Type]) main() {
 	waiter := &sync.WaitGroup{}
 	defer waiter.Wait()
 
-	for priority, channel := range nmn.opts.Inputs {
+	for priority := range nmn.opts.Inputs {
 		waiter.Add(1)
 
-		go nmn.io(waiter, priority, channel)
+		go nmn.io(waiter, priority)
 	}
 }
 
-func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint, channel <-chan Type) {
+func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
 	defer waiter.Done()
 
 	for {
