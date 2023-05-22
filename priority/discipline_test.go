@@ -874,6 +874,37 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	_ = gauger.Play()
 }
 
+func BenchmarkDisciplineRate(b *testing.B) {
+	handlersQuantity := uint(600)
+
+	gaugerOpts := test.GaugerOpts{
+		DisableGauges:    true,
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 5000000)
+	gauger.AddWrite(2, 5000000)
+	gauger.AddWrite(3, 5000000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Rate,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(b, err)
+
+	defer discipline.Stop()
+
+	_ = gauger.Play()
+}
+
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	handlersQuantity := uint(600)
 
@@ -892,6 +923,38 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(b, err)
+
+	defer discipline.Stop()
+
+	_ = gauger.Play()
+}
+
+func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
+	handlersQuantity := uint(600)
+
+	gaugerOpts := test.GaugerOpts{
+		DisableGauges:    true,
+		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    true,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 5000000)
+	gauger.AddWrite(2, 5000000)
+	gauger.AddWrite(3, 5000000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Rate,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),

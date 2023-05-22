@@ -291,6 +291,8 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 				return processed
 			}
 
+			interrupt = false
+
 			processed += dsc.send(item, priority)
 		case precedency := <-dsc.opts.Feedback:
 			dsc.decreaseActual(precedency)
