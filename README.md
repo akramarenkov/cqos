@@ -1,5 +1,7 @@
 # CQOS
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/akramarenkov/cqos.svg)](https://pkg.go.dev/github.com/akramarenkov/cqos)
+
 ## Purpose
 
 Library that allows you to control passage of data between Go channels

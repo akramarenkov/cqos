@@ -1,7 +1,5 @@
 # Priority discipline
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/akramarenkov/cqos.svg)](https://pkg.go.dev/github.com/akramarenkov/cqos)
-
 ## Purpose
 
 Used to distributes data among handlers according to priority
