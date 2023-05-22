@@ -16,6 +16,10 @@ import (
 )
 
 func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
@@ -163,6 +167,10 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
@@ -310,6 +318,10 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
@@ -457,6 +469,10 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
@@ -604,6 +620,10 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 }
 
 func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
@@ -724,6 +744,10 @@ func TestUnmanagedEven(t *testing.T) {
 }
 
 func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
