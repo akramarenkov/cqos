@@ -45,7 +45,21 @@ type Gauge struct {
 type GaugerOpts struct {
 	DisableGauges    bool
 	HandlersQuantity uint
+	InputCapacity    uint
 	NoFeedback       bool
+	NoInputBuffer    bool
+}
+
+func (opts GaugerOpts) normalize() GaugerOpts {
+	if opts.InputCapacity == 0 {
+		opts.InputCapacity = defaultChannelCapacity
+	}
+
+	if opts.NoInputBuffer {
+		opts.InputCapacity = 0
+	}
+
+	return opts
 }
 
 type Gauger struct {
@@ -69,7 +83,7 @@ type Gauger struct {
 
 func NewGauger(opts GaugerOpts) *Gauger {
 	ggr := &Gauger{
-		opts: opts,
+		opts: opts.normalize(),
 
 		ready: &sync.WaitGroup{},
 
@@ -98,7 +112,7 @@ func (ggr *Gauger) Finalize() {
 
 func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
 	if _, exists := ggr.inputs[priority]; !exists {
-		ggr.inputs[priority] = make(chan uint, defaultChannelCapacity)
+		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
 
 	action := action{
@@ -111,7 +125,7 @@ func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
 
 func (ggr *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
 	if _, exists := ggr.inputs[priority]; !exists {
-		ggr.inputs[priority] = make(chan uint, defaultChannelCapacity)
+		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
 
 	action := action{

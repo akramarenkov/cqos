@@ -15,11 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint) {
+func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -83,8 +84,10 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint) {
 	wtflChart := charts.NewBar()
 
 	subtitle := fmt.Sprintf(
-		"Rate divider, even time processing, handlers quantity: %d, time: %s",
+		"Rate divider, even time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -130,7 +133,8 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -152,15 +156,18 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint) {
 }
 
 func TestDisciplineRateEvenProcessingTime(t *testing.T) {
-	testDisciplineRateEvenProcessingTime(t, 1)
-	testDisciplineRateEvenProcessingTime(t, 10)
+	testDisciplineRateEvenProcessingTime(t, 1, true)
+	testDisciplineRateEvenProcessingTime(t, 10, true)
+	testDisciplineRateEvenProcessingTime(t, 1, false)
+	testDisciplineRateEvenProcessingTime(t, 10, false)
 }
 
-func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint) {
+func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -224,8 +231,10 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint) {
 	wtflChart := charts.NewBar()
 
 	subtitle := fmt.Sprintf(
-		"Rate divider, uneven time processing, handlers quantity: %d, time: %s",
+		"Rate divider, uneven time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -271,7 +280,8 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -293,15 +303,18 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint) {
 }
 
 func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
-	testDisciplineRateUnevenProcessingTime(t, 1)
-	testDisciplineRateUnevenProcessingTime(t, 10)
+	testDisciplineRateUnevenProcessingTime(t, 1, true)
+	testDisciplineRateUnevenProcessingTime(t, 10, true)
+	testDisciplineRateUnevenProcessingTime(t, 1, false)
+	testDisciplineRateUnevenProcessingTime(t, 10, false)
 }
 
-func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint) {
+func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -365,8 +378,10 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint) {
 	wtflChart := charts.NewBar()
 
 	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, handlers quantity: %d, time: %s",
+		"Fair divider, even time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -412,7 +427,8 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -434,15 +450,18 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint) {
 }
 
 func TestDisciplineFairEvenProcessingTime(t *testing.T) {
-	testDisciplineFairEvenProcessingTime(t, 1)
-	testDisciplineFairEvenProcessingTime(t, 10)
+	testDisciplineFairEvenProcessingTime(t, 1, true)
+	testDisciplineFairEvenProcessingTime(t, 10, true)
+	testDisciplineFairEvenProcessingTime(t, 1, false)
+	testDisciplineFairEvenProcessingTime(t, 10, false)
 }
 
-func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint) {
+func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -506,8 +525,10 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint) {
 	wtflChart := charts.NewBar()
 
 	subtitle := fmt.Sprintf(
-		"Fair divider, uneven time processing, handlers quantity: %d, time: %s",
+		"Fair divider, uneven time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -553,7 +574,8 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint) {
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -575,16 +597,19 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint) {
 }
 
 func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
-	testDisciplineFairUnevenProcessingTime(t, 1)
-	testDisciplineFairUnevenProcessingTime(t, 10)
+	testDisciplineFairUnevenProcessingTime(t, 1, true)
+	testDisciplineFairUnevenProcessingTime(t, 10, true)
+	testDisciplineFairUnevenProcessingTime(t, 1, false)
+	testDisciplineFairUnevenProcessingTime(t, 10, false)
 }
 
-func testUnmanagedEven(t *testing.T, factor uint) {
+func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -640,8 +665,10 @@ func testUnmanagedEven(t *testing.T, factor uint) {
 	ipotChart := charts.NewLine()
 
 	subtitle := fmt.Sprintf(
-		"Unmanaged, even time processing, handlers quantity: %d, time: %s",
+		"Unmanaged, even time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -673,7 +700,8 @@ func testUnmanagedEven(t *testing.T, factor uint) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -689,16 +717,19 @@ func testUnmanagedEven(t *testing.T, factor uint) {
 }
 
 func TestUnmanagedEven(t *testing.T) {
-	testUnmanagedEven(t, 1)
-	testUnmanagedEven(t, 10)
+	testUnmanagedEven(t, 1, true)
+	testUnmanagedEven(t, 10, true)
+	testUnmanagedEven(t, 1, false)
+	testUnmanagedEven(t, 10, false)
 }
 
-func testUnmanagedUneven(t *testing.T, factor uint) {
+func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 	handlersQuantity := uint(6) * factor
 
 	gaugerOpts := test.GaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
+		NoInputBuffer:    !inputBuffered,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
@@ -754,8 +785,10 @@ func testUnmanagedUneven(t *testing.T, factor uint) {
 	ipotChart := charts.NewLine()
 
 	subtitle := fmt.Sprintf(
-		"Unmanaged, uneven time processing, handlers quantity: %d, time: %s",
+		"Unmanaged, uneven time processing, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
+		inputBuffered,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -787,7 +820,8 @@ func testUnmanagedUneven(t *testing.T, factor uint) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity))
+	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(inputBuffered)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -803,8 +837,10 @@ func testUnmanagedUneven(t *testing.T, factor uint) {
 }
 
 func TestUnmanagedUneven(t *testing.T) {
-	testUnmanagedUneven(t, 1)
-	testUnmanagedUneven(t, 10)
+	testUnmanagedUneven(t, 1, true)
+	testUnmanagedUneven(t, 10, true)
+	testUnmanagedUneven(t, 1, false)
+	testUnmanagedUneven(t, 10, false)
 }
 
 func BenchmarkDisciplineFair(b *testing.B) {
@@ -813,6 +849,38 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	gaugerOpts := test.GaugerOpts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := test.NewGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 5000000)
+	gauger.AddWrite(2, 5000000)
+	gauger.AddWrite(3, 5000000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider.Fair,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(b, err)
+
+	defer discipline.Stop()
+
+	_ = gauger.Play()
+}
+
+func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
+	handlersQuantity := uint(600)
+
+	gaugerOpts := test.GaugerOpts{
+		DisableGauges:    true,
+		HandlersQuantity: handlersQuantity,
+		NoInputBuffer:    true,
 	}
 
 	gauger := test.NewGauger(gaugerOpts)
