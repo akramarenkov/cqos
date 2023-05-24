@@ -1,10 +1,10 @@
 module github.com/akramarenkov/cqos
 
-go 1.19
+go 1.20
 
 require (
 	github.com/go-echarts/go-echarts/v2 v2.2.6
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 )
 
 require (
