@@ -73,6 +73,11 @@ func (opts Opts[Type]) isValid() error {
 	return nil
 }
 
+// Creates and runs main prioritization discipline
+// Preferably input channels should be buffered
+// Data from input channels passed to handlers by output channel
+// Handlers must write priority of processed data to feedback channel
+// For "Equaling" use "Fair" divider, for "Prioritization" use "Rate" divider
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -104,6 +109,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
+// Terminates work of the discipline
 func (dsc *Discipline[Type]) Stop() {
 	dsc.stopMutex.Lock()
 	defer dsc.stopMutex.Unlock()
@@ -151,6 +157,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
+// Adds or updates (if it added previously) input channel for specified priority
 func (dsc *Discipline[Type]) AddInput(channel chan Type, priority uint) {
 	in := input[Type]{
 		channel:  channel,
@@ -168,6 +175,7 @@ func (dsc *Discipline[Type]) addInput(channel chan Type, priority uint) {
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
+// Removes input channel for specified priority
 func (dsc *Discipline[Type]) RemoveInput(priority uint) {
 	dsc.inputRmvs <- priority
 }
