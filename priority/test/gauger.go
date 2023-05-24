@@ -1,3 +1,4 @@
+// Mostly internaly package used to test and research the discipline
 package test
 
 import (

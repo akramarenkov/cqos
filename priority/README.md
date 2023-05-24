@@ -61,6 +61,7 @@ func main() {
         1: make(chan string, inputCapacity),
     }
 
+    // Map key is a value of priority
     inputsOpts := map[uint]<-chan string{
         3: inputs[3],
         2: inputs[2],
@@ -76,7 +77,7 @@ func main() {
     // Data from input channels passed to handlers by output channel
     output := make(chan types.Prioritized[string])
 
-    // Handlers must write priority of processed data to feedback channel
+    // Handlers must write priority of processed data to feedback channel after it has been processed
     feedback := make(chan uint)
     defer close(feedback)
 
@@ -84,7 +85,7 @@ func main() {
     measurements := make(chan bool)
     defer close(measurements)
 
-    // For "Equaling" use "Fair" divider, for "Prioritization" use "Rate" divider
+    // For equaling use divider.Fair divider, for prioritization use divider.Rate divider or custom divider
     disciplineOpts := priority.Opts[string]{
         Divider:          divider.Rate,
         Feedback:         feedback,
@@ -103,7 +104,7 @@ func main() {
     wg := &sync.WaitGroup{}
     defer wg.Wait()
 
-    // Run "handlers", that process data
+    // Run handlers, that process data
     for handler := 0; handler < handlersQuantity; handler++ {
         wg.Add(1)
 
@@ -111,7 +112,7 @@ func main() {
             defer wg.Done()
 
             for prioritized := range output {
-                // "Data processing"
+                // Data processing
                 fmt.Println(prioritized.Item)
                 measurements <- true
 
@@ -120,7 +121,7 @@ func main() {
         }()
     }
 
-    // Run "writers", that write data to input channels
+    // Run writers, that write data to input channels
     for priority, input := range inputs {
         wg.Add(1)
 

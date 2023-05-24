@@ -25,14 +25,29 @@ type input[Type any] struct {
 	priority uint
 }
 
+// Options of the created discipline
 type Opts[Type any] struct {
-	Divider          divider.Divider
-	Feedback         <-chan uint
+	// Determines how handlers are distributed among priorities
+	Divider divider.Divider
+	// Handlers must write priority of processed data to feedback channel after it has been processed
+	Feedback <-chan uint
+	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
-	Inputs           map[uint]<-chan Type
-	Output           chan<- types.Prioritized[Type]
+	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
+	Inputs map[uint]<-chan Type
+	// Handlers should read distributed data from this channel
+	Output chan<- types.Prioritized[Type]
 }
 
+// Main prioritization discipline.
+//
+// Preferably input channels should be buffered for performance reasons.
+//
+// Data from input channels passed to handlers by output channel.
+//
+// Handlers must write priority of processed data to feedback channel after it has been processed.
+//
+// For equaling use divider.Fair divider, for prioritization use divider.Rate divider or custom divider
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -74,10 +89,6 @@ func (opts Opts[Type]) isValid() error {
 }
 
 // Creates and runs main prioritization discipline
-// Preferably input channels should be buffered
-// Data from input channels passed to handlers by output channel
-// Handlers must write priority of processed data to feedback channel
-// For "Equaling" use "Fair" divider, for "Prioritization" use "Rate" divider
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
