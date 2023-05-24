@@ -80,7 +80,7 @@ func main() {
     feedback := make(chan uint)
     defer close(feedback)
 
-    // Used only in this example
+    // Used only in this example for detect that all written data are processed
     measurements := make(chan bool)
     defer close(measurements)
 
