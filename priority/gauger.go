@@ -1,11 +1,8 @@
-// Mostly internaly package used to test and research the discipline
-package test
+package priority
 
 import (
 	"sync"
 	"time"
-
-	"github.com/akramarenkov/cqos/types"
 )
 
 const (
@@ -13,12 +10,12 @@ const (
 	defaultWaitDevastationDelay = 1 * time.Microsecond
 )
 
-type GaugeKind int
+type gaugeKind int
 
 const (
-	GaugeKindCompleted GaugeKind = iota + 1
-	GaugeKindProcessed
-	GaugeKindReceived
+	gaugeKindCompleted gaugeKind = iota + 1
+	gaugeKindProcessed
+	gaugeKindReceived
 )
 
 type actionKind int
@@ -36,14 +33,14 @@ type action struct {
 	quantity uint
 }
 
-type Gauge struct {
+type gauge struct {
 	Data         uint
-	Kind         GaugeKind
+	Kind         gaugeKind
 	Priority     uint
 	RelativeTime time.Duration
 }
 
-type GaugerOpts struct {
+type gaugerOpts struct {
 	DisableGauges    bool
 	HandlersQuantity uint
 	InputCapacity    uint
@@ -51,7 +48,7 @@ type GaugerOpts struct {
 	NoInputBuffer    bool
 }
 
-func (opts GaugerOpts) normalize() GaugerOpts {
+func (opts gaugerOpts) normalize() gaugerOpts {
 	if opts.InputCapacity == 0 {
 		opts.InputCapacity = defaultChannelCapacity
 	}
@@ -63,8 +60,8 @@ func (opts GaugerOpts) normalize() GaugerOpts {
 	return opts
 }
 
-type Gauger struct {
-	opts GaugerOpts
+type gauger struct {
+	opts gaugerOpts
 
 	breaker   chan bool
 	ready     *sync.WaitGroup
@@ -73,17 +70,17 @@ type Gauger struct {
 
 	actions map[uint][]action
 	delays  map[uint]time.Duration
-	gauges  chan []Gauge
+	gauges  chan []gauge
 
 	feedback chan uint
 	inputs   map[uint]chan uint
-	output   chan types.Prioritized[uint]
+	output   chan Prioritized[uint]
 
 	waiter *sync.WaitGroup
 }
 
-func NewGauger(opts GaugerOpts) *Gauger {
-	ggr := &Gauger{
+func newGauger(opts gaugerOpts) *gauger {
+	ggr := &gauger{
 		opts: opts.normalize(),
 
 		ready: &sync.WaitGroup{},
@@ -93,7 +90,7 @@ func NewGauger(opts GaugerOpts) *Gauger {
 
 		feedback: make(chan uint, defaultChannelCapacity),
 		inputs:   make(map[uint]chan uint),
-		output:   make(chan types.Prioritized[uint], defaultChannelCapacity),
+		output:   make(chan Prioritized[uint], defaultChannelCapacity),
 
 		waiter: &sync.WaitGroup{},
 	}
@@ -101,7 +98,7 @@ func NewGauger(opts GaugerOpts) *Gauger {
 	return ggr
 }
 
-func (ggr *Gauger) Finalize() {
+func (ggr *gauger) Finalize() {
 	close(ggr.feedback)
 
 	for _, channel := range ggr.inputs {
@@ -111,7 +108,7 @@ func (ggr *Gauger) Finalize() {
 	close(ggr.output)
 }
 
-func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
+func (ggr *gauger) AddWrite(priority uint, quantity uint) {
 	if _, exists := ggr.inputs[priority]; !exists {
 		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
@@ -124,7 +121,7 @@ func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
+func (ggr *gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
 	if _, exists := ggr.inputs[priority]; !exists {
 		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
@@ -138,7 +135,7 @@ func (ggr *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Du
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *Gauger) AddWaitDevastation(priority uint) {
+func (ggr *gauger) AddWaitDevastation(priority uint) {
 	action := action{
 		kind: actionKindWaitDevastation,
 	}
@@ -146,7 +143,7 @@ func (ggr *Gauger) AddWaitDevastation(priority uint) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *Gauger) AddDelay(priority uint, delay time.Duration) {
+func (ggr *gauger) AddDelay(priority uint, delay time.Duration) {
 	action := action{
 		kind:  actionKindDelay,
 		delay: delay,
@@ -155,7 +152,7 @@ func (ggr *Gauger) AddDelay(priority uint, delay time.Duration) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *Gauger) calcExpectedGuagesQuantity() uint {
+func (ggr *gauger) calcExpectedGuagesQuantity() uint {
 	quantity := uint(0)
 
 	for _, actions := range ggr.actions {
@@ -172,11 +169,11 @@ func (ggr *Gauger) calcExpectedGuagesQuantity() uint {
 	return quantity
 }
 
-func (ggr *Gauger) SetProcessDelay(priority uint, delay time.Duration) {
+func (ggr *gauger) SetProcessDelay(priority uint, delay time.Duration) {
 	ggr.delays[priority] = delay
 }
 
-func (ggr *Gauger) GetInputs() map[uint]<-chan uint {
+func (ggr *gauger) GetInputs() map[uint]<-chan uint {
 	out := make(map[uint]<-chan uint, len(ggr.inputs))
 
 	for priority, channel := range ggr.inputs {
@@ -186,15 +183,15 @@ func (ggr *Gauger) GetInputs() map[uint]<-chan uint {
 	return out
 }
 
-func (ggr *Gauger) GetOutput() chan<- types.Prioritized[uint] {
+func (ggr *gauger) GetOutput() chan<- Prioritized[uint] {
 	return ggr.output
 }
 
-func (ggr *Gauger) GetFeedback() <-chan uint {
+func (ggr *gauger) GetFeedback() <-chan uint {
 	return ggr.feedback
 }
 
-func (ggr *Gauger) runWriters() {
+func (ggr *gauger) runWriters() {
 	for priority := range ggr.inputs {
 		ggr.waiter.Add(1)
 
@@ -202,7 +199,7 @@ func (ggr *Gauger) runWriters() {
 	}
 }
 
-func (ggr *Gauger) writer(priority uint) {
+func (ggr *gauger) writer(priority uint) {
 	defer ggr.waiter.Done()
 
 	written := uint(0)
@@ -240,7 +237,7 @@ func (ggr *Gauger) writer(priority uint) {
 	}
 }
 
-func (ggr *Gauger) runHandlers() {
+func (ggr *gauger) runHandlers() {
 	ggr.start = make(chan bool)
 	defer close(ggr.start)
 
@@ -256,7 +253,7 @@ func (ggr *Gauger) runHandlers() {
 	ggr.startedAt = time.Now()
 }
 
-func (ggr *Gauger) handler() {
+func (ggr *gauger) handler() {
 	defer ggr.waiter.Done()
 
 	ggr.ready.Done()
@@ -277,12 +274,12 @@ func (ggr *Gauger) handler() {
 				continue
 			}
 
-			batch := make([]Gauge, 0, batchSize)
+			batch := make([]gauge, 0, batchSize)
 
-			received := Gauge{
+			received := gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         GaugeKindReceived,
+				Kind:         gaugeKindReceived,
 				Data:         prioritized.Item,
 			}
 
@@ -290,10 +287,10 @@ func (ggr *Gauger) handler() {
 
 			time.Sleep(ggr.delays[prioritized.Priority])
 
-			processed := Gauge{
+			processed := gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         GaugeKindProcessed,
+				Kind:         gaugeKindProcessed,
 				Data:         prioritized.Item,
 			}
 
@@ -303,10 +300,10 @@ func (ggr *Gauger) handler() {
 				ggr.feedback <- prioritized.Priority
 			}
 
-			completed := Gauge{
+			completed := gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         GaugeKindCompleted,
+				Kind:         gaugeKindCompleted,
 				Data:         prioritized.Item,
 			}
 
@@ -317,7 +314,7 @@ func (ggr *Gauger) handler() {
 	}
 }
 
-func (ggr *Gauger) Play() []Gauge {
+func (ggr *gauger) Play() []gauge {
 	expectedGaugesQuantity := ggr.calcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
@@ -331,10 +328,10 @@ func (ggr *Gauger) Play() []Gauge {
 	}
 
 	ggr.breaker = make(chan bool)
-	ggr.gauges = make(chan []Gauge, expectedGaugesQuantity)
+	ggr.gauges = make(chan []gauge, expectedGaugesQuantity)
 
 	received := uint(0)
-	gauges := make([]Gauge, 0, gaugesCapacity)
+	gauges := make([]gauge, 0, gaugesCapacity)
 
 	ggr.runWriters()
 	ggr.runHandlers()

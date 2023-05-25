@@ -1,23 +1,16 @@
-package test
+package priority
 
 import (
-	"errors"
 	"sync"
-
-	"github.com/akramarenkov/cqos/types"
 )
 
-var (
-	ErrEmptyOutput = errors.New("output channel was not specified")
-)
-
-type UnmanagedOpts[Type any] struct {
+type unmanagedOpts[Type any] struct {
 	Inputs map[uint]<-chan Type
-	Output chan<- types.Prioritized[Type]
+	Output chan<- Prioritized[Type]
 }
 
-type Unmanaged[Type any] struct {
-	opts UnmanagedOpts[Type]
+type unmanaged[Type any] struct {
+	opts unmanagedOpts[Type]
 
 	breaker   chan bool
 	completer chan bool
@@ -25,12 +18,12 @@ type Unmanaged[Type any] struct {
 	stopped   bool
 }
 
-func NewUnmanaged[Type any](opts UnmanagedOpts[Type]) (*Unmanaged[Type], error) {
+func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) {
 	if opts.Output == nil {
 		return nil, ErrEmptyOutput
 	}
 
-	nmn := &Unmanaged[Type]{
+	nmn := &unmanaged[Type]{
 		opts: opts,
 
 		breaker:   make(chan bool),
@@ -43,7 +36,7 @@ func NewUnmanaged[Type any](opts UnmanagedOpts[Type]) (*Unmanaged[Type], error) 
 	return nmn, nil
 }
 
-func (nmn *Unmanaged[Type]) Stop() {
+func (nmn *unmanaged[Type]) Stop() {
 	nmn.stopMutex.Lock()
 	defer nmn.stopMutex.Unlock()
 
@@ -56,12 +49,12 @@ func (nmn *Unmanaged[Type]) Stop() {
 	nmn.stopped = true
 }
 
-func (nmn *Unmanaged[Type]) stop() {
+func (nmn *unmanaged[Type]) stop() {
 	close(nmn.breaker)
 	<-nmn.completer
 }
 
-func (nmn *Unmanaged[Type]) main() {
+func (nmn *unmanaged[Type]) main() {
 	defer close(nmn.completer)
 
 	waiter := &sync.WaitGroup{}
@@ -74,7 +67,7 @@ func (nmn *Unmanaged[Type]) main() {
 	}
 }
 
-func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
+func (nmn *unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
 	defer waiter.Done()
 
 	for {
@@ -91,8 +84,8 @@ func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
 	}
 }
 
-func (nmn *Unmanaged[Type]) send(item Type, priority uint) {
-	prioritized := types.Prioritized[Type]{
+func (nmn *unmanaged[Type]) send(item Type, priority uint) {
+	prioritized := Prioritized[Type]{
 		Priority: priority,
 		Item:     item,
 	}

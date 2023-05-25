@@ -1,4 +1,4 @@
-package test
+package priority
 
 import (
 	"sort"
@@ -7,13 +7,13 @@ import (
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
 
-type QuantityOverTime struct {
+type quantityOverTime struct {
 	Quantity     uint
 	RelativeTime time.Duration
 }
 
-func FilterByKind(gauges []Gauge, kind GaugeKind) []Gauge {
-	out := make([]Gauge, 0, len(gauges))
+func filterByKind(gauges []gauge, kind gaugeKind) []gauge {
+	out := make([]gauge, 0, len(gauges))
 
 	for _, gauge := range gauges {
 		if gauge.Kind != kind {
@@ -26,21 +26,7 @@ func FilterByKind(gauges []Gauge, kind GaugeKind) []Gauge {
 	return out
 }
 
-func FilterByPriority(gauges []Gauge, priority uint) []Gauge {
-	out := make([]Gauge, 0, len(gauges))
-
-	for _, gauge := range gauges {
-		if gauge.Priority != priority {
-			continue
-		}
-
-		out = append(out, gauge)
-	}
-
-	return out
-}
-
-func SortByData(gauges []Gauge) {
+func sortByData(gauges []gauge) {
 	less := func(i int, j int) bool {
 		return gauges[i].Data < gauges[j].Data
 	}
@@ -48,7 +34,7 @@ func SortByData(gauges []Gauge) {
 	sort.SliceStable(gauges, less)
 }
 
-func SortByRelativeTime(gauges []Gauge) {
+func sortByRelativeTime(gauges []gauge) {
 	less := func(i int, j int) bool {
 		return gauges[i].RelativeTime < gauges[j].RelativeTime
 	}
@@ -56,7 +42,7 @@ func SortByRelativeTime(gauges []Gauge) {
 	sort.SliceStable(gauges, less)
 }
 
-func SortDurations(durations []time.Duration) {
+func sortDurations(durations []time.Duration) {
 	less := func(i int, j int) bool {
 		return durations[i] < durations[j]
 	}
@@ -64,29 +50,29 @@ func SortDurations(durations []time.Duration) {
 	sort.SliceStable(durations, less)
 }
 
-func CalcDataQuantity(
-	gauges []Gauge,
+func calcDataQuantity(
+	gauges []gauge,
 	resolution time.Duration,
-) map[uint][]QuantityOverTime {
+) map[uint][]quantityOverTime {
 	if len(gauges) == 0 {
 		return nil
 	}
 
-	SortByRelativeTime(gauges)
+	sortByRelativeTime(gauges)
 
 	minRelativeTime := time.Duration(0)
 	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
-	quantities := make(map[uint][]QuantityOverTime)
+	quantities := make(map[uint][]quantityOverTime)
 
 	for _, gauge := range gauges {
 		if _, exists := quantities[gauge.Priority]; exists {
 			continue
 		}
 
-		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
+		quantities[gauge.Priority] = make([]quantityOverTime, 0, quantitiesCapacity)
 	}
 
 	gaugesEdge := 0
@@ -104,7 +90,7 @@ func CalcDataQuantity(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     quantity,
 			}
@@ -117,7 +103,7 @@ func CalcDataQuantity(
 				continue
 			}
 
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     0,
 			}
@@ -129,29 +115,29 @@ func CalcDataQuantity(
 	return quantities
 }
 
-func CalcInProcessing(
-	gauges []Gauge,
+func calcInProcessing(
+	gauges []gauge,
 	resolution time.Duration,
-) map[uint][]QuantityOverTime {
+) map[uint][]quantityOverTime {
 	if len(gauges) == 0 {
 		return nil
 	}
 
-	SortByRelativeTime(gauges)
+	sortByRelativeTime(gauges)
 
 	minRelativeTime := time.Duration(0)
 	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
-	quantities := make(map[uint][]QuantityOverTime)
+	quantities := make(map[uint][]quantityOverTime)
 
 	for _, gauge := range gauges {
 		if _, exists := quantities[gauge.Priority]; exists {
 			continue
 		}
 
-		quantities[gauge.Priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
+		quantities[gauge.Priority] = make([]quantityOverTime, 0, quantitiesCapacity)
 	}
 
 	gaugesEdge := 0
@@ -172,9 +158,9 @@ func CalcInProcessing(
 			}
 
 			switch gauge.Kind {
-			case GaugeKindReceived:
+			case gaugeKindReceived:
 				receivedQuantities[gauge.Priority][gauge.Data]++
-			case GaugeKindCompleted:
+			case gaugeKindCompleted:
 				completedQuantities[gauge.Priority][gauge.Data]++
 			}
 		}
@@ -190,7 +176,7 @@ func CalcInProcessing(
 				quantity += amount
 			}
 
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     quantity,
 			}
@@ -203,7 +189,7 @@ func CalcInProcessing(
 				continue
 			}
 
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     0,
 			}
@@ -215,22 +201,22 @@ func CalcInProcessing(
 	return quantities
 }
 
-func CalcWriteToFeedbackLatency(
-	gauges []Gauge,
+func calcWriteToFeedbackLatency(
+	gauges []gauge,
 	interval time.Duration,
-) map[uint][]QuantityOverTime {
+) map[uint][]quantityOverTime {
 	if len(gauges) == 0 {
 		return nil
 	}
 
-	SortByData(gauges)
+	sortByData(gauges)
 
 	latencies := make(map[uint][]time.Duration)
-	pairs := make(map[uint]Gauge)
+	pairs := make(map[uint]gauge)
 
 	for _, gauge := range gauges {
 		switch gauge.Kind {
-		case GaugeKindCompleted:
+		case gaugeKindCompleted:
 			if _, exists := pairs[gauge.Priority]; !exists {
 				pairs[gauge.Priority] = gauge
 				continue
@@ -241,7 +227,7 @@ func CalcWriteToFeedbackLatency(
 			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
 
 			delete(pairs, gauge.Priority)
-		case GaugeKindProcessed:
+		case gaugeKindProcessed:
 			if _, exists := pairs[gauge.Priority]; !exists {
 				pairs[gauge.Priority] = gauge
 				continue
@@ -255,15 +241,15 @@ func CalcWriteToFeedbackLatency(
 		}
 	}
 
-	return ProcessLatencies(latencies, interval)
+	return processLatencies(latencies, interval)
 }
 
-func ProcessLatencies(
+func processLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
-) map[uint][]QuantityOverTime {
+) map[uint][]quantityOverTime {
 	for priority := range latencies {
-		SortDurations(latencies[priority])
+		sortDurations(latencies[priority])
 	}
 
 	minLatency := time.Duration(0)
@@ -283,14 +269,14 @@ func ProcessLatencies(
 
 	quantitiesCapacity := (maxLatency - minLatency) / interval
 
-	quantities := make(map[uint][]QuantityOverTime)
+	quantities := make(map[uint][]quantityOverTime)
 
 	for priority := range latencies {
 		if _, exists := quantities[priority]; exists {
 			continue
 		}
 
-		quantities[priority] = make([]QuantityOverTime, 0, quantitiesCapacity)
+		quantities[priority] = make([]quantityOverTime, 0, quantitiesCapacity)
 	}
 
 	latenciesEdge := make(map[uint]int)
@@ -310,7 +296,7 @@ func ProcessLatencies(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: intervalLatency,
 				Quantity:     quantity,
 			}
@@ -323,7 +309,7 @@ func ProcessLatencies(
 				continue
 			}
 
-			item := QuantityOverTime{
+			item := quantityOverTime{
 				RelativeTime: intervalLatency,
 				Quantity:     0,
 			}
@@ -335,8 +321,8 @@ func ProcessLatencies(
 	return quantities
 }
 
-func ConvertQuantityOverTimeToLineEcharts(
-	quantities map[uint][]QuantityOverTime,
+func convertQuantityOverTimeToLineEcharts(
+	quantities map[uint][]quantityOverTime,
 	relativeTimeUnit time.Duration,
 ) (map[uint][]chartsopts.LineData, []uint) {
 	serieses := make(map[uint][]chartsopts.LineData)
@@ -368,8 +354,8 @@ func ConvertQuantityOverTimeToLineEcharts(
 	return serieses, xaxis
 }
 
-func ConvertQuantityOverTimeToBarEcharts(
-	quantities map[uint][]QuantityOverTime,
+func convertQuantityOverTimeToBarEcharts(
+	quantities map[uint][]quantityOverTime,
 ) (map[uint][]chartsopts.BarData, []uint) {
 	serieses := make(map[uint][]chartsopts.BarData)
 	xaxis := []uint(nil)

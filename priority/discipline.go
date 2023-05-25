@@ -4,9 +4,6 @@ import (
 	"errors"
 	"sync"
 	"time"
-
-	"github.com/akramarenkov/cqos/priority/divider"
-	"github.com/akramarenkov/cqos/types"
 )
 
 var (
@@ -25,10 +22,16 @@ type input[Type any] struct {
 	priority uint
 }
 
-// Options of the created discipline
+// Describes the data distributed by the prioritization discipline
+type Prioritized[Type any] struct {
+	Item     Type
+	Priority uint
+}
+
+// Options of the created main prioritization discipline
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
-	Divider divider.Divider
+	Divider Divider
 	// Handlers must write priority of processed data to feedback channel after it has been processed
 	Feedback <-chan uint
 	// Between how many handlers you need to distribute data
@@ -36,7 +39,7 @@ type Opts[Type any] struct {
 	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
 	Inputs map[uint]<-chan Type
 	// Handlers should read distributed data from this channel
-	Output chan<- types.Prioritized[Type]
+	Output chan<- Prioritized[Type]
 }
 
 // Main prioritization discipline.
@@ -47,7 +50,7 @@ type Opts[Type any] struct {
 //
 // Handlers must write priority of processed data to feedback channel after it has been processed.
 //
-// For equaling use divider.Fair divider, for prioritization use divider.Rate divider or custom divider
+// For equaling use FairDivider, for prioritization use RateDivider or custom divider
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -326,7 +329,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 }
 
 func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
-	prioritized := types.Prioritized[Type]{
+	prioritized := Prioritized[Type]{
 		Priority: priority,
 		Item:     item,
 	}

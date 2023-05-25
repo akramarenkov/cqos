@@ -15,6 +15,5 @@ linters:
     - revive
     - staticcheck
     - typecheck
-    - unparam
     - unused
     - wsl

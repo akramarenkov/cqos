@@ -45,8 +45,6 @@ import (
     "sync"
 
     "github.com/akramarenkov/cqos/priority"
-    "github.com/akramarenkov/cqos/priority/divider"
-    "github.com/akramarenkov/cqos/types"
 )
 
 func main() {
@@ -75,7 +73,7 @@ func main() {
     }()
 
     // Data from input channels passed to handlers by output channel
-    output := make(chan types.Prioritized[string])
+    output := make(chan priority.Prioritized[string])
 
     // Handlers must write priority of processed data to feedback channel after it has been processed
     feedback := make(chan uint)
@@ -85,9 +83,9 @@ func main() {
     measurements := make(chan bool)
     defer close(measurements)
 
-    // For equaling use divider.Fair divider, for prioritization use divider.Rate divider or custom divider
+    // For equaling use FairDivider, for prioritization use RateDivider or custom divider
     disciplineOpts := priority.Opts[string]{
-        Divider:          divider.Rate,
+        Divider:          priority.RateDivider,
         Feedback:         feedback,
         HandlersQuantity: uint(handlersQuantity),
         Inputs:           inputsOpts,

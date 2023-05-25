@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/priority/divider"
-	"github.com/akramarenkov/cqos/priority/test"
-
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -22,12 +19,12 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4100*factor)
@@ -53,7 +50,7 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Rate,
+		Divider:          RateDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -67,20 +64,20 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
-		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -173,12 +170,12 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 430*factor)
@@ -204,7 +201,7 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Rate,
+		Divider:          RateDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -218,20 +215,20 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
-		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -324,12 +321,12 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4000*factor)
@@ -355,7 +352,7 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Fair,
+		Divider:          FairDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -369,20 +366,20 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
-		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -475,12 +472,12 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 450*factor)
@@ -506,7 +503,7 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Fair,
+		Divider:          FairDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -520,20 +517,20 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := test.ConvertQuantityOverTimeToBarEcharts(
-		test.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -626,13 +623,13 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4000*factor)
@@ -657,27 +654,27 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 	gauger.SetProcessDelay(2, 10*time.Millisecond)
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
-	unmanagedOpts := test.UnmanagedOpts[uint]{
+	unmanagedOpts := unmanagedOpts[uint]{
 		Inputs: gauger.GetInputs(),
 		Output: gauger.GetOutput(),
 	}
 
-	unmanaged, err := test.NewUnmanaged(unmanagedOpts)
+	unmanaged, err := newUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
 
 	defer unmanaged.Stop()
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
@@ -750,13 +747,13 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 500*factor)
@@ -781,27 +778,27 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 	gauger.SetProcessDelay(2, 50*time.Millisecond)
 	gauger.SetProcessDelay(3, 10*time.Millisecond)
 
-	unmanagedOpts := test.UnmanagedOpts[uint]{
+	unmanagedOpts := unmanagedOpts[uint]{
 		Inputs: gauger.GetInputs(),
 		Output: gauger.GetOutput(),
 	}
 
-	unmanaged, err := test.NewUnmanaged(unmanagedOpts)
+	unmanaged, err := newUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
 
 	defer unmanaged.Stop()
 
 	gauges := gauger.Play()
 
-	received := test.FilterByKind(gauges, test.GaugeKindReceived)
+	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := test.ConvertQuantityOverTimeToLineEcharts(
-		test.CalcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
@@ -870,12 +867,12 @@ func TestUnmanagedUneven(t *testing.T) {
 func BenchmarkDisciplineFair(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
@@ -883,7 +880,7 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Fair,
+		Divider:          FairDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -901,12 +898,12 @@ func BenchmarkDisciplineFair(b *testing.B) {
 func BenchmarkDisciplineRate(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
@@ -914,7 +911,7 @@ func BenchmarkDisciplineRate(b *testing.B) {
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Rate,
+		Divider:          RateDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -932,13 +929,13 @@ func BenchmarkDisciplineRate(b *testing.B) {
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
@@ -946,7 +943,7 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Fair,
+		Divider:          FairDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -964,13 +961,13 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
@@ -978,7 +975,7 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Rate,
+		Divider:          RateDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -996,11 +993,11 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 func TestOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := test.GaugerOpts{
+	gaugerOpts := gaugerOpts{
 		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	gauger := test.NewGauger(gaugerOpts)
+	gauger := newGauger(gaugerOpts)
 	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 500000)
@@ -1028,7 +1025,7 @@ func TestOverQuantity(t *testing.T) {
 	gauger.AddWrite(3, 500000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          divider.Rate,
+		Divider:          RateDivider,
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
@@ -1042,7 +1039,7 @@ func TestOverQuantity(t *testing.T) {
 
 	gauges := gauger.Play()
 
-	quantities := test.CalcInProcessing(gauges, 100*time.Millisecond)
+	quantities := calcInProcessing(gauges, 100*time.Millisecond)
 
 	for priority := range quantities {
 		for id := range quantities[priority] {
