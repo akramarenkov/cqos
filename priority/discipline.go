@@ -1,6 +1,7 @@
 package priority
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -30,6 +31,8 @@ type Prioritized[Type any] struct {
 
 // Options of the created main prioritization discipline
 type Opts[Type any] struct {
+	// Terminates (cancels) work of the discipline
+	Ctx context.Context
 	// Determines how handlers are distributed among priorities
 	Divider Divider
 	// Handlers must write priority of processed data to feedback channel after it has been processed
@@ -54,10 +57,10 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker   chan bool
-	completer chan bool
-	stopMutex *sync.Mutex
-	stopped   bool
+	breaked      bool
+	breaker      chan bool
+	breakerMutex *sync.Mutex
+	completer    chan bool
 
 	inputs     map[uint]<-chan Type
 	priorities []uint
@@ -91,6 +94,14 @@ func (opts Opts[Type]) isValid() error {
 	return nil
 }
 
+func (opts Opts[Type]) normalize() Opts[Type] {
+	if opts.Ctx == nil {
+		opts.Ctx = context.Background()
+	}
+
+	return opts
+}
+
 // Creates and runs main prioritization discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
@@ -98,11 +109,11 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	}
 
 	dsc := &Discipline[Type]{
-		opts: opts,
+		opts: opts.normalize(),
 
-		breaker:   make(chan bool),
-		completer: make(chan bool),
-		stopMutex: &sync.Mutex{},
+		breaker:      make(chan bool),
+		breakerMutex: &sync.Mutex{},
+		completer:    make(chan bool),
 
 		inputs:    make(map[uint]<-chan Type),
 		inputAdds: make(chan input[Type]),
@@ -123,26 +134,25 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
-// Terminates work of the discipline
+// Terminates work of the discipline.
+//
+// Use for wait completion at terminates via context
 func (dsc *Discipline[Type]) Stop() {
-	dsc.stopMutex.Lock()
-	defer dsc.stopMutex.Unlock()
-
-	if dsc.stopped {
-		return
-	}
-
 	dsc.stop()
-
-	dsc.stopped = true
+	<-dsc.completer
 }
 
 func (dsc *Discipline[Type]) stop() {
+	dsc.breakerMutex.Lock()
+	defer dsc.breakerMutex.Unlock()
+
+	if dsc.breaked {
+		return
+	}
+
 	close(dsc.breaker)
-	<-dsc.completer
-	close(dsc.inputAdds)
-	close(dsc.inputRmvs)
-	dsc.interrupter.Stop()
+
+	dsc.breaked = true
 }
 
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
@@ -205,10 +215,15 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 
 func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.completer)
+	defer close(dsc.inputAdds)
+	defer close(dsc.inputRmvs)
+	defer dsc.interrupter.Stop()
 
 	for {
 		select {
 		case <-dsc.breaker:
+			return
+		case <-dsc.opts.Ctx.Done():
 			return
 		case add := <-dsc.inputAdds:
 			dsc.addInput(add.channel, add.priority)
@@ -281,6 +296,8 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 		select {
 		case <-dsc.breaker:
 			return processed
+		case <-dsc.opts.Ctx.Done():
+			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
 				return processed
@@ -307,6 +324,8 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 
 		select {
 		case <-dsc.breaker:
+			return processed
+		case <-dsc.opts.Ctx.Done():
 			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
@@ -338,6 +357,8 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 		select {
 		case <-dsc.breaker:
 			return 0
+		case <-dsc.opts.Ctx.Done():
+			return 0
 		case dsc.opts.Output <- prioritized:
 			dsc.decreaseTactic(priority)
 			dsc.increaseActual(priority)
@@ -366,6 +387,8 @@ func (dsc *Discipline[Type]) calcTactic() {
 		if !dsc.pickUpTactic() {
 			select {
 			case <-dsc.breaker:
+				return
+			case <-dsc.opts.Ctx.Done():
 				return
 			case priority := <-dsc.opts.Feedback:
 				dsc.decreaseActual(priority)
