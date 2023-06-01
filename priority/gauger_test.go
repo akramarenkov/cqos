@@ -152,7 +152,7 @@ func (ggr *gauger) AddDelay(priority uint, delay time.Duration) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *gauger) calcExpectedGuagesQuantity() uint {
+func (ggr *gauger) CalcExpectedGuagesQuantity() uint {
 	quantity := uint(0)
 
 	for _, actions := range ggr.actions {
@@ -315,7 +315,7 @@ func (ggr *gauger) handler() {
 }
 
 func (ggr *gauger) Play() []gauge {
-	expectedGaugesQuantity := ggr.calcExpectedGuagesQuantity()
+	expectedGaugesQuantity := ggr.CalcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
 		return nil

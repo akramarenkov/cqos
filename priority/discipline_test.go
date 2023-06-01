@@ -1046,4 +1046,174 @@ func TestOverQuantity(t *testing.T) {
 			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
 		}
 	}
+
+	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
+func TestFatalDividingError(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 50000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 50000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 50000)
+
+	gauger.AddWrite(2, 50000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 50000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 50000)
+
+	gauger.AddWrite(3, 50000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 50000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 50000)
+
+	gauger.AddWrite(4, 50000)
+	gauger.AddWaitDevastation(4)
+	gauger.AddDelay(4, 1*time.Second)
+	gauger.AddWrite(4, 50000)
+	gauger.AddWaitDevastation(4)
+	gauger.AddDelay(4, 1*time.Second)
+	gauger.AddWrite(4, 50000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
+func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
+	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+		t.SkipNow()
+	}
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 4000)
+
+	gauger.AddWrite(2, 500)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 500)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 4*time.Second)
+	gauger.AddWrite(2, 1000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 2*time.Second)
+	gauger.AddWrite(2, 2000)
+
+	gauger.AddWrite(3, 500)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 5*time.Second)
+	gauger.AddWrite(3, 4000)
+
+	gauger.AddWrite(4, 500)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(4, 5*time.Second)
+	gauger.AddWrite(4, 4000)
+
+	gauger.SetProcessDelay(1, 10*time.Millisecond)
+	gauger.SetProcessDelay(2, 10*time.Millisecond)
+	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	gauger.SetProcessDelay(4, 10*time.Millisecond)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	received := filterByKind(gauges, gaugeKindReceived)
+
+	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	dqotChart := charts.NewLine()
+
+	subtitle := fmt.Sprintf(
+		"Fair divider, even time processing, "+
+			"significant dividing error, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
+		handlersQuantity,
+		!gaugerOpts.NoInputBuffer,
+		time.Now().Format(time.RFC3339),
+	)
+
+	dqotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Data retrieval graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	dqotChart.SetXAxis(dqotX).
+		AddSeries("4", dqot[4]).
+		AddSeries("3", dqot[3]).
+		AddSeries("2", dqot[2]).
+		AddSeries("1", dqot[1])
+
+	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(!gaugerOpts.NoInputBuffer) + "_dividing_error"
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
+	require.NoError(t, err)
+
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
+}
+
+func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
+	testDisciplineFairEvenProcessingTimeDividingError(t, 6)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 7)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 8)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 9)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 10)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 11)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 12)
 }
