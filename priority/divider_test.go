@@ -183,6 +183,20 @@ func TestFairDividerDiscontinuous(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 4, 1: 4}, distribution)
 }
 
+func TestFairDividerNotMonotonic(t *testing.T) {
+	distribution := FairDivider([]uint{6, 5, 4, 3, 2, 1}, 6, nil)
+	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
+
+	distribution = FairDivider([]uint{5, 4, 3, 2, 1}, 6, nil)
+	require.Equal(t, map[uint]uint{5: 2, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
+
+	distribution = FairDivider([]uint{4, 3, 2, 1}, 6, nil)
+	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 0}, distribution)
+
+	distribution = FairDivider([]uint{4, 3, 2, 1}, 12, nil)
+	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 3}, distribution)
+}
+
 func TestRateDivider(t *testing.T) {
 	priorities := []uint{3, 2, 1}
 
