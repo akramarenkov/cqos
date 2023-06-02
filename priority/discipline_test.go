@@ -990,7 +990,7 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	_ = gauger.Play()
 }
 
-func TestOverQuantity(t *testing.T) {
+func TestRateOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
 	gaugerOpts := gaugerOpts{
@@ -1050,7 +1050,127 @@ func TestOverQuantity(t *testing.T) {
 	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
-func TestFatalDividingError(t *testing.T) {
+func TestFairOverQuantity(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: 2 * handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 500000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 500000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 500000)
+
+	gauger.AddWrite(2, 500000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 500000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 500000)
+
+	gauger.AddWrite(3, 500000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 500000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 500000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	quantities := calcInProcessing(gauges, 100*time.Millisecond)
+
+	for priority := range quantities {
+		for id := range quantities[priority] {
+			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
+		}
+	}
+
+	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
+func TestRateFatalDividingError(t *testing.T) {
+	handlersQuantity := uint(5)
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 50000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 50000)
+	gauger.AddWaitDevastation(1)
+	gauger.AddDelay(1, 1*time.Second)
+	gauger.AddWrite(1, 50000)
+
+	gauger.AddWrite(2, 50000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 50000)
+	gauger.AddWaitDevastation(2)
+	gauger.AddDelay(2, 1*time.Second)
+	gauger.AddWrite(2, 50000)
+
+	gauger.AddWrite(3, 50000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 50000)
+	gauger.AddWaitDevastation(3)
+	gauger.AddDelay(3, 1*time.Second)
+	gauger.AddWrite(3, 50000)
+
+	gauger.AddWrite(4, 50000)
+	gauger.AddWaitDevastation(4)
+	gauger.AddDelay(4, 1*time.Second)
+	gauger.AddWrite(4, 50000)
+	gauger.AddWaitDevastation(4)
+	gauger.AddDelay(4, 1*time.Second)
+	gauger.AddWrite(4, 50000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          RateDivider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	gauges := gauger.Play()
+
+	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
+func TestFairFatalDividingError(t *testing.T) {
 	handlersQuantity := uint(6)
 
 	gaugerOpts := gaugerOpts{
