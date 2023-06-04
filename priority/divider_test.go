@@ -440,8 +440,8 @@ func TestRateDividerError(t *testing.T) {
 }
 
 func TestRateDividerLifeHack(t *testing.T) {
-	priorities := []uint{75, 20, 5}
+	priorities := []uint{70, 20, 10}
 
 	distribution := RateDivider(priorities, 100, nil)
-	require.Equal(t, map[uint]uint{75: 75, 20: 20, 5: 5}, distribution)
+	require.Equal(t, map[uint]uint{70: 70, 20: 20, 10: 10}, distribution)
 }

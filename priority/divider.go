@@ -68,11 +68,7 @@ func RateDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 		distribution = make(map[uint]uint, len(priorities))
 	}
 
-	sum := uint(0)
-
-	for _, priority := range priorities {
-		sum += priority
-	}
+	sum := sumPriorities(priorities)
 
 	step := float64(dividend) / float64(sum)
 
