@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	oneHundredPercent               = 100
-	referenceHandlersQuantityFactor = 1000
+	oneHundredPercent = 100
+	referenceFactor   = 1000
 )
 
 func sortPriorities(priorities []uint) {
@@ -41,16 +41,6 @@ func sumPriorities(priorities []uint) uint {
 	}
 
 	return sum
-}
-
-func isDistributionFilled(distribution map[uint]uint) bool {
-	for _, quantity := range distribution {
-		if quantity == 0 {
-			return false
-		}
-	}
-
-	return true
 }
 
 // inefficient implementation, but usually there are not so many priorities for
@@ -131,16 +121,21 @@ func isCombinationExists(combinations [][]uint, verifiable []uint) bool {
 	return false
 }
 
-// Checks if the combination of priorities, handlers quantity and divider is
-// such that not causes a fatal error (for none of the priorities, the quantity is
-// not equal to zero) in distributions handlers quantity by priorities
-func IsNonFatalConfig(
-	priorities []uint,
+func isDistributionFilled(distribution map[uint]uint) bool {
+	for _, quantity := range distribution {
+		if quantity == 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isNonFatalConfig(
+	combinations [][]uint,
 	divider Divider,
 	handlersQuantity uint,
 ) bool {
-	combinations := genPriorityCombinations(priorities)
-
 	for _, combination := range combinations {
 		distribution := divider(combination, handlersQuantity, nil)
 
@@ -152,7 +147,59 @@ func IsNonFatalConfig(
 	return true
 }
 
-func isDistributionHasSmallError(
+// Due to the imperfection of the division function and working with integers (since
+// the number of handlers is an integer), large errors can occur when distributing
+// handlers by priority, especially for small numbers of handlers. This function allows
+// you to determine if a situation occurs when one or more priorities are not processed
+// (for none of the priorities, the quantity is not equal to zero) with the specified
+// combination of priorities, division function and number of handlers
+func IsNonFatalConfig(
+	priorities []uint,
+	divider Divider,
+	handlersQuantity uint,
+) bool {
+	combinations := genPriorityCombinations(priorities)
+
+	return isNonFatalConfig(combinations, divider, handlersQuantity)
+}
+
+// Picks up the minimum number of handlers for which the division error does not
+// cause stop processing of one or more priorities
+func PickUpMinNonFatalHandlersQuantity(
+	priorities []uint,
+	divider Divider,
+	maxHandlersQuantity uint,
+) uint {
+	combinations := genPriorityCombinations(priorities)
+
+	for quantity := uint(1); quantity <= maxHandlersQuantity; quantity++ {
+		if isNonFatalConfig(combinations, divider, quantity) {
+			return quantity
+		}
+	}
+
+	return 0
+}
+
+// Picks up the maximum number of handlers for which the division error does not
+// cause stop processing of one or more priorities
+func PickUpMaxNonFatalHandlersQuantity(
+	priorities []uint,
+	divider Divider,
+	maxHandlersQuantity uint,
+) uint {
+	combinations := genPriorityCombinations(priorities)
+
+	for quantity := maxHandlersQuantity; quantity > 0; quantity-- {
+		if isNonFatalConfig(combinations, divider, quantity) {
+			return quantity
+		}
+	}
+
+	return 0
+}
+
+func isDistributionSuitable(
 	distribution map[uint]uint,
 	reference map[uint]uint,
 	handlersQuantity uint,
@@ -164,9 +211,10 @@ func isDistributionHasSmallError(
 			return false
 		}
 
-		handlersQuantityRatio := float64(referenceHandlersQuantity) / float64(handlersQuantity)
+		ratio := float64(referenceHandlersQuantity) / float64(handlersQuantity)
 
-		diff := 1.0 - handlersQuantityRatio*float64(distribution[priority])/float64(referenceQuantity)
+		diff := 1.0 - ratio*float64(distribution[priority])/float64(referenceQuantity)
+
 		diff = oneHundredPercent * math.Abs(diff)
 
 		if diff > maxDiff {
@@ -177,27 +225,25 @@ func isDistributionHasSmallError(
 	return true
 }
 
-// Checks if the combination of priorities, handlers quantity and divider is
-// such that causes a small error (in percent) in distributions handlers quantity by priorities.
-func IsSmallErrorConfig(
+func isSuitableConfig(
+	combinations [][]uint,
 	priorities []uint,
 	divider Divider,
 	handlersQuantity uint,
 	maxDiff float64,
 ) bool {
-	referenceHandlersQuantity := sumPriorities(priorities) * referenceHandlersQuantityFactor
-
-	combinations := genPriorityCombinations(priorities)
+	referenceHandlersQuantity := sumPriorities(priorities) * referenceFactor
 
 	for _, combination := range combinations {
 		distribution := divider(combination, handlersQuantity, nil)
-		reference := divider(combination, referenceHandlersQuantity, nil)
 
 		if !isDistributionFilled(distribution) {
 			return false
 		}
 
-		small := isDistributionHasSmallError(
+		reference := divider(combination, referenceHandlersQuantity, nil)
+
+		suitable := isDistributionSuitable(
 			distribution,
 			reference,
 			handlersQuantity,
@@ -205,10 +251,65 @@ func IsSmallErrorConfig(
 			maxDiff,
 		)
 
-		if !small {
+		if !suitable {
 			return false
 		}
 	}
 
 	return true
+}
+
+// Due to the imperfection of the division function and working with integers (since
+// the number of handlers is an integer), large errors can occur when distributing
+// handlers by priority, especially for small numbers of handlers. This function allows
+// you to determine that with the specified combination of priorities, the division
+// function and the number of handlers, the distribution error does not exceed
+// the required value
+func IsSuitableConfig(
+	priorities []uint,
+	divider Divider,
+	handlersQuantity uint,
+	maxDiff float64,
+) bool {
+	combinations := genPriorityCombinations(priorities)
+
+	return isSuitableConfig(combinations, priorities, divider, handlersQuantity, maxDiff)
+}
+
+// Picks up the minimum number of handlers for which the division error does not
+// exceed the specified value
+func PickUpMinSuitableHandlersQuantity(
+	priorities []uint,
+	divider Divider,
+	maxHandlersQuantity uint,
+	maxDiff float64,
+) uint {
+	combinations := genPriorityCombinations(priorities)
+
+	for quantity := uint(1); quantity <= maxHandlersQuantity; quantity++ {
+		if isSuitableConfig(combinations, priorities, divider, quantity, maxDiff) {
+			return quantity
+		}
+	}
+
+	return 0
+}
+
+// Picks up the maximum number of handlers for which the division error does not
+// exceed the specified value
+func PickUpMaxSuitableHandlersQuantity(
+	priorities []uint,
+	divider Divider,
+	maxHandlersQuantity uint,
+	maxDiff float64,
+) uint {
+	combinations := genPriorityCombinations(priorities)
+
+	for quantity := maxHandlersQuantity; quantity > 0; quantity-- {
+		if isSuitableConfig(combinations, priorities, divider, quantity, maxDiff) {
+			return quantity
+		}
+	}
+
+	return 0
 }
