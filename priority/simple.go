@@ -5,22 +5,38 @@ import (
 	"sync"
 )
 
-type Pickup func(priorities []uint, divider Divider, quantity uint) uint
-type Handle[Type any] func(item Type) uint
+const (
+	defaultCapacityFactor = 0.1
+)
 
+// Callback function called in handlers when an item is received
+// Function should be interrupted when context is canceled
+type Handle[Type any] func(ctx context.Context, item Type)
+
+// Options of the created simplified prioritization discipline
 type SimpleOpts[Type any] struct {
 	// Terminates (cancels) work of the discipline
 	Ctx context.Context
 	// Determines how handlers are distributed among priorities
 	Divider Divider
+	// Callback function called in handlers when an item is received
+	Handle Handle[Type]
 	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
 	Inputs map[uint]<-chan Type
-	Pickup Pickup
-	Handle Handle[Type]
 }
 
+func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
+	if opts.Ctx == nil {
+		opts.Ctx = context.Background()
+	}
+
+	return opts
+}
+
+// Simplified version that runs handlers on its own and hides the output and
+// feedback channels
 type Simple[Type any] struct {
 	opts SimpleOpts[Type]
 
@@ -37,9 +53,14 @@ type Simple[Type any] struct {
 	wg *sync.WaitGroup
 }
 
+// Creates and runs simplified prioritization discipline
 func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
-	output := make(chan Prioritized[Type])
-	feedback := make(chan uint)
+	opts = opts.normalize()
+
+	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+
+	output := make(chan Prioritized[Type], capacity)
+	feedback := make(chan uint, capacity)
 
 	disciplineOpts := Opts[Type]{
 		Divider:          opts.Divider,
@@ -69,11 +90,14 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		wg: &sync.WaitGroup{},
 	}
 
-	smpl.runHandlers()
+	go smpl.handlers()
 
 	return smpl, nil
 }
 
+// Terminates work of the discipline.
+//
+// Use for wait completion at terminates via context
 func (smpl *Simple[Type]) Stop() {
 	smpl.stop()
 	<-smpl.completer
@@ -92,18 +116,31 @@ func (smpl *Simple[Type]) stop() {
 	smpl.breaked = true
 }
 
-func (smpl *Simple[Type]) runHandlers() {
+func (smpl *Simple[Type]) handlers() {
 	defer close(smpl.completer)
+	defer close(smpl.output)
+	defer close(smpl.feedback)
+	defer smpl.discipline.Stop()
 	defer smpl.wg.Wait()
+
+	ctx, cancel := context.WithCancel(smpl.opts.Ctx)
+	defer cancel()
 
 	for id := 0; id < int(smpl.opts.HandlersQuantity); id++ {
 		smpl.wg.Add(1)
 
-		go smpl.handler()
+		go smpl.handler(ctx)
+	}
+
+	select {
+	case <-smpl.breaker:
+		return
+	case <-smpl.opts.Ctx.Done():
+		return
 	}
 }
 
-func (smpl *Simple[Type]) handler() {
+func (smpl *Simple[Type]) handler(ctx context.Context) {
 	defer smpl.wg.Done()
 
 	for {
@@ -113,7 +150,8 @@ func (smpl *Simple[Type]) handler() {
 		case <-smpl.opts.Ctx.Done():
 			return
 		case prioritized := <-smpl.output:
-			smpl.opts.Handle(prioritized.Item)
+			smpl.opts.Handle(ctx, prioritized.Item)
+			smpl.feedback <- prioritized.Priority
 		}
 	}
 }
