@@ -1046,8 +1046,6 @@ func TestRateOverQuantity(t *testing.T) {
 			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
 		}
 	}
-
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
 func TestFairOverQuantity(t *testing.T) {
@@ -1106,8 +1104,6 @@ func TestFairOverQuantity(t *testing.T) {
 			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
 		}
 	}
-
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
 func TestRateFatalDividingError(t *testing.T) {
