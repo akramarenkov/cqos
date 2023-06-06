@@ -36,8 +36,8 @@ func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
 	return opts
 }
 
-// Simplified version that runs handlers on its own and hides the output and
-// feedback channels
+// Simplified version of the discipline that runs handlers on its own and
+// hides the output and feedback channels
 type Simple[Type any] struct {
 	opts SimpleOpts[Type]
 
