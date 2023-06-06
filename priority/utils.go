@@ -1,6 +1,7 @@
 package priority
 
 import (
+	"math"
 	"sort"
 )
 
@@ -35,4 +36,14 @@ func sumPriorities(priorities []uint) uint {
 	}
 
 	return sum
+}
+
+func calcCapacity(base int, factor float64, reserve int) int {
+	capacity := int(math.Round(factor * float64(base)))
+
+	if capacity == 0 {
+		capacity = reserve
+	}
+
+	return capacity
 }
