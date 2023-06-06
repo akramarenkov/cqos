@@ -114,9 +114,10 @@ func isNonFatalConfig(
 // Due to the imperfection of the division function and working with integers (since
 // the quantity of handlers is an integer), large errors can occur when distributing
 // handlers by priority, especially for small quantity of handlers. This function allows
-// you to determine if a situation occurs when one or more priorities are not processed
-// (for none of the priorities, the quantity is not equal to zero) with the specified
-// combination of priorities, division function and quantity of handlers
+// you to determine that with the specified combination of priorities, the division
+// function and the quantity of handlers, the distribution error does not cause stop
+// processing of one or more priorities (for none of the priorities, the quantity is
+// not equal to zero)
 func IsNonFatalConfig(
 	priorities []uint,
 	divider Divider,
@@ -168,7 +169,7 @@ func isDistributionSuitable(
 	reference map[uint]uint,
 	totalQuantity uint,
 	referenceTotalQuantity uint,
-	maxDiff float64,
+	limit float64,
 ) bool {
 	ratio := float64(referenceTotalQuantity) / float64(totalQuantity)
 
@@ -181,7 +182,7 @@ func isDistributionSuitable(
 
 		diff = oneHundredPercent * math.Abs(diff)
 
-		if diff > maxDiff {
+		if diff > limit {
 			return false
 		}
 	}
@@ -194,7 +195,7 @@ func isSuitableConfig(
 	priorities []uint,
 	divider Divider,
 	quantity uint,
-	maxDiff float64,
+	limit float64,
 ) bool {
 	referenceTotalQuantity := referenceFactor * sumPriorities(priorities)
 
@@ -212,7 +213,7 @@ func isSuitableConfig(
 			reference,
 			quantity,
 			referenceTotalQuantity,
-			maxDiff,
+			limit,
 		)
 
 		if !suitable {
@@ -228,30 +229,30 @@ func isSuitableConfig(
 // handlers by priority, especially for small quantity of handlers. This function allows
 // you to determine that with the specified combination of priorities, the division
 // function and the quantity of handlers, the distribution error does not exceed
-// the required value
+// the limit
 func IsSuitableConfig(
 	priorities []uint,
 	divider Divider,
 	quantity uint,
-	maxDiff float64,
+	limit float64,
 ) bool {
 	combinations := genPriorityCombinations(priorities)
 
-	return isSuitableConfig(combinations, priorities, divider, quantity, maxDiff)
+	return isSuitableConfig(combinations, priorities, divider, quantity, limit)
 }
 
 // Picks up the minimum quantity of handlers for which the division error does not
-// exceed the specified value
+// exceed the limit
 func PickUpMinSuitableQuantity(
 	priorities []uint,
 	divider Divider,
 	maxQuantity uint,
-	maxDiff float64,
+	limit float64,
 ) uint {
 	combinations := genPriorityCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
-		if isSuitableConfig(combinations, priorities, divider, quantity, maxDiff) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}
 	}
@@ -260,17 +261,17 @@ func PickUpMinSuitableQuantity(
 }
 
 // Picks up the maximum quantity of handlers for which the division error does not
-// exceed the specified value
+// exceed the limit
 func PickUpMaxSuitableQuantity(
 	priorities []uint,
 	divider Divider,
 	maxQuantity uint,
-	maxDiff float64,
+	limit float64,
 ) uint {
 	combinations := genPriorityCombinations(priorities)
 
 	for quantity := maxQuantity; quantity > 0; quantity-- {
-		if isSuitableConfig(combinations, priorities, divider, quantity, maxDiff) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}
 	}

@@ -9,7 +9,8 @@ const (
 	defaultCapacityFactor = 0.1
 )
 
-// Callback function called in handlers when an item is received
+// Callback function called in handlers of simplified prioritization discipline when an item is received.
+//
 // Function should be interrupted when context is canceled
 type Handle[Type any] func(ctx context.Context, item Type)
 
