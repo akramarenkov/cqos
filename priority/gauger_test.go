@@ -1,6 +1,7 @@
 package priority
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -208,13 +209,21 @@ func (ggr *gauger) writer(priority uint) {
 		switch action.kind {
 		case actionKindWrite:
 			for id := uint(0); id < action.quantity; id++ {
-				ggr.inputs[priority] <- written
+				select {
+				case <-ggr.breaker:
+					return
+				case ggr.inputs[priority] <- written:
+				}
 
 				written++
 			}
 		case actionKindWriteWithDelay:
 			for id := uint(0); id < action.quantity; id++ {
-				ggr.inputs[priority] <- written
+				select {
+				case <-ggr.breaker:
+					return
+				case ggr.inputs[priority] <- written:
+				}
 
 				time.Sleep(action.delay)
 
@@ -225,9 +234,14 @@ func (ggr *gauger) writer(priority uint) {
 				ticker := time.NewTicker(defaultWaitDevastationDelay)
 				defer ticker.Stop()
 
-				for range ticker.C {
-					if len(ggr.inputs[priority]) == 0 {
-						break
+				for {
+					select {
+					case <-ggr.breaker:
+						return
+					case <-ticker.C:
+						if len(ggr.inputs[priority]) == 0 {
+							return
+						}
 					}
 				}
 			}()
@@ -314,7 +328,7 @@ func (ggr *gauger) handler() {
 	}
 }
 
-func (ggr *gauger) Play() []gauge {
+func (ggr *gauger) Play(ctx context.Context) []gauge {
 	expectedGaugesQuantity := ggr.CalcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
@@ -340,17 +354,20 @@ func (ggr *gauger) Play() []gauge {
 	defer ggr.waiter.Wait()
 	defer close(ggr.breaker)
 
-	for batch := range ggr.gauges {
-		if !ggr.opts.DisableGauges {
-			gauges = append(gauges, batch...)
-		}
-
-		received++
-
-		if received == expectedGaugesQuantity {
+	for {
+		select {
+		case <-ctx.Done():
 			return gauges
+		case batch := <-ggr.gauges:
+			if !ggr.opts.DisableGauges {
+				gauges = append(gauges, batch...)
+			}
+
+			received++
+
+			if received == expectedGaugesQuantity {
+				return gauges
+			}
 		}
 	}
-
-	return nil
 }

@@ -19,7 +19,7 @@ const (
 )
 
 type input[Type any] struct {
-	channel  chan Type
+	channel  <-chan Type
 	priority uint
 }
 
@@ -182,7 +182,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 }
 
 // Adds or updates (if it added previously) input channel for specified priority
-func (dsc *Discipline[Type]) AddInput(channel chan Type, priority uint) {
+func (dsc *Discipline[Type]) AddInput(channel <-chan Type, priority uint) {
 	in := input[Type]{
 		channel:  channel,
 		priority: priority,
@@ -191,7 +191,7 @@ func (dsc *Discipline[Type]) AddInput(channel chan Type, priority uint) {
 	dsc.inputAdds <- in
 }
 
-func (dsc *Discipline[Type]) addInput(channel chan Type, priority uint) {
+func (dsc *Discipline[Type]) addInput(channel <-chan Type, priority uint) {
 	dsc.addPriority(channel, priority)
 
 	sortPriorities(dsc.priorities)
