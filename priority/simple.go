@@ -2,11 +2,16 @@ package priority
 
 import (
 	"context"
+	"errors"
 	"sync"
 )
 
 const (
 	defaultCapacityFactor = 0.1
+)
+
+var (
+	ErrEmptyHandle = errors.New("handle function was not specified")
 )
 
 // Callback function called in handlers of simplified prioritization discipline when an item is received.
@@ -26,6 +31,14 @@ type SimpleOpts[Type any] struct {
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
 	Inputs map[uint]<-chan Type
+}
+
+func (opts SimpleOpts[Type]) isValid() error {
+	if opts.Handle == nil {
+		return ErrEmptyHandle
+	}
+
+	return nil
 }
 
 func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
@@ -56,6 +69,10 @@ type Simple[Type any] struct {
 
 // Creates and runs simplified prioritization discipline
 func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
+	if err := opts.isValid(); err != nil {
+		return nil, err
+	}
+
 	opts = opts.normalize()
 
 	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
@@ -148,7 +165,7 @@ func (smpl *Simple[Type]) handler(ctx context.Context) {
 		select {
 		case <-smpl.breaker:
 			return
-		case <-smpl.opts.Ctx.Done():
+		case <-ctx.Done():
 			return
 		case prioritized := <-smpl.output:
 			smpl.opts.Handle(ctx, prioritized.Item)
