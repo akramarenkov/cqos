@@ -170,6 +170,20 @@ func BenchmarkGenPriorityCombinations(b *testing.B) {
 	_ = genPriorityCombinations(prioritites)
 }
 
+func TestIsSortedPrioritiesEqual(t *testing.T) {
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2, 1}, []uint{3, 2}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2}, []uint{3, 2, 1}))
+	require.Equal(t, true, isSortedPrioritiesEqual([]uint{3, 2, 1}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 1, 2}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{2, 3, 1}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{1, 3, 2}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{2, 1, 3}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{1, 2, 3}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{4, 2, 1}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 4, 1}, []uint{3, 2, 1}))
+	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2, 4}, []uint{3, 2, 1}))
+}
+
 func TestIsDistributionFilled(t *testing.T) {
 	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 0, 2: 0, 1: 0}))
 	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 1, 2: 0, 1: 0}))
@@ -245,7 +259,10 @@ func TestIsNonFatalConfig(t *testing.T) {
 }
 
 func TestPickUpMinNonFatalQuantity(t *testing.T) {
-	quantity := PickUpMinNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 6)
+	quantity := PickUpMinNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 2)
+	require.Equal(t, uint(0), quantity)
+
+	quantity = PickUpMinNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 6)
 	require.Equal(t, uint(3), quantity)
 
 	quantity = PickUpMinNonFatalQuantity([]uint{70, 20, 10}, RateDivider, 8)
@@ -253,11 +270,30 @@ func TestPickUpMinNonFatalQuantity(t *testing.T) {
 }
 
 func TestPickUpMaxNonFatalQuantity(t *testing.T) {
-	quantity := PickUpMaxNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 6)
+	quantity := PickUpMaxNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 2)
+	require.Equal(t, uint(0), quantity)
+
+	quantity = PickUpMaxNonFatalQuantity([]uint{70, 20, 10}, FairDivider, 6)
 	require.Equal(t, uint(6), quantity)
 
 	quantity = PickUpMaxNonFatalQuantity([]uint{70, 20, 10}, RateDivider, 8)
 	require.Equal(t, uint(7), quantity)
+}
+
+func TestIsDistributionSuitable(t *testing.T) {
+	quantity := uint(100)
+
+	distribution := RateDivider([]uint{3, 2, 0}, quantity, nil)
+	reference := RateDivider([]uint{3, 2, 0}, referenceFactor*quantity, nil)
+
+	suitable := isDistributionSuitable(distribution, reference, quantity, referenceFactor*quantity, 10.0)
+	require.Equal(t, false, suitable)
+
+	distribution = RateDivider([]uint{3, 2, 1}, quantity, nil)
+	reference = RateDivider([]uint{3, 2, 1}, referenceFactor*quantity, nil)
+
+	suitable = isDistributionSuitable(distribution, reference, quantity, referenceFactor*quantity, 10.0)
+	require.Equal(t, true, suitable)
 }
 
 func TestIsSuitableConfig(t *testing.T) {

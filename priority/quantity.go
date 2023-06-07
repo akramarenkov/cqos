@@ -111,10 +111,10 @@ func isNonFatalConfig(
 	return true
 }
 
-// Due to the imperfection of the division function and working with integers (since
+// Due to the imperfection of the dividing function and working with integers (since
 // the quantity of handlers is an integer), large errors can occur when distributing
 // handlers by priority, especially for small quantity of handlers. This function allows
-// you to determine that with the specified combination of priorities, the division
+// you to determine that with the specified combination of priorities, the dividing
 // function and the quantity of handlers, the distribution error does not cause stop
 // processing of one or more priorities (for none of the priorities, the quantity is
 // not equal to zero)
@@ -174,6 +174,9 @@ func isDistributionSuitable(
 	ratio := float64(referenceTotalQuantity) / float64(totalQuantity)
 
 	for priority, referenceQuantity := range reference {
+		// a bug is assumed in the dividing function, in which it always returns 0,
+		// even with large quantities
+		// or strange combinations of priorities and dividing function are used
 		if referenceQuantity == 0 {
 			return false
 		}
@@ -224,10 +227,10 @@ func isSuitableConfig(
 	return true
 }
 
-// Due to the imperfection of the division function and working with integers (since
+// Due to the imperfection of the dividing function and working with integers (since
 // the quantity of handlers is an integer), large errors can occur when distributing
 // handlers by priority, especially for small quantity of handlers. This function allows
-// you to determine that with the specified combination of priorities, the division
+// you to determine that with the specified combination of priorities, the dividing
 // function and the quantity of handlers, the distribution error does not exceed
 // the limit
 func IsSuitableConfig(
