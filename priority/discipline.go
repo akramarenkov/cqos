@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	ErrEmptyDivider  = errors.New("priorities divider was not specified")
-	ErrEmptyFeedback = errors.New("feedback channel was not specified")
-	ErrEmptyOutput   = errors.New("output channel was not specified")
+	ErrEmptyDivider     = errors.New("priorities divider was not specified")
+	ErrEmptyFeedback    = errors.New("feedback channel was not specified")
+	ErrEmptyOutput      = errors.New("output channel was not specified")
+	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
 )
 
 const (
@@ -76,6 +77,8 @@ type Discipline[Type any] struct {
 
 	interrupter *time.Ticker
 	unbuffered  map[uint]bool
+
+	err chan error
 }
 
 func (opts Opts[Type]) isValid() error {
@@ -125,6 +128,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
 		unbuffered:  make(map[uint]bool),
+
+		err: make(chan error, 1),
 	}
 
 	dsc.updateInputs(opts.Inputs)
@@ -132,6 +137,16 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	go dsc.loop()
 
 	return dsc, nil
+}
+
+// Returns a channel with errors. If an error occurs (the value from the channel
+// is not equal to nil) the discipline terminates its work. The most likely cause of
+// the error is an incorrectly working dividing function in which the sum of
+// the distributed quantities is not equal to the original quantity.
+//
+// The single nil value means that the discipline has terminated in normal mode
+func (dsc *Discipline[Type]) Err() <-chan error {
+	return dsc.err
 }
 
 // Terminates work of the discipline.
@@ -218,6 +233,13 @@ func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.inputAdds)
 	defer close(dsc.inputRmvs)
 	defer dsc.interrupter.Stop()
+	defer close(dsc.err)
+
+	defer func() {
+		if value := recover(); value != nil {
+			dsc.err <- value.(error)
+		}
+	}()
 
 	for {
 		select {
@@ -464,8 +486,9 @@ func (dsc *Discipline[Type]) calcVacants() uint {
 		busy += quantity
 	}
 
+	// In order not to overload the code with error returns due to one possible error
 	if dsc.opts.HandlersQuantity < busy {
-		panic("value of handlers quantity has been exceeded")
+		panic(ErrQuantityExceeded)
 	}
 
 	return dsc.opts.HandlersQuantity - busy

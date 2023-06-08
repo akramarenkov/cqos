@@ -1225,6 +1225,57 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
+func TestDisciplineBadDivider(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+	defer gauger.Finalize()
+
+	gauger.AddWrite(1, 100000)
+	gauger.AddWrite(2, 100000)
+	gauger.AddWrite(3, 100000)
+
+	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
+		out := FairDivider(priorities, dividend, distribution)
+
+		for priority, quantity := range out {
+			out[priority] = 2 * quantity
+		}
+
+		return out
+	}
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		if <-discipline.Err() != nil {
+			cancel()
+		}
+	}()
+
+	gauges := gauger.Play(ctx)
+
+	require.NotEqual(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
 func TestDisciplineStop(t *testing.T) {
 	handlersQuantity := uint(6)
 

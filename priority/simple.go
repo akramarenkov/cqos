@@ -65,6 +65,8 @@ type Simple[Type any] struct {
 	feedback chan uint
 
 	wg *sync.WaitGroup
+
+	err chan error
 }
 
 // Creates and runs simplified prioritization discipline
@@ -106,11 +108,23 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		feedback: feedback,
 
 		wg: &sync.WaitGroup{},
+
+		err: make(chan error, 1),
 	}
 
 	go smpl.handlers()
 
 	return smpl, nil
+}
+
+// Returns a channel with errors. If an error occurs (the value from the channel
+// is not equal to nil) the discipline terminates its work. The most likely cause of
+// the error is an incorrectly working dividing function in which the sum of
+// the distributed quantities is not equal to the original quantity.
+//
+// The single nil value means that the discipline has terminated in normal mode
+func (smpl *Simple[Type]) Err() <-chan error {
+	return smpl.err
 }
 
 // Terminates work of the discipline.
@@ -140,6 +154,7 @@ func (smpl *Simple[Type]) handlers() {
 	defer close(smpl.feedback)
 	defer smpl.discipline.Stop()
 	defer smpl.wg.Wait()
+	defer close(smpl.err)
 
 	ctx, cancel := context.WithCancel(smpl.opts.Ctx)
 	defer cancel()
@@ -152,9 +167,9 @@ func (smpl *Simple[Type]) handlers() {
 
 	select {
 	case <-smpl.breaker:
-		return
 	case <-smpl.opts.Ctx.Done():
-		return
+	case err := <-smpl.discipline.Err():
+		smpl.err <- err
 	}
 }
 
@@ -169,7 +184,14 @@ func (smpl *Simple[Type]) handler(ctx context.Context) {
 			return
 		case prioritized := <-smpl.output:
 			smpl.opts.Handle(ctx, prioritized.Item)
-			smpl.feedback <- prioritized.Priority
+
+			select {
+			case <-smpl.breaker:
+				return
+			case <-ctx.Done():
+				return
+			case smpl.feedback <- prioritized.Priority:
+			}
 		}
 	}
 }
