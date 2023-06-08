@@ -1166,6 +1166,8 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 	gauger.AddWrite(2, 1000000)
 	gauger.AddWrite(3, 1000000)
 
+	inputs := gauger.GetInputs()
+
 	disciplineOpts := Opts[uint]{
 		Divider:          FairDivider,
 		Feedback:         gauger.GetFeedback(),
@@ -1176,31 +1178,49 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	inputs := gauger.GetInputs()
-
-	discipline.AddInput(inputs[2], 2)
-	discipline.AddInput(inputs[2], 2)
-	discipline.AddInput(inputs[1], 1)
-	discipline.AddInput(inputs[1], 1)
-	discipline.AddInput(inputs[3], 3)
-	discipline.AddInput(inputs[3], 3)
-	discipline.AddInput(make(chan uint), 4)
-	discipline.AddInput(make(chan uint), 4)
-	discipline.RemoveInput(3)
-	discipline.RemoveInput(3)
-	discipline.RemoveInput(2)
-	discipline.RemoveInput(2)
-	discipline.RemoveInput(1)
-	discipline.RemoveInput(1)
-	discipline.RemoveInput(4)
-	discipline.RemoveInput(4)
-	discipline.AddInput(inputs[2], 2)
-	discipline.AddInput(inputs[1], 1)
-	discipline.AddInput(inputs[3], 3)
-
 	defer discipline.Stop()
 
+	waiter := make(chan bool)
+
+	go func() {
+		defer close(waiter)
+
+		discipline.AddInput(inputs[2], 2)
+		discipline.AddInput(inputs[2], 2)
+		discipline.AddInput(inputs[1], 1)
+		discipline.AddInput(inputs[1], 1)
+		discipline.AddInput(inputs[3], 3)
+		discipline.AddInput(inputs[3], 3)
+
+		four := make(chan uint, 10)
+		close(four)
+
+		discipline.AddInput(four, 4)
+
+		four = make(chan uint)
+		close(four)
+
+		discipline.AddInput(four, 4)
+
+		time.Sleep(1 * time.Second)
+
+		discipline.RemoveInput(3)
+		discipline.RemoveInput(3)
+		discipline.RemoveInput(2)
+		discipline.RemoveInput(2)
+		discipline.RemoveInput(1)
+		discipline.RemoveInput(1)
+		discipline.RemoveInput(4)
+		discipline.RemoveInput(4)
+
+		discipline.AddInput(inputs[2], 6)
+		discipline.AddInput(inputs[1], 5)
+		discipline.AddInput(inputs[3], 7)
+	}()
+
 	gauges := gauger.Play(context.Background())
+
+	<-waiter
 
 	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
