@@ -1,10 +1,12 @@
+// Used to distributes data among handlers according to priority
 package priority
 
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
+
+	"github.com/akramarenkov/cqos/breaker"
 )
 
 var (
@@ -58,10 +60,8 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaked      bool
-	breaker      chan bool
-	breakerMutex *sync.Mutex
-	completer    chan bool
+	breaker  *breaker.Breaker
+	graceful *breaker.Breaker
 
 	inputs     map[uint]<-chan Type
 	priorities []uint
@@ -114,9 +114,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts.normalize(),
 
-		breaker:      make(chan bool),
-		breakerMutex: &sync.Mutex{},
-		completer:    make(chan bool),
+		breaker:  breaker.New(),
+		graceful: breaker.New(),
 
 		inputs:    make(map[uint]<-chan Type),
 		inputAdds: make(chan input[Type]),
@@ -153,21 +152,16 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 //
 // Use for wait completion at terminates via context
 func (dsc *Discipline[Type]) Stop() {
-	dsc.stop()
-	<-dsc.completer
+	dsc.breaker.Break()
 }
 
-func (dsc *Discipline[Type]) stop() {
-	dsc.breakerMutex.Lock()
-	defer dsc.breakerMutex.Unlock()
-
-	if dsc.breaked {
-		return
-	}
-
-	close(dsc.breaker)
-
-	dsc.breaked = true
+// Graceful terminates work of the discipline.
+//
+// Waits draining input channels, waits end processing data in handlers and terminates.
+//
+// You must end write to input channels, otherwise graceful stop not be ended
+func (dsc *Discipline[Type]) GracefulStop() {
+	dsc.graceful.Break()
 }
 
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
@@ -229,11 +223,12 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 }
 
 func (dsc *Discipline[Type]) loop() {
-	defer close(dsc.completer)
+	defer dsc.breaker.Complete()
+	defer dsc.graceful.Complete()
+	defer close(dsc.err)
 	defer close(dsc.inputAdds)
 	defer close(dsc.inputRmvs)
 	defer dsc.interrupter.Stop()
-	defer close(dsc.err)
 
 	defer func() {
 		if value := recover(); value != nil {
@@ -243,7 +238,7 @@ func (dsc *Discipline[Type]) loop() {
 
 	for {
 		select {
-		case <-dsc.breaker:
+		case <-dsc.breaker.Breaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
@@ -259,6 +254,14 @@ func (dsc *Discipline[Type]) loop() {
 		dsc.clearActual()
 
 		if processed := dsc.main(); processed == 0 {
+			select {
+			case <-dsc.graceful.Breaked():
+				if dsc.isZeroActual() {
+					return
+				}
+			default:
+			}
+
 			time.Sleep(defaultIdleDelay)
 		}
 	}
@@ -270,6 +273,16 @@ func (dsc *Discipline[Type]) clearActual() {
 			delete(dsc.actual, priority)
 		}
 	}
+}
+
+func (dsc *Discipline[Type]) isZeroActual() bool {
+	for _, quantity := range dsc.actual {
+		if quantity != 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (dsc *Discipline[Type]) isInputExists(priority uint) bool {
@@ -316,7 +329,7 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 		}
 
 		select {
-		case <-dsc.breaker:
+		case <-dsc.breaker.Breaked():
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
@@ -345,7 +358,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 		}
 
 		select {
-		case <-dsc.breaker:
+		case <-dsc.breaker.Breaked():
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
@@ -377,7 +390,7 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 
 	for {
 		select {
-		case <-dsc.breaker:
+		case <-dsc.breaker.Breaked():
 			return 0
 		case <-dsc.opts.Ctx.Done():
 			return 0
@@ -408,7 +421,7 @@ func (dsc *Discipline[Type]) calcTactic() {
 	for {
 		if !dsc.pickUpTactic() {
 			select {
-			case <-dsc.breaker:
+			case <-dsc.breaker.Breaked():
 				return
 			case <-dsc.opts.Ctx.Done():
 				return

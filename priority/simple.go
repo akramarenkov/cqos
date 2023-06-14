@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/akramarenkov/cqos/breaker"
 )
 
 const (
@@ -56,10 +58,8 @@ type Simple[Type any] struct {
 
 	discipline *Discipline[Type]
 
-	breaked      bool
-	breaker      chan bool
-	breakerMutex *sync.Mutex
-	completer    chan bool
+	breaker  *breaker.Breaker
+	graceful *breaker.Breaker
 
 	output   chan Prioritized[Type]
 	feedback chan uint
@@ -100,9 +100,8 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 		discipline: discipline,
 
-		breaker:      make(chan bool),
-		breakerMutex: &sync.Mutex{},
-		completer:    make(chan bool),
+		breaker:  breaker.New(),
+		graceful: breaker.New(),
 
 		output:   output,
 		feedback: feedback,
@@ -131,33 +130,30 @@ func (smpl *Simple[Type]) Err() <-chan error {
 //
 // Use for wait completion at terminates via context
 func (smpl *Simple[Type]) Stop() {
-	smpl.stop()
-	<-smpl.completer
+	smpl.breaker.Break()
 }
 
-func (smpl *Simple[Type]) stop() {
-	smpl.breakerMutex.Lock()
-	defer smpl.breakerMutex.Unlock()
-
-	if smpl.breaked {
-		return
-	}
-
-	close(smpl.breaker)
-
-	smpl.breaked = true
+// Graceful terminates work of the discipline.
+//
+// Waits draining input channels, waits end processing data in handlers and terminates.
+//
+// You must end write to input channels, otherwise graceful stop not be ended
+func (smpl *Simple[Type]) GracefulStop() {
+	smpl.graceful.Break()
 }
 
 func (smpl *Simple[Type]) handlers() {
-	defer close(smpl.completer)
+	defer smpl.breaker.Complete()
+	defer smpl.graceful.Complete()
+	defer close(smpl.err)
 	defer close(smpl.output)
 	defer close(smpl.feedback)
-	defer smpl.discipline.Stop()
 	defer smpl.wg.Wait()
-	defer close(smpl.err)
 
 	ctx, cancel := context.WithCancel(smpl.opts.Ctx)
 	defer cancel()
+
+	defer smpl.discipline.Stop()
 
 	for id := 0; id < int(smpl.opts.HandlersQuantity); id++ {
 		smpl.wg.Add(1)
@@ -166,8 +162,10 @@ func (smpl *Simple[Type]) handlers() {
 	}
 
 	select {
-	case <-smpl.breaker:
+	case <-smpl.breaker.Breaked():
 	case <-smpl.opts.Ctx.Done():
+	case <-smpl.graceful.Breaked():
+		smpl.discipline.GracefulStop()
 	case err := <-smpl.discipline.Err():
 		smpl.err <- err
 	}
@@ -178,16 +176,12 @@ func (smpl *Simple[Type]) handler(ctx context.Context) {
 
 	for {
 		select {
-		case <-smpl.breaker:
-			return
 		case <-ctx.Done():
 			return
 		case prioritized := <-smpl.output:
 			smpl.opts.Handle(ctx, prioritized.Item)
 
 			select {
-			case <-smpl.breaker:
-				return
 			case <-ctx.Done():
 				return
 			case smpl.feedback <- prioritized.Priority:
