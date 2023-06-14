@@ -524,6 +524,7 @@ func ExampleSimple_GracefulStop() {
 
 	wg := &sync.WaitGroup{}
 
+	// Run writers, that write data to input channels
 	for priority, input := range inputs {
 		wg.Add(1)
 
