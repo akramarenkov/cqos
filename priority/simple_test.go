@@ -324,12 +324,6 @@ func TestSimpleGracefulStop(t *testing.T) {
 		1: inputs[1],
 	}
 
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
 	measurements := make(chan bool)
 	defer close(measurements)
 
@@ -351,7 +345,6 @@ func TestSimpleGracefulStop(t *testing.T) {
 	require.NoError(t, err)
 
 	wg := &sync.WaitGroup{}
-	defer wg.Wait()
 
 	for priority, input := range inputs {
 		wg.Add(1)
@@ -369,19 +362,28 @@ func TestSimpleGracefulStop(t *testing.T) {
 		}(priority, input)
 	}
 
+	obtained := make(chan int)
+	defer close(obtained)
+
 	go func() {
-		simple.GracefulStop()
+		received := 0
+
+		for range measurements {
+			received++
+
+			if received == itemsQuantity*len(inputs) {
+				obtained <- received
+				return
+			}
+		}
 	}()
 
-	received := 0
+	wg.Wait()
 
-	for range measurements {
-		received++
-
-		if received == itemsQuantity*len(inputs) {
-			break
-		}
+	for _, input := range inputs {
+		close(input)
 	}
 
-	require.Equal(t, itemsQuantity*len(inputs), received)
+	require.NoError(t, <-simple.Err())
+	require.Equal(t, itemsQuantity*len(inputs), <-obtained)
 }

@@ -34,7 +34,7 @@ type Prioritized[Type any] struct {
 
 // Options of the created main prioritization discipline
 type Opts[Type any] struct {
-	// Terminates (cancels) work of the discipline
+	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
 	// Determines how handlers are distributed among priorities
 	Divider Divider
@@ -42,7 +42,10 @@ type Opts[Type any] struct {
 	Feedback <-chan uint
 	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
-	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
+	// Channels with input data, should be buffered for performance reasons
+	// Map key is a value of priority
+	// For graceful termination close all input channels
+	// and, optionaly, read from Err() channel for wait completion
 	Inputs map[uint]<-chan Type
 	// Handlers should read distributed data from this channel
 	Output chan<- Prioritized[Type]
@@ -60,8 +63,7 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker  *breaker.Breaker
-	graceful *breaker.Breaker
+	breaker *breaker.Breaker
 
 	inputs     map[uint]<-chan Type
 	priorities []uint
@@ -77,6 +79,8 @@ type Discipline[Type any] struct {
 
 	interrupter *time.Ticker
 	unbuffered  map[uint]bool
+
+	drained map[uint]bool
 
 	err chan error
 }
@@ -114,8 +118,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts.normalize(),
 
-		breaker:  breaker.New(),
-		graceful: breaker.New(),
+		breaker: breaker.New(),
 
 		inputs:    make(map[uint]<-chan Type),
 		inputAdds: make(chan input[Type]),
@@ -127,6 +130,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
 		unbuffered:  make(map[uint]bool),
+
+		drained: make(map[uint]bool),
 
 		err: make(chan error, 1),
 	}
@@ -148,20 +153,11 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
 
-// Terminates work of the discipline.
+// Roughly terminates work of the discipline.
 //
 // Use for wait completion at terminates via context
 func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
-}
-
-// Graceful terminates work of the discipline.
-//
-// Waits draining input channels, waits end processing data in handlers and terminates.
-//
-// You must end write to input channels, otherwise graceful stop not be ended
-func (dsc *Discipline[Type]) GracefulStop() {
-	dsc.graceful.Break()
 }
 
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
@@ -217,6 +213,7 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 	delete(dsc.inputs, priority)
 	delete(dsc.tactic, priority)
 	delete(dsc.unbuffered, priority)
+	delete(dsc.drained, priority)
 
 	dsc.priorities = removePriority(dsc.priorities, priority)
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
@@ -224,7 +221,6 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 
 func (dsc *Discipline[Type]) loop() {
 	defer dsc.breaker.Complete()
-	defer dsc.graceful.Complete()
 	defer close(dsc.err)
 	defer close(dsc.inputAdds)
 	defer close(dsc.inputRmvs)
@@ -254,12 +250,8 @@ func (dsc *Discipline[Type]) loop() {
 		dsc.clearActual()
 
 		if processed := dsc.main(); processed == 0 {
-			select {
-			case <-dsc.graceful.Breaked():
-				if dsc.isZeroActual() {
-					return
-				}
-			default:
+			if dsc.isZeroActual() && dsc.isDrainedInputs() {
+				return
 			}
 
 			time.Sleep(defaultIdleDelay)
@@ -278,6 +270,16 @@ func (dsc *Discipline[Type]) clearActual() {
 func (dsc *Discipline[Type]) isZeroActual() bool {
 	for _, quantity := range dsc.actual {
 		if quantity != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (dsc *Discipline[Type]) isDrainedInputs() bool {
+	for priority := range dsc.inputs {
+		if !dsc.drained[priority] {
 			return false
 		}
 	}
@@ -335,6 +337,7 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
+				dsc.drained[priority] = true
 				return processed
 			}
 
@@ -364,6 +367,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
+				dsc.drained[priority] = true
 				return processed
 			}
 

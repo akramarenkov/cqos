@@ -23,7 +23,7 @@ type Handle[Type any] func(ctx context.Context, item Type)
 
 // Options of the created simplified prioritization discipline
 type SimpleOpts[Type any] struct {
-	// Terminates (cancels) work of the discipline
+	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
 	// Determines how handlers are distributed among priorities
 	Divider Divider
@@ -31,7 +31,10 @@ type SimpleOpts[Type any] struct {
 	Handle Handle[Type]
 	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
-	// Channels with input data, should be buffered for performance reasons. Map key is a value of priority
+	// Channels with input data, should be buffered for performance reasons
+	// Map key is a value of priority
+	// For graceful termination close all input channels
+	// and, optionaly, read from Err() channel for wait completion
 	Inputs map[uint]<-chan Type
 }
 
@@ -58,8 +61,7 @@ type Simple[Type any] struct {
 
 	discipline *Discipline[Type]
 
-	breaker  *breaker.Breaker
-	graceful *breaker.Breaker
+	breaker *breaker.Breaker
 
 	output   chan Prioritized[Type]
 	feedback chan uint
@@ -100,8 +102,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 		discipline: discipline,
 
-		breaker:  breaker.New(),
-		graceful: breaker.New(),
+		breaker: breaker.New(),
 
 		output:   output,
 		feedback: feedback,
@@ -126,25 +127,15 @@ func (smpl *Simple[Type]) Err() <-chan error {
 	return smpl.err
 }
 
-// Terminates work of the discipline.
+// Roughly terminates work of the discipline.
 //
 // Use for wait completion at terminates via context
 func (smpl *Simple[Type]) Stop() {
 	smpl.breaker.Break()
 }
 
-// Graceful terminates work of the discipline.
-//
-// Waits draining input channels, waits end processing data in handlers and terminates.
-//
-// You must end write to input channels, otherwise graceful stop not be ended
-func (smpl *Simple[Type]) GracefulStop() {
-	smpl.graceful.Break()
-}
-
 func (smpl *Simple[Type]) handlers() {
 	defer smpl.breaker.Complete()
-	defer smpl.graceful.Complete()
 	defer close(smpl.err)
 	defer close(smpl.output)
 	defer close(smpl.feedback)
@@ -155,7 +146,7 @@ func (smpl *Simple[Type]) handlers() {
 
 	defer smpl.discipline.Stop()
 
-	for id := 0; id < int(smpl.opts.HandlersQuantity); id++ {
+	for id := uint(0); id < smpl.opts.HandlersQuantity; id++ {
 		smpl.wg.Add(1)
 
 		go smpl.handler(ctx)
@@ -164,8 +155,6 @@ func (smpl *Simple[Type]) handlers() {
 	select {
 	case <-smpl.breaker.Breaked():
 	case <-smpl.opts.Ctx.Done():
-	case <-smpl.graceful.Breaked():
-		smpl.discipline.GracefulStop()
 	case err := <-smpl.discipline.Err():
 		smpl.err <- err
 	}
