@@ -420,7 +420,6 @@ func ExampleSimple() {
 	handle := func(ctx context.Context, item string) {
 		// Data processing
 		// fmt.Println(item)
-
 		select {
 		case <-ctx.Done():
 		case measurements <- true:
@@ -502,7 +501,6 @@ func ExampleSimple_GracefulStop() {
 	handle := func(ctx context.Context, item string) {
 		// Data processing
 		// fmt.Println(item)
-
 		select {
 		case <-ctx.Done():
 		case measurements <- true:
