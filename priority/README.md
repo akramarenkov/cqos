@@ -111,7 +111,7 @@ func main() {
 
             for prioritized := range output {
                 // Data processing
-                fmt.Println(prioritized.Item)
+                // fmt.Println(prioritized.Item)
                 measurements <- true
 
                 feedback <- prioritized.Priority
@@ -130,12 +130,13 @@ func main() {
 
             for id := 0; id < itemsQuantity; id++ {
                 item := base + ":" + strconv.Itoa(id)
-                
+
                 channel <- item
             }
         }(priority, input)
     }
 
+    // Terminate handlers
     defer close(output)
 
     received := 0
@@ -145,8 +146,11 @@ func main() {
         received++
 
         if received == itemsQuantity*len(inputs) {
-            return
+            break
         }
     }
+
+    fmt.Println("Processed items quantity:", received)
+    // Output: Processed items quantity: 300
 }
 ```
