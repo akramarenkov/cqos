@@ -44,8 +44,7 @@ type Opts[Type any] struct {
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons
 	// Map key is a value of priority
-	// For graceful termination close all input channels
-	// and, optionaly, read from Err() channel for wait completion
+	// For graceful termination need close all input channels or remove them
 	Inputs map[uint]<-chan Type
 	// Handlers should read distributed data from this channel
 	Output chan<- Prioritized[Type]
@@ -63,7 +62,8 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker *breaker.Breaker
+	breaker  *breaker.Breaker
+	graceful *breaker.Breaker
 
 	inputs     map[uint]<-chan Type
 	priorities []uint
@@ -118,7 +118,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts.normalize(),
 
-		breaker: breaker.New(),
+		breaker:  breaker.New(),
+		graceful: breaker.New(),
 
 		inputs:    make(map[uint]<-chan Type),
 		inputAdds: make(chan input[Type]),
@@ -158,6 +159,16 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 // Use for wait completion at terminates via context
 func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
+}
+
+// Graceful terminates work of the discipline.
+//
+// Waits draining input channels, waits end processing data in handlers and terminates.
+//
+// You must end write to input channels and close them (or remove),
+// otherwise graceful stop not be ended
+func (dsc *Discipline[Type]) GracefulStop() {
+	dsc.graceful.Break()
 }
 
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
@@ -221,6 +232,7 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 
 func (dsc *Discipline[Type]) loop() {
 	defer dsc.breaker.Complete()
+	defer dsc.graceful.Complete()
 	defer close(dsc.err)
 	defer close(dsc.inputAdds)
 	defer close(dsc.inputRmvs)
@@ -250,8 +262,12 @@ func (dsc *Discipline[Type]) loop() {
 		dsc.clearActual()
 
 		if processed := dsc.main(); processed == 0 {
-			if dsc.isZeroActual() && dsc.isDrainedInputs() {
-				return
+			select {
+			case <-dsc.graceful.Breaked():
+				if dsc.isZeroActual() && dsc.isDrainedInputs() {
+					return
+				}
+			default:
 			}
 
 			time.Sleep(defaultIdleDelay)

@@ -16,7 +16,8 @@ var (
 	ErrEmptyHandle = errors.New("handle function was not specified")
 )
 
-// Callback function called in handlers of simplified prioritization discipline when an item is received.
+// Callback function called in handlers of simplified prioritization
+// discipline when an item is received.
 //
 // Function should be interrupted when context is canceled
 type Handle[Type any] func(ctx context.Context, item Type)
@@ -33,8 +34,7 @@ type SimpleOpts[Type any] struct {
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons
 	// Map key is a value of priority
-	// For graceful termination close all input channels
-	// and, optionaly, read from Err() channel for wait completion
+	// For graceful termination need close all input channels
 	Inputs map[uint]<-chan Type
 }
 
@@ -61,7 +61,8 @@ type Simple[Type any] struct {
 
 	discipline *Discipline[Type]
 
-	breaker *breaker.Breaker
+	breaker  *breaker.Breaker
+	graceful *breaker.Breaker
 
 	output   chan Prioritized[Type]
 	feedback chan uint
@@ -102,7 +103,8 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 		discipline: discipline,
 
-		breaker: breaker.New(),
+		breaker:  breaker.New(),
+		graceful: breaker.New(),
 
 		output:   output,
 		feedback: feedback,
@@ -134,8 +136,19 @@ func (smpl *Simple[Type]) Stop() {
 	smpl.breaker.Break()
 }
 
+// Graceful terminates work of the discipline.
+//
+// Waits draining input channels, waits end processing data in handlers and terminates.
+//
+// You must end write to input channels and close them,
+// otherwise graceful stop not be ended
+func (smpl *Simple[Type]) GracefulStop() {
+	smpl.graceful.Break()
+}
+
 func (smpl *Simple[Type]) handlers() {
 	defer smpl.breaker.Complete()
+	defer smpl.graceful.Complete()
 	defer close(smpl.err)
 	defer close(smpl.output)
 	defer close(smpl.feedback)
@@ -155,6 +168,8 @@ func (smpl *Simple[Type]) handlers() {
 	select {
 	case <-smpl.breaker.Breaked():
 	case <-smpl.opts.Ctx.Done():
+	case <-smpl.graceful.Breaked():
+		smpl.discipline.GracefulStop()
 	case err := <-smpl.discipline.Err():
 		smpl.err <- err
 	}

@@ -1317,6 +1317,44 @@ func TestDisciplineStop(t *testing.T) {
 	require.NotEqual(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
+func TestDisciplineGracefulStop(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gaugerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	gauger := newGauger(gaugerOpts)
+
+	gauger.AddWrite(1, 100000)
+	gauger.AddWrite(2, 100000)
+	gauger.AddWrite(3, 100000)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          RateDivider,
+		Feedback:         gauger.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           gauger.GetInputs(),
+		Output:           gauger.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		defer cancel()
+
+		discipline.GracefulStop()
+	}()
+
+	gauges := gauger.Play(ctx)
+	gauger.Finalize()
+
+	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+}
+
 func TestDisciplineRateOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 

@@ -325,7 +325,6 @@ func TestSimpleGracefulStop(t *testing.T) {
 	}
 
 	measurements := make(chan bool)
-	defer close(measurements)
 
 	handle := func(ctx context.Context, item string) {
 		select {
@@ -370,12 +369,9 @@ func TestSimpleGracefulStop(t *testing.T) {
 
 		for range measurements {
 			received++
-
-			if received == itemsQuantity*len(inputs) {
-				obtained <- received
-				return
-			}
 		}
+
+		obtained <- received
 	}()
 
 	wg.Wait()
@@ -384,6 +380,9 @@ func TestSimpleGracefulStop(t *testing.T) {
 		close(input)
 	}
 
-	require.NoError(t, <-simple.Err())
+	simple.GracefulStop()
+
+	close(measurements)
+
 	require.Equal(t, itemsQuantity*len(inputs), <-obtained)
 }
