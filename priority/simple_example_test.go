@@ -1,10 +1,12 @@
-package priority
+package priority_test
 
 import (
 	"context"
 	"fmt"
 	"strconv"
 	"sync"
+
+	"github.com/akramarenkov/cqos/priority"
 )
 
 func ExampleSimple() {
@@ -46,14 +48,14 @@ func ExampleSimple() {
 	}
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	opts := SimpleOpts[string]{
-		Divider:          RateDivider,
+	opts := priority.SimpleOpts[string]{
+		Divider:          priority.RateDivider,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	simple, err := NewSimple(opts)
+	simple, err := priority.NewSimple(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -127,14 +129,14 @@ func ExampleSimple_GracefulStop() {
 	}
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	opts := SimpleOpts[string]{
-		Divider:          RateDivider,
+	opts := priority.SimpleOpts[string]{
+		Divider:          priority.RateDivider,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	simple, err := NewSimple(opts)
+	simple, err := priority.NewSimple(opts)
 	if err != nil {
 		panic(err)
 	}

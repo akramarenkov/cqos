@@ -1,9 +1,11 @@
-package priority
+package priority_test
 
 import (
 	"fmt"
 	"strconv"
 	"sync"
+
+	"github.com/akramarenkov/cqos/priority"
 )
 
 func ExampleDiscipline() {
@@ -32,7 +34,7 @@ func ExampleDiscipline() {
 	}()
 
 	// Data from input channels passed to handlers by output channel
-	output := make(chan Prioritized[string])
+	output := make(chan priority.Prioritized[string])
 
 	// Handlers must write priority of processed data to feedback channel after it has been processed
 	feedback := make(chan uint)
@@ -43,15 +45,15 @@ func ExampleDiscipline() {
 	defer close(measurements)
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	disciplineOpts := Opts[string]{
-		Divider:          RateDivider,
+	disciplineOpts := priority.Opts[string]{
+		Divider:          priority.RateDivider,
 		Feedback:         feedback,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 		Output:           output,
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := priority.New(disciplineOpts)
 	if err != nil {
 		panic(err)
 	}
@@ -133,7 +135,7 @@ func ExampleDiscipline_GracefulStop() {
 	}
 
 	// Data from input channels passed to handlers by output channel
-	output := make(chan Prioritized[string])
+	output := make(chan priority.Prioritized[string])
 
 	// Handlers must write priority of processed data to feedback channel after it has been processed
 	feedback := make(chan uint)
@@ -143,15 +145,15 @@ func ExampleDiscipline_GracefulStop() {
 	measurements := make(chan bool)
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	disciplineOpts := Opts[string]{
-		Divider:          RateDivider,
+	disciplineOpts := priority.Opts[string]{
+		Divider:          priority.RateDivider,
 		Feedback:         feedback,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 		Output:           output,
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := priority.New(disciplineOpts)
 	if err != nil {
 		panic(err)
 	}
