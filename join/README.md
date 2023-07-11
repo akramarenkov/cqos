@@ -1,4 +1,4 @@
-# Stack discipline
+# Join discipline
 
 ## Purpose
 
@@ -21,7 +21,7 @@ import (
     "fmt"
     "sync"
 
-    "github.com/akramarenkov/cqos/stack"
+    "github.com/akramarenkov/cqos/join"
 )
 
 func main() {
@@ -29,12 +29,12 @@ func main() {
 
     input := make(chan uint)
 
-    opts := stack.Opts[uint]{
+    opts := join.Opts[uint]{
         Input:     input,
-        StackSize: 5,
+        JoinSize: 5,
     }
 
-    discipline, err := stack.New(opts)
+    discipline, err := join.New(opts)
     if err != nil {
         panic(err)
     }

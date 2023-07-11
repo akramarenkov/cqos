@@ -1,4 +1,4 @@
-package stack
+package join
 
 import (
 	"context"
@@ -16,8 +16,8 @@ func testDiscipline(t *testing.T, useReleased bool) {
 	released := make(chan struct{})
 
 	opts := Opts[uint]{
-		Input:     input,
-		StackSize: 10,
+		Input:    input,
+		JoinSize: 10,
 	}
 
 	if useReleased {
@@ -76,7 +76,7 @@ func TestDisciplineReleased(t *testing.T) {
 
 func TestDisciplineOptsValidation(t *testing.T) {
 	opts := Opts[uint]{
-		StackSize: 10,
+		JoinSize: 10,
 	}
 
 	_, err := New(opts)
@@ -90,9 +90,9 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.Error(t, err)
 
 	opts = Opts[uint]{
-		Input:     make(chan uint),
-		StackSize: 10,
-		Timeout:   2 * time.Nanosecond,
+		Input:    make(chan uint),
+		JoinSize: 10,
+		Timeout:  2 * time.Nanosecond,
 	}
 
 	_, err = New(opts)
@@ -106,9 +106,9 @@ func TestDisciplineTimeout(t *testing.T) {
 	input := make(chan uint)
 
 	opts := Opts[uint]{
-		Input:     input,
-		StackSize: 10,
-		Timeout:   500 * time.Millisecond,
+		Input:    input,
+		JoinSize: 10,
+		Timeout:  500 * time.Millisecond,
 	}
 
 	discipline, err := New(opts)
@@ -162,9 +162,9 @@ func testDisciplineStop(t *testing.T, byCtx bool) {
 	defer cancel()
 
 	opts := Opts[uint]{
-		Ctx:       ctx,
-		Input:     input,
-		StackSize: 10,
+		Ctx:      ctx,
+		Input:    input,
+		JoinSize: 10,
 	}
 
 	discipline, err := New(opts)
@@ -233,7 +233,7 @@ func benchmarkDiscipline(b *testing.B, useReleased bool) {
 	opts := Opts[uint]{
 		Input: input,
 
-		StackSize: 100,
+		JoinSize: 100,
 	}
 
 	if useReleased {

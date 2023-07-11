@@ -1,10 +1,10 @@
-package stack_test
+package join_test
 
 import (
 	"fmt"
 	"sync"
 
-	"github.com/akramarenkov/cqos/stack"
+	"github.com/akramarenkov/cqos/join"
 )
 
 func ExampleDiscipline() {
@@ -12,12 +12,12 @@ func ExampleDiscipline() {
 
 	input := make(chan uint)
 
-	opts := stack.Opts[uint]{
-		Input:     input,
-		StackSize: 5,
+	opts := join.Opts[uint]{
+		Input:    input,
+		JoinSize: 5,
 	}
 
-	discipline, err := stack.New(opts)
+	discipline, err := join.New(opts)
 	if err != nil {
 		panic(err)
 	}

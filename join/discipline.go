@@ -1,4 +1,4 @@
-package stack
+package join
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	ErrEmptyInput       = errors.New("input channel was not specified")
-	ErrInvalidStackSize = errors.New("invalid stack size")
-	ErrTimeoutTooSmall  = errors.New("timeout value is too small")
+	ErrEmptyInput      = errors.New("input channel was not specified")
+	ErrInvalidJoinSize = errors.New("invalid join size")
+	ErrTimeoutTooSmall = errors.New("timeout value is too small")
 )
 
 const (
@@ -32,8 +32,8 @@ type Opts[Type any] struct {
 	// In this case, after the accumulated slice is used it is necessary to inform
 	// the discipline about it by writing to Released channel
 	Released <-chan struct{}
-	// Data stack size
-	StackSize uint
+	// Output slice size
+	JoinSize uint
 	// Send timeout of accumulated slice
 	Timeout time.Duration
 }
@@ -43,8 +43,8 @@ func (opts Opts[Type]) isValid() error {
 		return ErrEmptyInput
 	}
 
-	if opts.StackSize == 0 {
-		return ErrInvalidStackSize
+	if opts.JoinSize == 0 {
+		return ErrInvalidJoinSize
 	}
 
 	return nil
@@ -70,7 +70,7 @@ type Discipline[Type any] struct {
 
 	output    chan []Type
 	sendAt    time.Time
-	stack     []Type
+	join      []Type
 	timeouter *time.Ticker
 }
 
@@ -93,7 +93,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		breaker: breaker.New(),
 
 		output:    make(chan []Type, 1),
-		stack:     make([]Type, 0, opts.StackSize),
+		join:      make([]Type, 0, opts.JoinSize),
 		timeouter: time.NewTicker(duration),
 	}
 
@@ -158,9 +158,9 @@ func (dsc *Discipline[Type]) loop() {
 }
 
 func (dsc *Discipline[Type]) process(item Type) {
-	dsc.stack = append(dsc.stack, item)
+	dsc.join = append(dsc.join, item)
 
-	if len(dsc.stack) < int(dsc.opts.StackSize) {
+	if len(dsc.join) < int(dsc.opts.JoinSize) {
 		return
 	}
 
@@ -168,9 +168,9 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) send() {
-	stack := dsc.prepareStack()
+	join := dsc.prepareJoin()
 
-	if len(stack) == 0 {
+	if len(join) == 0 {
 		return
 	}
 
@@ -179,7 +179,7 @@ func (dsc *Discipline[Type]) send() {
 		return
 	case <-dsc.opts.Ctx.Done():
 		return
-	case dsc.output <- stack:
+	case dsc.output <- join:
 	}
 
 	if dsc.opts.Released != nil {
@@ -192,7 +192,7 @@ func (dsc *Discipline[Type]) send() {
 		}
 	}
 
-	dsc.resetStack()
+	dsc.resetJoin()
 	dsc.resetSendAt()
 }
 
@@ -204,22 +204,22 @@ func (dsc *Discipline[Type]) isTimeouted() bool {
 	return time.Since(dsc.sendAt) >= dsc.opts.Timeout
 }
 
-func (dsc *Discipline[Type]) resetStack() {
-	dsc.stack = dsc.stack[:0]
+func (dsc *Discipline[Type]) resetJoin() {
+	dsc.join = dsc.join[:0]
 }
 
-func (dsc *Discipline[Type]) copyStack() []Type {
-	sent := make([]Type, len(dsc.stack))
+func (dsc *Discipline[Type]) copyJoin() []Type {
+	sent := make([]Type, len(dsc.join))
 
-	copy(sent, dsc.stack)
+	copy(sent, dsc.join)
 
 	return sent
 }
 
-func (dsc *Discipline[Type]) prepareStack() []Type {
+func (dsc *Discipline[Type]) prepareJoin() []Type {
 	if dsc.opts.Released != nil {
-		return dsc.stack
+		return dsc.join
 	}
 
-	return dsc.copyStack()
+	return dsc.copyJoin()
 }
