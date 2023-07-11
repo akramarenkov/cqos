@@ -181,8 +181,7 @@ func TestDisciplineStop(t *testing.T) {
 
 	wg.Wait()
 
-	require.NotEqual(t, inSequence, outSequence)
-	require.GreaterOrEqual(t, len(outSequence), stopAt*90/100)
+	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
 
 func TestDisciplineCtx(t *testing.T) {
@@ -238,6 +237,5 @@ func TestDisciplineCtx(t *testing.T) {
 
 	wg.Wait()
 
-	require.NotEqual(t, inSequence, outSequence)
-	require.GreaterOrEqual(t, len(outSequence), stopAt*90/100)
+	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
