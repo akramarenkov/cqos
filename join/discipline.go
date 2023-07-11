@@ -1,3 +1,5 @@
+// Accumulates elements from the input channel into a slice and writes it to the
+// output channel when the size or timeout is reached
 package join
 
 import (
