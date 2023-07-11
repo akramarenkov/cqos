@@ -96,17 +96,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
-func (dsc *Discipline[Type]) Output() <-chan []Type {
-	return dsc.output
-}
-
-// Roughly terminates work of the discipline.
-//
-// Use for wait completion at terminates via context
-func (dsc *Discipline[Type]) Stop() {
-	dsc.breaker.Break()
-}
-
 // Maximum timeout error is calculated as timeout + timeout/divider.
 //
 // Relative timeout error in percent is calculated as 100/divider.
@@ -122,11 +111,21 @@ func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
 	return timeout, nil
 }
 
+func (dsc *Discipline[Type]) Output() <-chan []Type {
+	return dsc.output
+}
+
+// Roughly terminates work of the discipline.
+//
+// Use for wait completion at terminates via context
+func (dsc *Discipline[Type]) Stop() {
+	dsc.breaker.Break()
+}
+
 func (dsc *Discipline[Type]) loop() {
 	defer dsc.breaker.Complete()
-	defer close(dsc.output)
 	defer dsc.timeouter.Stop()
-	defer dsc.send()
+	defer close(dsc.output)
 
 	dsc.resetSendAt()
 
@@ -142,20 +141,23 @@ func (dsc *Discipline[Type]) loop() {
 			}
 		case item, opened := <-dsc.opts.Input:
 			if !opened {
+				dsc.send()
 				return
 			}
 
-			dsc.add(item)
+			dsc.process(item)
 		}
 	}
 }
 
-func (dsc *Discipline[Type]) add(item Type) {
+func (dsc *Discipline[Type]) process(item Type) {
 	dsc.stack = append(dsc.stack, item)
 
-	if len(dsc.stack) == cap(dsc.stack) {
-		dsc.send()
+	if len(dsc.stack) < int(dsc.opts.StackSize) {
+		return
 	}
+
+	dsc.send()
 }
 
 func (dsc *Discipline[Type]) send() {
