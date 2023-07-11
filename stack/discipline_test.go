@@ -9,54 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDiscipline(t *testing.T) {
-	quantity := 105
-
-	input := make(chan uint)
-
-	opts := Opts[uint]{
-		Input:     input,
-		StackSize: 10,
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-		defer close(input)
-
-		for stage := 1; stage <= quantity; stage++ {
-			inSequence = append(inSequence, uint(stage))
-
-			input <- uint(stage)
-		}
-	}()
-
-	outSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-
-		for stack := range discipline.Output() {
-			require.NotEqual(t, 0, stack)
-
-			outSequence = append(outSequence, stack...)
-		}
-	}()
-
-	wg.Wait()
-
-	require.Equal(t, inSequence, outSequence)
-}
-
-func TestDisciplineReleased(t *testing.T) {
+func testDiscipline(t *testing.T, useReleased bool) {
 	quantity := 105
 
 	input := make(chan uint)
@@ -64,8 +17,11 @@ func TestDisciplineReleased(t *testing.T) {
 
 	opts := Opts[uint]{
 		Input:     input,
-		Released:  released,
 		StackSize: 10,
+	}
+
+	if useReleased {
+		opts.Released = released
 	}
 
 	discipline, err := New(opts)
@@ -99,13 +55,23 @@ func TestDisciplineReleased(t *testing.T) {
 
 			outSequence = append(outSequence, stack...)
 
-			released <- struct{}{}
+			if useReleased {
+				released <- struct{}{}
+			}
 		}
 	}()
 
 	wg.Wait()
 
 	require.Equal(t, inSequence, outSequence)
+}
+
+func TestDiscipline(t *testing.T) {
+	testDiscipline(t, false)
+}
+
+func TestDisciplineReleased(t *testing.T) {
+	testDiscipline(t, true)
 }
 
 func TestDisciplineOptsValidation(t *testing.T) {
@@ -185,63 +151,12 @@ func TestDisciplineTimeout(t *testing.T) {
 	require.Equal(t, inSequence, outSequence)
 }
 
-func TestDisciplineStop(t *testing.T) {
+func testDisciplineStop(t *testing.T, byCtx bool) {
 	quantity := 105
 	stopAt := quantity / 2
 
 	input := make(chan uint)
-
-	opts := Opts[uint]{
-		Input:     input,
-		StackSize: 10,
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-		defer close(input)
-
-		for stage := 1; stage <= quantity; stage++ {
-			if stage == stopAt {
-				discipline.Stop()
-				return
-			}
-
-			inSequence = append(inSequence, uint(stage))
-
-			input <- uint(stage)
-		}
-	}()
-
-	outSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-
-		for stack := range discipline.Output() {
-			require.NotEqual(t, 0, stack)
-			outSequence = append(outSequence, stack...)
-		}
-	}()
-
-	wg.Wait()
-
-	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
-}
-
-func TestDisciplineCtx(t *testing.T) {
-	quantity := 105
-	stopAt := quantity / 2
-
-	input := make(chan uint)
+	defer close(input)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -261,13 +176,21 @@ func TestDisciplineCtx(t *testing.T) {
 
 	inSequence := make([]uint, 0, quantity)
 
+	stop := func() {
+		if byCtx {
+			cancel()
+			return
+		}
+
+		discipline.Stop()
+	}
+
 	go func() {
 		defer wg.Done()
-		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
 			if stage == stopAt {
-				cancel()
+				stop()
 				return
 			}
 
@@ -293,55 +216,28 @@ func TestDisciplineCtx(t *testing.T) {
 	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
 
-func BenchmarkDiscipline(b *testing.B) {
-	quantity := 10000000
-
-	input := make(chan uint)
-
-	opts := Opts[uint]{
-		Input:     input,
-		StackSize: 100,
-	}
-
-	discipline, err := New(opts)
-	require.NoError(b, err)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		defer close(input)
-
-		for stage := 1; stage <= quantity; stage++ {
-			input <- uint(stage)
-		}
-	}()
-
-	count := 0
-
-	go func() {
-		defer wg.Done()
-
-		for range discipline.Output() {
-			count++
-		}
-	}()
-
-	wg.Wait()
+func TestDisciplineStop(t *testing.T) {
+	testDisciplineStop(t, false)
 }
 
-func BenchmarkDisciplineReleased(b *testing.B) {
+func TestDisciplineStopByCtx(t *testing.T) {
+	testDisciplineStop(t, true)
+}
+
+func benchmarkDiscipline(b *testing.B, useReleased bool) {
 	quantity := 10000000
 
 	input := make(chan uint)
 	released := make(chan struct{})
 
 	opts := Opts[uint]{
-		Input:     input,
-		Released:  released,
+		Input: input,
+
 		StackSize: 100,
+	}
+
+	if useReleased {
+		opts.Released = released
 	}
 
 	discipline, err := New(opts)
@@ -365,9 +261,19 @@ func BenchmarkDisciplineReleased(b *testing.B) {
 		defer close(released)
 
 		for range discipline.Output() {
-			released <- struct{}{}
+			if useReleased {
+				released <- struct{}{}
+			}
 		}
 	}()
 
 	wg.Wait()
+}
+
+func BenchmarkDiscipline(b *testing.B) {
+	benchmarkDiscipline(b, false)
+}
+
+func BenchmarkDisciplineReleased(b *testing.B) {
+	benchmarkDiscipline(b, true)
 }
