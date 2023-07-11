@@ -26,15 +26,11 @@ func ExampleDiscipline() {
 
 	wg.Add(2)
 
-	inSequence := make([]uint, 0, quantity)
-
 	go func() {
 		defer wg.Done()
 		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
-			inSequence = append(inSequence, uint(stage))
-
 			input <- uint(stage)
 		}
 	}()
