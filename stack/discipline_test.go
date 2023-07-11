@@ -292,3 +292,79 @@ func TestDisciplineCtx(t *testing.T) {
 
 	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
+
+func BenchmarkDiscipline(b *testing.B) {
+	quantity := 10000000
+
+	input := make(chan uint)
+
+	opts := Opts[uint]{
+		Input:     input,
+		StackSize: 100,
+	}
+
+	discipline, err := New(opts)
+	require.NoError(b, err)
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		defer close(input)
+
+		for stage := 1; stage <= quantity; stage++ {
+			input <- uint(stage)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		for range discipline.Output() {
+		}
+	}()
+
+	wg.Wait()
+}
+
+func BenchmarkDisciplineReuse(b *testing.B) {
+	quantity := 10000000
+
+	input := make(chan uint)
+	feedback := make(chan struct{})
+
+	opts := Opts[uint]{
+		Input:     input,
+		StackSize: 100,
+		Feedback:  feedback,
+	}
+
+	discipline, err := New(opts)
+	require.NoError(b, err)
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		defer close(input)
+
+		for stage := 1; stage <= quantity; stage++ {
+			input <- uint(stage)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		defer close(feedback)
+
+		for range discipline.Output() {
+			feedback <- struct{}{}
+		}
+	}()
+
+	wg.Wait()
+}
