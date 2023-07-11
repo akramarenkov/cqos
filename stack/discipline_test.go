@@ -12,11 +12,9 @@ func TestDiscipline(t *testing.T) {
 	quantity := 100
 
 	input := make(chan uint)
-	output := make(chan []uint)
 
 	opts := Opts[uint]{
-		Input:  input,
-		Output: output,
+		Input: input,
 	}
 
 	discipline, err := New(opts)
@@ -51,15 +49,9 @@ func TestDiscipline(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		defer close(output)
-		defer discipline.GracefulStop()
 
-		for item := range output {
+		for item := range discipline.Output() {
 			outSequence = append(outSequence, item)
-
-			if len(outSequence) == cap(outSequence) {
-				return
-			}
 		}
 	}()
 

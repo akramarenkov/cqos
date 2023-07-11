@@ -10,7 +10,6 @@ import (
 
 var (
 	ErrEmptyInput      = errors.New("input channel was not specified")
-	ErrEmptyOutput     = errors.New("output channel was not specified")
 	ErrTimeoutTooSmall = errors.New("timeout value is too small")
 )
 
@@ -29,8 +28,6 @@ type Opts[Type any] struct {
 	// Input data channel. For graceful termination it is enough to
 	// close the input channel
 	Input <-chan Type
-	// Output channel of stacked data
-	Output chan<- []Type
 	// Send timeout of accumulated buffer
 	Timeout time.Duration
 }
@@ -38,10 +35,6 @@ type Opts[Type any] struct {
 func (opts Opts[Type]) isValid() error {
 	if opts.Input == nil {
 		return ErrEmptyInput
-	}
-
-	if opts.Output == nil {
-		return ErrEmptyOutput
 	}
 
 	return nil
@@ -67,11 +60,11 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker  *breaker.Breaker
-	graceful *breaker.Breaker
+	breaker *breaker.Breaker
 
-	stack     []Type
+	output    chan []Type
 	sendAt    time.Time
+	stack     []Type
 	timeouter *time.Ticker
 }
 
@@ -91,9 +84,9 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		breaker:  breaker.New(),
-		graceful: breaker.New(),
+		breaker: breaker.New(),
 
+		output:    make(chan []Type, 1),
 		stack:     make([]Type, 0, opts.StackSize),
 		timeouter: time.NewTicker(duration),
 	}
@@ -103,21 +96,15 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
+func (dsc *Discipline[Type]) Output() <-chan []Type {
+	return dsc.output
+}
+
 // Roughly terminates work of the discipline.
 //
 // Use for wait completion at terminates via context
 func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
-}
-
-// Graceful terminates work of the discipline.
-//
-// Waits draining input channel, write stack to output channel and terminates.
-//
-// You must end write to input channel and close them,
-// otherwise graceful stop not be ended
-func (dsc *Discipline[Type]) GracefulStop() {
-	dsc.graceful.Break()
 }
 
 // Maximum timeout error is calculated as timeout + timeout/divider.
@@ -137,7 +124,7 @@ func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
 
 func (dsc *Discipline[Type]) loop() {
 	defer dsc.breaker.Complete()
-	defer dsc.graceful.Complete()
+	defer close(dsc.output)
 	defer dsc.timeouter.Stop()
 	defer dsc.send()
 
@@ -199,7 +186,7 @@ func (dsc *Discipline[Type]) send() {
 		return
 	case <-dsc.opts.Ctx.Done():
 		return
-	case dsc.opts.Output <- stack:
+	case dsc.output <- stack:
 	}
 
 	dsc.resetStack()
