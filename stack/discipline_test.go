@@ -1,7 +1,6 @@
 package stack
 
 import (
-	"fmt"
 	"sync"
 	"testing"
 
@@ -9,12 +8,13 @@ import (
 )
 
 func TestDiscipline(t *testing.T) {
-	quantity := 100
+	quantity := 105
 
 	input := make(chan uint)
 
 	opts := Opts[uint]{
-		Input: input,
+		Input:     input,
+		StackSize: 10,
 	}
 
 	discipline, err := New(opts)
@@ -30,33 +30,25 @@ func TestDiscipline(t *testing.T) {
 		defer wg.Done()
 		defer close(input)
 
-		period := uint(1)
+		for stage := 1; stage <= quantity; stage++ {
+			inSequence = append(inSequence, uint(stage))
 
-		for stage := 0; stage < quantity; stage++ {
-			inSequence = append(inSequence, period)
-
-			input <- period
-
-			period++
-
-			if period == 4 {
-				period = 1
-			}
+			input <- uint(stage)
 		}
 	}()
 
-	outSequence := make([][]uint, 0, quantity/10)
+	outSequence := make([]uint, 0, quantity)
 
 	go func() {
 		defer wg.Done()
 
-		for item := range discipline.Output() {
-			outSequence = append(outSequence, item)
+		for stack := range discipline.Output() {
+			require.NotEqual(t, 0, stack)
+			outSequence = append(outSequence, stack...)
 		}
 	}()
 
 	wg.Wait()
 
-	fmt.Println(inSequence)
-	fmt.Println(outSequence)
+	require.Equal(t, inSequence, outSequence)
 }
