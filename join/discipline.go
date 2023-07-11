@@ -26,14 +26,14 @@ type Opts[Type any] struct {
 	// Input data channel. For graceful termination it is enough to
 	// close the input channel
 	Input <-chan Type
+	// Output slice size
+	JoinSize uint
 	// By default, to the output channel is written a copy of the accumulated slice
 	// If the Released channel is set, then to the output channel will be directly
 	// written the accumulated slice
 	// In this case, after the accumulated slice is used it is necessary to inform
 	// the discipline about it by writing to Released channel
 	Released <-chan struct{}
-	// Output slice size
-	JoinSize uint
 	// Send timeout of accumulated slice
 	Timeout time.Duration
 }
