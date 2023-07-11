@@ -23,14 +23,18 @@ const (
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
-	// Reuse slice
-	Feedback <-chan struct{}
 	// Input data channel. For graceful termination it is enough to
 	// close the input channel
 	Input <-chan Type
+	// By default, to the output channel is written a copy of the accumulated slice
+	// If the Released channel is set, then to the output channel will be directly
+	// written the accumulated slice
+	// In this case, after the accumulated slice is used it is necessary to inform the
+	// discipline about it by writing to Released channel
+	Released <-chan struct{}
 	// Data stack size
-	StackSize uint
-	// Send timeout of accumulated stack
+	Size uint
+	// Send timeout of accumulated slice
 	Timeout time.Duration
 }
 
@@ -39,7 +43,7 @@ func (opts Opts[Type]) isValid() error {
 		return ErrEmptyInput
 	}
 
-	if opts.StackSize == 0 {
+	if opts.Size == 0 {
 		return ErrInvalidStackSize
 	}
 
@@ -89,7 +93,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		breaker: breaker.New(),
 
 		output:    make(chan []Type, 1),
-		stack:     make([]Type, 0, opts.StackSize),
+		stack:     make([]Type, 0, opts.Size),
 		timeouter: time.NewTicker(duration),
 	}
 
@@ -113,6 +117,7 @@ func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
 	return timeout, nil
 }
 
+// Returns output channel
 func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
@@ -155,7 +160,7 @@ func (dsc *Discipline[Type]) loop() {
 func (dsc *Discipline[Type]) process(item Type) {
 	dsc.stack = append(dsc.stack, item)
 
-	if len(dsc.stack) < int(dsc.opts.StackSize) {
+	if len(dsc.stack) < int(dsc.opts.Size) {
 		return
 	}
 
@@ -177,13 +182,13 @@ func (dsc *Discipline[Type]) send() {
 	case dsc.output <- stack:
 	}
 
-	if dsc.opts.Feedback != nil {
+	if dsc.opts.Released != nil {
 		select {
 		case <-dsc.breaker.Breaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
-		case <-dsc.opts.Feedback:
+		case <-dsc.opts.Released:
 		}
 	}
 
@@ -212,7 +217,7 @@ func (dsc *Discipline[Type]) copyStack() []Type {
 }
 
 func (dsc *Discipline[Type]) prepareStack() []Type {
-	if dsc.opts.Feedback != nil {
+	if dsc.opts.Released != nil {
 		return dsc.stack
 	}
 
