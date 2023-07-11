@@ -33,7 +33,7 @@ type Opts[Type any] struct {
 	// discipline about it by writing to Released channel
 	Released <-chan struct{}
 	// Data stack size
-	Size uint
+	StackSize uint
 	// Send timeout of accumulated slice
 	Timeout time.Duration
 }
@@ -43,7 +43,7 @@ func (opts Opts[Type]) isValid() error {
 		return ErrEmptyInput
 	}
 
-	if opts.Size == 0 {
+	if opts.StackSize == 0 {
 		return ErrInvalidStackSize
 	}
 
@@ -93,7 +93,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		breaker: breaker.New(),
 
 		output:    make(chan []Type, 1),
-		stack:     make([]Type, 0, opts.Size),
+		stack:     make([]Type, 0, opts.StackSize),
 		timeouter: time.NewTicker(duration),
 	}
 
@@ -160,7 +160,7 @@ func (dsc *Discipline[Type]) loop() {
 func (dsc *Discipline[Type]) process(item Type) {
 	dsc.stack = append(dsc.stack, item)
 
-	if len(dsc.stack) < int(dsc.opts.Size) {
+	if len(dsc.stack) < int(dsc.opts.StackSize) {
 		return
 	}
 

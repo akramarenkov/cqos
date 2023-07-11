@@ -13,8 +13,8 @@ func ExampleDiscipline() {
 	input := make(chan uint)
 
 	opts := stack.Opts[uint]{
-		Input: input,
-		Size:  5,
+		Input:     input,
+		StackSize: 5,
 	}
 
 	discipline, err := stack.New(opts)
