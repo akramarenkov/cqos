@@ -23,6 +23,8 @@ const (
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
+	// Reuse slice
+	Feedback <-chan struct{}
 	// Input data channel. For graceful termination it is enough to
 	// close the input channel
 	Input <-chan Type
@@ -161,6 +163,15 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) send() {
+	if dsc.opts.Feedback != nil {
+		dsc.sendOriginal()
+		return
+	}
+
+	dsc.sendCopy()
+}
+
+func (dsc *Discipline[Type]) sendCopy() {
 	stack := dsc.copyStack()
 
 	if len(stack) == 0 {
@@ -173,6 +184,31 @@ func (dsc *Discipline[Type]) send() {
 	case <-dsc.opts.Ctx.Done():
 		return
 	case dsc.output <- stack:
+	}
+
+	dsc.resetStack()
+	dsc.resetSendAt()
+}
+
+func (dsc *Discipline[Type]) sendOriginal() {
+	if len(dsc.stack) == 0 {
+		return
+	}
+
+	select {
+	case <-dsc.breaker.Breaked():
+		return
+	case <-dsc.opts.Ctx.Done():
+		return
+	case dsc.output <- dsc.stack:
+	}
+
+	select {
+	case <-dsc.breaker.Breaked():
+		return
+	case <-dsc.opts.Ctx.Done():
+		return
+	case <-dsc.opts.Feedback:
 	}
 
 	dsc.resetStack()
