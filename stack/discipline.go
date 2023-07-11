@@ -163,16 +163,7 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) send() {
-	if dsc.opts.Feedback != nil {
-		dsc.sendOriginal()
-		return
-	}
-
-	dsc.sendCopy()
-}
-
-func (dsc *Discipline[Type]) sendCopy() {
-	stack := dsc.copyStack()
+	stack := dsc.prepareStack()
 
 	if len(stack) == 0 {
 		return
@@ -186,29 +177,14 @@ func (dsc *Discipline[Type]) sendCopy() {
 	case dsc.output <- stack:
 	}
 
-	dsc.resetStack()
-	dsc.resetSendAt()
-}
-
-func (dsc *Discipline[Type]) sendOriginal() {
-	if len(dsc.stack) == 0 {
-		return
-	}
-
-	select {
-	case <-dsc.breaker.Breaked():
-		return
-	case <-dsc.opts.Ctx.Done():
-		return
-	case dsc.output <- dsc.stack:
-	}
-
-	select {
-	case <-dsc.breaker.Breaked():
-		return
-	case <-dsc.opts.Ctx.Done():
-		return
-	case <-dsc.opts.Feedback:
+	if dsc.opts.Feedback != nil {
+		select {
+		case <-dsc.breaker.Breaked():
+			return
+		case <-dsc.opts.Ctx.Done():
+			return
+		case <-dsc.opts.Feedback:
+		}
 	}
 
 	dsc.resetStack()
@@ -233,4 +209,12 @@ func (dsc *Discipline[Type]) copyStack() []Type {
 	copy(sent, dsc.stack)
 
 	return sent
+}
+
+func (dsc *Discipline[Type]) prepareStack() []Type {
+	if dsc.opts.Feedback != nil {
+		return dsc.stack
+	}
+
+	return dsc.copyStack()
 }
