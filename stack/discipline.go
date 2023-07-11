@@ -29,8 +29,8 @@ type Opts[Type any] struct {
 	// By default, to the output channel is written a copy of the accumulated slice
 	// If the Released channel is set, then to the output channel will be directly
 	// written the accumulated slice
-	// In this case, after the accumulated slice is used it is necessary to inform the
-	// discipline about it by writing to Released channel
+	// In this case, after the accumulated slice is used it is necessary to inform
+	// the discipline about it by writing to Released channel
 	Released <-chan struct{}
 	// Data stack size
 	StackSize uint
