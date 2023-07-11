@@ -50,10 +50,10 @@ func testDiscipline(t *testing.T, useReleased bool) {
 		defer wg.Done()
 		defer close(released)
 
-		for stack := range discipline.Output() {
-			require.NotEqual(t, 0, stack)
+		for slice := range discipline.Output() {
+			require.NotEqual(t, 0, slice)
 
-			outSequence = append(outSequence, stack...)
+			outSequence = append(outSequence, slice...)
 
 			if useReleased {
 				released <- struct{}{}
@@ -140,9 +140,10 @@ func TestDisciplineTimeout(t *testing.T) {
 	go func() {
 		defer wg.Done()
 
-		for stack := range discipline.Output() {
-			require.NotEqual(t, 0, stack)
-			outSequence = append(outSequence, stack...)
+		for slice := range discipline.Output() {
+			require.NotEqual(t, 0, slice)
+
+			outSequence = append(outSequence, slice...)
 		}
 	}()
 
@@ -205,9 +206,10 @@ func testDisciplineStop(t *testing.T, byCtx bool) {
 	go func() {
 		defer wg.Done()
 
-		for stack := range discipline.Output() {
-			require.NotEqual(t, 0, stack)
-			outSequence = append(outSequence, stack...)
+		for slice := range discipline.Output() {
+			require.NotEqual(t, 0, slice)
+
+			outSequence = append(outSequence, slice...)
 		}
 	}()
 

@@ -30,7 +30,7 @@ func main() {
     input := make(chan uint)
 
     opts := join.Opts[uint]{
-        Input:     input,
+        Input:    input,
         JoinSize: 5,
     }
 
