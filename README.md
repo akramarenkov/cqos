@@ -11,3 +11,5 @@ Library that allows you to control passage of data between Go channels
 ## Implemented disciplines
 
 * **priority** - distributes data among handlers according to priority. See [README](./priority/README.md)
+
+* **stack** - accumulates elements from the input channel into a slice and writes it to the output channel when the size or timeout is reached. See [README](./stack/README.md)
