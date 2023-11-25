@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/research"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -67,17 +68,17 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
 		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -218,17 +219,17 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
 		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -369,17 +370,17 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
 		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -520,17 +521,17 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := convertQuantityOverTimeToBarEcharts(
+	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
 		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -669,12 +670,12 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
@@ -793,12 +794,12 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := convertQuantityOverTimeToLineEcharts(
+	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
@@ -1552,7 +1553,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 
 	received := filterByKind(gauges, gaugeKindReceived)
 
-	dqot, dqotX := convertQuantityOverTimeToLineEcharts(
+	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
