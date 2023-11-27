@@ -119,6 +119,7 @@ func TestSimpleBadDivider(t *testing.T) {
 	handle := func(ctx context.Context, item string) {
 		select {
 		case <-ctx.Done():
+			return
 		case measurements <- true:
 			time.Sleep(1 * time.Millisecond)
 		}
@@ -127,8 +128,8 @@ func TestSimpleBadDivider(t *testing.T) {
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
 		out := FairDivider(priorities, dividend, distribution)
 
-		for priority, quantity := range out {
-			out[priority] = 2 * quantity
+		for priority := range out {
+			out[priority] *= 2
 		}
 
 		return out
@@ -182,6 +183,10 @@ func TestSimpleBadDivider(t *testing.T) {
 	defer func() {
 		require.NotEqual(t, 0, received)
 		require.NotEqual(t, itemsQuantity*len(inputs), received)
+	}()
+
+	defer func() {
+		<-simple.Err()
 	}()
 
 	for {

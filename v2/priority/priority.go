@@ -8,7 +8,6 @@ import (
 
 var (
 	ErrEmptyDivider     = errors.New("priorities divider was not specified")
-	ErrEmptyFeedback    = errors.New("feedback channel was not specified")
 	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
 )
 
@@ -28,8 +27,6 @@ type Prioritized[Type any] struct {
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
 	Divider Divider
-	// Handlers must write priority of processed data to feedback channel after it has been processed
-	Feedback <-chan uint
 	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons
@@ -50,13 +47,15 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	inputs     map[uint]<-chan Type
-	priorities []uint
-	output     chan Prioritized[Type]
+	feedback chan uint
+	inputs   map[uint]<-chan Type
+	output   chan Prioritized[Type]
 
+	priorities []uint
+
+	actual    map[uint]uint
 	strategic map[uint]uint
 	tactic    map[uint]uint
-	actual    map[uint]uint
 
 	uncrowded []uint
 	useful    []uint
@@ -74,10 +73,6 @@ func (opts Opts[Type]) isValid() error {
 		return ErrEmptyDivider
 	}
 
-	if opts.Feedback == nil {
-		return ErrEmptyFeedback
-	}
-
 	return nil
 }
 
@@ -92,12 +87,13 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		inputs: make(map[uint]<-chan Type),
-		output: make(chan Prioritized[Type], capacity),
+		feedback: make(chan uint, capacity),
+		inputs:   make(map[uint]<-chan Type),
+		output:   make(chan Prioritized[Type], capacity),
 
+		actual:    make(map[uint]uint),
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
-		actual:    make(map[uint]uint),
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
 		unbuffered:  make(map[uint]bool),
@@ -119,6 +115,11 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // If this channel is closed, it means that the discipline is terminated
 func (dsc *Discipline[Type]) Output() <-chan Prioritized[Type] {
 	return dsc.output
+}
+
+// Marks that current data has been processed and handler is ready for new data
+func (dsc *Discipline[Type]) Release(priority uint) {
+	dsc.feedback <- priority
 }
 
 // Returns a channel with errors. If an error occurs (the value from the channel
@@ -150,17 +151,32 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.err)
 	defer close(dsc.output)
+	defer close(dsc.feedback)
 	defer dsc.interrupter.Stop()
 
 	defer func() {
 		if value := recover(); value != nil {
 			dsc.err <- value.(error)
 		}
+
+		for {
+			select {
+			case priority := <-dsc.feedback:
+				dsc.decreaseActual(priority)
+			default:
+			}
+
+			if dsc.isZeroActual() {
+				return
+			}
+
+			time.Sleep(defaultIdleDelay)
+		}
 	}()
 
 	for {
 		select {
-		case priority := <-dsc.opts.Feedback:
+		case priority := <-dsc.feedback:
 			dsc.decreaseActual(priority)
 		default:
 		}
@@ -241,7 +257,7 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			}
 
 			processed += dsc.send(item, priority)
-		case precedency := <-dsc.opts.Feedback:
+		case precedency := <-dsc.feedback:
 			dsc.decreaseActual(precedency)
 		default:
 			return processed
@@ -269,7 +285,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = false
 
 			processed += dsc.send(item, priority)
-		case precedency := <-dsc.opts.Feedback:
+		case precedency := <-dsc.feedback:
 			dsc.decreaseActual(precedency)
 		case <-dsc.interrupter.C:
 			if interrupt {
@@ -294,7 +310,7 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 			dsc.increaseActual(priority)
 
 			return 1
-		case precedency := <-dsc.opts.Feedback:
+		case precedency := <-dsc.feedback:
 			dsc.decreaseActual(precedency)
 		}
 	}
@@ -315,7 +331,7 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 func (dsc *Discipline[Type]) calcTactic() {
 	for {
 		if !dsc.pickUpTactic() {
-			dsc.decreaseActual(<-dsc.opts.Feedback)
+			dsc.decreaseActual(<-dsc.feedback)
 			continue
 		}
 

@@ -27,10 +27,6 @@ func ExampleDiscipline() {
 		1: inputs[1],
 	}
 
-	// Handlers must write priority of processed data to feedback channel after it has been processed
-	feedback := make(chan uint)
-	defer close(feedback)
-
 	// Used only in this example for detect that all written data are processed
 	measurements := make(chan bool)
 	defer close(measurements)
@@ -38,7 +34,6 @@ func ExampleDiscipline() {
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
 	disciplineOpts := priority.Opts[string]{
 		Divider:          priority.RateDivider,
-		Feedback:         feedback,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
@@ -81,7 +76,8 @@ func ExampleDiscipline() {
 				// fmt.Println(prioritized.Item)
 				measurements <- true
 
-				feedback <- prioritized.Priority
+				// Handlers must indicate that current data has been processed
+				discipline.Release(prioritized.Priority)
 			}
 		}()
 	}

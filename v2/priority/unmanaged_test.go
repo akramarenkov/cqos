@@ -30,6 +30,9 @@ func (nmn *unmanaged[Type]) Output() <-chan Prioritized[Type] {
 	return nmn.output
 }
 
+func (nmn *unmanaged[Type]) Release(uint) {
+}
+
 func (nmn *unmanaged[Type]) main() {
 	defer close(nmn.output)
 

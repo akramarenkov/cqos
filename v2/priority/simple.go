@@ -45,8 +45,6 @@ type Simple[Type any] struct {
 
 	discipline *Discipline[Type]
 
-	feedback chan uint
-
 	wg *sync.WaitGroup
 
 	err chan error
@@ -58,13 +56,8 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		return nil, err
 	}
 
-	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
-
-	feedback := make(chan uint, capacity)
-
 	disciplineOpts := Opts[Type]{
 		Divider:          opts.Divider,
-		Feedback:         feedback,
 		HandlersQuantity: opts.HandlersQuantity,
 		Inputs:           opts.Inputs,
 	}
@@ -78,8 +71,6 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		opts: opts,
 
 		discipline: discipline,
-
-		feedback: feedback,
 
 		wg: &sync.WaitGroup{},
 
@@ -103,7 +94,6 @@ func (smpl *Simple[Type]) Err() <-chan error {
 
 func (smpl *Simple[Type]) handlers() {
 	defer close(smpl.err)
-	defer close(smpl.feedback)
 	defer smpl.wg.Wait()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -132,12 +122,7 @@ func (smpl *Simple[Type]) handler(ctx context.Context) {
 			}
 
 			smpl.opts.Handle(ctx, prioritized.Item)
-
-			select {
-			case <-ctx.Done():
-				return
-			case smpl.feedback <- prioritized.Priority:
-			}
+			smpl.discipline.Release(prioritized.Priority)
 		}
 	}
 }

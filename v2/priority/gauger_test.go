@@ -11,6 +11,11 @@ const (
 	defaultWaitDevastationDelay = 1 * time.Microsecond
 )
 
+type disciplineInterface[Type any] interface {
+	Output() <-chan Prioritized[Type]
+	Release(priority uint)
+}
+
 type gaugeKind int
 
 const (
@@ -72,9 +77,8 @@ type gauger struct {
 	delays  map[uint]time.Duration
 	gauges  chan []gauge
 
-	feedback chan uint
-	inputs   map[uint]chan uint
-	output   <-chan Prioritized[uint]
+	inputs     map[uint]chan uint
+	discipline disciplineInterface[uint]
 
 	waiter *sync.WaitGroup
 }
@@ -88,8 +92,7 @@ func newGauger(opts gaugerOpts) *gauger {
 		actions: make(map[uint][]action),
 		delays:  make(map[uint]time.Duration),
 
-		feedback: make(chan uint, defaultChannelCapacity),
-		inputs:   make(map[uint]chan uint),
+		inputs: make(map[uint]chan uint),
 
 		waiter: &sync.WaitGroup{},
 	}
@@ -172,12 +175,8 @@ func (ggr *gauger) GetInputs() map[uint]<-chan uint {
 	return out
 }
 
-func (ggr *gauger) SetOutput(output <-chan Prioritized[uint]) {
-	ggr.output = output
-}
-
-func (ggr *gauger) GetFeedback() <-chan uint {
-	return ggr.feedback
+func (ggr *gauger) SetDiscipline(discipline disciplineInterface[uint]) {
+	ggr.discipline = discipline
 }
 
 func (ggr *gauger) runWriters(ctx context.Context) {
@@ -269,13 +268,13 @@ func (ggr *gauger) handler(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case prioritized, opened := <-ggr.output:
+		case prioritized, opened := <-ggr.discipline.Output():
 			if !opened {
 				return
 			}
 
 			if ggr.opts.DisableGauges {
-				ggr.feedback <- prioritized.Priority
+				ggr.discipline.Release(prioritized.Priority)
 				ggr.gauges <- nil
 
 				continue
@@ -304,7 +303,7 @@ func (ggr *gauger) handler(ctx context.Context) {
 			batch = append(batch, processed)
 
 			if !ggr.opts.NoFeedback {
-				ggr.feedback <- prioritized.Priority
+				ggr.discipline.Release(prioritized.Priority)
 			}
 
 			completed := gauge{
@@ -322,8 +321,6 @@ func (ggr *gauger) handler(ctx context.Context) {
 }
 
 func (ggr *gauger) Play(ctx context.Context) []gauge {
-	defer close(ggr.feedback)
-
 	expectedGaugesQuantity := ggr.CalcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
