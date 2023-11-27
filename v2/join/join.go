@@ -26,11 +26,11 @@ type Opts[Type any] struct {
 	// Output slice size
 	JoinSize uint
 	// By default, to the output channel is written a copy of the accumulated slice
-	// If the Released channel is set, then to the output channel will be directly
+	// If the NoCopy is set to true, then to the output channel will be directly
 	// written the accumulated slice
-	// In this case, after the accumulated slice is used it is necessary to inform
-	// the discipline about it by writing to Released channel
-	Released <-chan struct{}
+	// In this case, after the accumulated slice is no longer used it is necessary to
+	// inform the discipline about it by calling Release()
+	NoCopy bool
 	// Send timeout of accumulated slice
 	// Minimum value is 4 nanoseconds
 	Timeout time.Duration
@@ -60,10 +60,11 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	output    chan []Type
-	sendAt    time.Time
-	join      []Type
-	timeouter *time.Ticker
+	join     []Type
+	output   chan []Type
+	released chan struct{}
+	sendAt   time.Time
+	ticker   *time.Ticker
 }
 
 // Creates and runs main discipline
@@ -74,7 +75,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	duration, err := calcTimeouterDuration(opts.Timeout)
+	duration, err := calcTickerDuration(opts.Timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -82,9 +83,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		output:    make(chan []Type, 1),
-		join:      make([]Type, 0, opts.JoinSize),
-		timeouter: time.NewTicker(duration),
+		join:     make([]Type, 0, opts.JoinSize),
+		output:   make(chan []Type, 1),
+		released: make(chan struct{}),
+		ticker:   time.NewTicker(duration),
 	}
 
 	dsc.resetSendAt()
@@ -99,7 +101,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // Relative timeout error in percent is calculated as 100/divider.
 //
 // Remember that a ticker is triggered in the 'divider' times more often
-func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
+func calcTickerDuration(timeout time.Duration) (time.Duration, error) {
 	timeout /= defaultTimeoutDivider
 
 	if timeout == 0 {
@@ -116,13 +118,17 @@ func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
 
+func (dsc *Discipline[Type]) Release() {
+	dsc.released <- struct{}{}
+}
+
 func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.output)
-	defer dsc.timeouter.Stop()
+	defer dsc.ticker.Stop()
 
 	for {
 		select {
-		case <-dsc.timeouter.C:
+		case <-dsc.ticker.C:
 			if dsc.isTimeouted() {
 				dsc.send()
 			}
@@ -156,8 +162,8 @@ func (dsc *Discipline[Type]) send() {
 
 	dsc.output <- join
 
-	if dsc.opts.Released != nil {
-		<-dsc.opts.Released
+	if dsc.opts.NoCopy {
+		<-dsc.released
 	}
 
 	dsc.resetJoin()
@@ -185,7 +191,7 @@ func (dsc *Discipline[Type]) copyJoin() []Type {
 }
 
 func (dsc *Discipline[Type]) prepareJoin() []Type {
-	if dsc.opts.Released != nil {
+	if dsc.opts.NoCopy {
 		return dsc.join
 	}
 

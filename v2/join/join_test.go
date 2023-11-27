@@ -33,21 +33,15 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.Error(t, err)
 }
 
-func testDiscipline(t *testing.T, useReleased bool) {
+func testDiscipline(t *testing.T, noCopy bool) {
 	quantity := 105
 
 	input := make(chan int)
-	released := make(chan struct{})
-
-	defer close(released)
 
 	opts := Opts[int]{
 		Input:    input,
 		JoinSize: 10,
-	}
-
-	if useReleased {
-		opts.Released = released
+		NoCopy:   noCopy,
 	}
 
 	discipline, err := New(opts)
@@ -75,8 +69,8 @@ func testDiscipline(t *testing.T, useReleased bool) {
 
 		outSequence = append(outSequence, slice...)
 
-		if useReleased {
-			released <- struct{}{}
+		if noCopy {
+			discipline.Release()
 		}
 	}
 
@@ -90,7 +84,7 @@ func TestDiscipline(t *testing.T) {
 	testDiscipline(t, false)
 }
 
-func TestDisciplineReleased(t *testing.T) {
+func TestDisciplineNoCopy(t *testing.T) {
 	testDiscipline(t, true)
 }
 
@@ -143,22 +137,15 @@ func TestDisciplineTimeout(t *testing.T) {
 	require.Equal(t, expectedJoins, joins)
 }
 
-func benchmarkDiscipline(b *testing.B, useReleased bool) {
+func benchmarkDiscipline(b *testing.B, noCopy bool) {
 	quantity := 10000000
 
 	input := make(chan int)
-	released := make(chan struct{})
-
-	defer close(released)
 
 	opts := Opts[int]{
-		Input: input,
-
+		Input:    input,
 		JoinSize: 100,
-	}
-
-	if useReleased {
-		opts.Released = released
+		NoCopy:   noCopy,
 	}
 
 	discipline, err := New(opts)
@@ -173,8 +160,8 @@ func benchmarkDiscipline(b *testing.B, useReleased bool) {
 	}()
 
 	for range discipline.Output() {
-		if useReleased {
-			released <- struct{}{}
+		if noCopy {
+			discipline.Release()
 		}
 	}
 }
