@@ -118,6 +118,9 @@ func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
 
+// Marks accumulated slice as no longer used.
+//
+// Must be used only if NoCopy option is set to true
 func (dsc *Discipline[Type]) Release() {
 	dsc.released <- struct{}{}
 }
