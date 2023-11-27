@@ -19,6 +19,10 @@ const (
 	defaultTimeoutInaccuracy = 25
 )
 
+const (
+	oneHundredPercent = 100
+)
+
 // Options of the created discipline
 type Opts[Type any] struct {
 	// Input data channel. For terminate discipline it is enough to
@@ -115,7 +119,7 @@ func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, 
 		return 0, ErrInvalidTimeoutInaccuracy
 	}
 
-	divider := 100 / inaccuracy
+	divider := oneHundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrInvalidTimeoutInaccuracy
