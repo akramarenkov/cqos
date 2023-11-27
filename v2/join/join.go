@@ -145,6 +145,7 @@ func (dsc *Discipline[Type]) Release() {
 }
 
 func (dsc *Discipline[Type]) loop() {
+	defer close(dsc.released)
 	defer close(dsc.output)
 	defer dsc.ticker.Stop()
 
