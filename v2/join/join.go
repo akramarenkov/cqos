@@ -71,11 +71,11 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	join     []Type
-	output   chan []Type
-	released chan struct{}
-	sendAt   time.Time
-	ticker   *time.Ticker
+	join    []Type
+	output  chan []Type
+	release chan struct{}
+	sendAt  time.Time
+	ticker  *time.Ticker
 }
 
 // Creates and runs main discipline
@@ -94,10 +94,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		join:     make([]Type, 0, opts.JoinSize),
-		output:   make(chan []Type, 1),
-		released: make(chan struct{}),
-		ticker:   time.NewTicker(duration),
+		join:    make([]Type, 0, opts.JoinSize),
+		output:  make(chan []Type, 1),
+		release: make(chan struct{}),
+		ticker:  time.NewTicker(duration),
 	}
 
 	dsc.resetSendAt()
@@ -141,11 +141,11 @@ func (dsc *Discipline[Type]) Output() <-chan []Type {
 //
 // Must be used only if NoCopy option is set to true
 func (dsc *Discipline[Type]) Release() {
-	dsc.released <- struct{}{}
+	dsc.release <- struct{}{}
 }
 
 func (dsc *Discipline[Type]) loop() {
-	defer close(dsc.released)
+	defer close(dsc.release)
 	defer close(dsc.output)
 	defer dsc.ticker.Stop()
 
@@ -186,7 +186,7 @@ func (dsc *Discipline[Type]) send() {
 	dsc.output <- join
 
 	if dsc.opts.NoCopy {
-		<-dsc.released
+		<-dsc.release
 	}
 
 	dsc.resetJoin()
