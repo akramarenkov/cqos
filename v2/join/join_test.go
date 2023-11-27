@@ -8,6 +8,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCalcTickerDuration(t *testing.T) {
+	duration, err := calcTickerDuration(1*time.Millisecond, 25)
+	require.NoError(t, err)
+	require.Equal(t, 250*time.Microsecond, duration)
+
+	duration, err = calcTickerDuration(2*time.Nanosecond, 25)
+	require.Error(t, err)
+	require.Equal(t, time.Duration(0), duration)
+
+	duration, err = calcTickerDuration(1*time.Millisecond, 0)
+	require.Error(t, err)
+	require.Equal(t, time.Duration(0), duration)
+
+	duration, err = calcTickerDuration(1*time.Millisecond, 101)
+	require.Error(t, err)
+	require.Equal(t, time.Duration(0), duration)
+}
+
 func TestDisciplineOptsValidation(t *testing.T) {
 	opts := Opts[uint]{
 		JoinSize: 10,
@@ -31,6 +49,14 @@ func TestDisciplineOptsValidation(t *testing.T) {
 
 	_, err = New(opts)
 	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Input:    make(chan uint),
+		JoinSize: 10,
+	}
+
+	_, err = New(opts)
+	require.NoError(t, err)
 }
 
 func testDiscipline(t *testing.T, noCopy bool) {
@@ -97,7 +123,7 @@ func TestDisciplineTimeout(t *testing.T) {
 	opts := Opts[int]{
 		Input:    input,
 		JoinSize: 10,
-		Timeout:  500 * time.Millisecond,
+		Timeout:  100 * time.Millisecond,
 	}
 
 	discipline, err := New(opts)
@@ -110,7 +136,7 @@ func TestDisciplineTimeout(t *testing.T) {
 
 		for stage := 1; stage <= quantity; stage++ {
 			if stage == pauseAt {
-				time.Sleep(3 * opts.Timeout)
+				time.Sleep(5 * opts.Timeout)
 			}
 
 			inSequence = append(inSequence, stage)
@@ -130,7 +156,7 @@ func TestDisciplineTimeout(t *testing.T) {
 		outSequence = append(outSequence, slice...)
 	}
 
-	// plus one due to pause
+	// plus one (slice with incomplete size) due to pause on write to input
 	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize)) + 1)
 
 	require.Equal(t, inSequence, outSequence)

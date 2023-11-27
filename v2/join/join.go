@@ -8,14 +8,15 @@ import (
 )
 
 var (
-	ErrEmptyInput      = errors.New("input channel was not specified")
-	ErrInvalidJoinSize = errors.New("invalid join size")
-	ErrTimeoutTooSmall = errors.New("timeout value is too small")
+	ErrEmptyInput               = errors.New("input channel was not specified")
+	ErrInvalidJoinSize          = errors.New("invalid join size")
+	ErrInvalidTimeoutInaccuracy = errors.New("invalid timeout inaccuracy")
+	ErrTimeoutTooSmall          = errors.New("timeout value is too small")
 )
 
 const (
-	defaultTimeout        = 1 * time.Millisecond
-	defaultTimeoutDivider = 4
+	defaultTimeout           = 1 * time.Millisecond
+	defaultTimeoutInaccuracy = 25
 )
 
 // Options of the created discipline
@@ -32,8 +33,14 @@ type Opts[Type any] struct {
 	// inform the discipline about it by calling Release()
 	NoCopy bool
 	// Send timeout of accumulated slice
-	// Minimum value is 4 nanoseconds
 	Timeout time.Duration
+	// Due to the fact that it is not possible to reliably reset the timer/ticker
+	// (without false ticks), a ticker with a duration several times shorter than
+	// the timeout is used and to determine the expiration of the timeout,
+	// the current time is compared with the time of the last recording to
+	// the output channel. This method has an inaccuracy that can be set by
+	// this parameter
+	TimeoutInaccuracy uint
 }
 
 func (opts Opts[Type]) isValid() error {
@@ -51,6 +58,10 @@ func (opts Opts[Type]) isValid() error {
 func (opts Opts[Type]) normalize() Opts[Type] {
 	if opts.Timeout == 0 {
 		opts.Timeout = defaultTimeout
+	}
+
+	if opts.TimeoutInaccuracy == 0 {
+		opts.TimeoutInaccuracy = defaultTimeoutInaccuracy
 	}
 
 	return opts
@@ -75,7 +86,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	duration, err := calcTickerDuration(opts.Timeout)
+	duration, err := calcTickerDuration(opts.Timeout, opts.TimeoutInaccuracy)
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +109,19 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 // Maximum timeout error is calculated as timeout + timeout/divider.
 //
-// Relative timeout error in percent is calculated as 100/divider.
-//
-// Remember that a ticker is triggered in the 'divider' times more often
-func calcTickerDuration(timeout time.Duration) (time.Duration, error) {
-	timeout /= defaultTimeoutDivider
+// Relative timeout error in percent (inaccuracy) is calculated as 100/divider
+func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, error) {
+	if inaccuracy == 0 {
+		return 0, ErrInvalidTimeoutInaccuracy
+	}
+
+	divider := 100 / inaccuracy
+
+	if divider == 0 {
+		return 0, ErrInvalidTimeoutInaccuracy
+	}
+
+	timeout /= time.Duration(divider)
 
 	if timeout == 0 {
 		return 0, ErrTimeoutTooSmall
