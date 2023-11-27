@@ -3,11 +3,8 @@
 package join
 
 import (
-	"context"
 	"errors"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/breaker"
 )
 
 var (
@@ -23,9 +20,7 @@ const (
 
 // Options of the created discipline
 type Opts[Type any] struct {
-	// Roughly terminates (cancels) work of the discipline
-	Ctx context.Context
-	// Input data channel. For graceful termination it is enough to
+	// Input data channel. For terminate discipline it is enough to
 	// close the input channel
 	Input <-chan Type
 	// Output slice size
@@ -37,6 +32,7 @@ type Opts[Type any] struct {
 	// the discipline about it by writing to Released channel
 	Released <-chan struct{}
 	// Send timeout of accumulated slice
+	// Minimum value is 4 nanoseconds
 	Timeout time.Duration
 }
 
@@ -53,10 +49,6 @@ func (opts Opts[Type]) isValid() error {
 }
 
 func (opts Opts[Type]) normalize() Opts[Type] {
-	if opts.Ctx == nil {
-		opts.Ctx = context.Background()
-	}
-
 	if opts.Timeout == 0 {
 		opts.Timeout = defaultTimeout
 	}
@@ -67,8 +59,6 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 // Main discipline
 type Discipline[Type any] struct {
 	opts Opts[Type]
-
-	breaker *breaker.Breaker
 
 	output    chan []Type
 	sendAt    time.Time
@@ -92,12 +82,12 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		breaker: breaker.New(),
-
 		output:    make(chan []Type, 1),
 		join:      make([]Type, 0, opts.JoinSize),
 		timeouter: time.NewTicker(duration),
 	}
+
+	dsc.resetSendAt()
 
 	go dsc.loop()
 
@@ -108,7 +98,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 //
 // Relative timeout error in percent is calculated as 100/divider.
 //
-// Remember that a ticker is 'divider' times more likely to be triggered
+// Remember that a ticker is triggered in the 'divider' times more often
 func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
 	timeout /= defaultTimeoutDivider
 
@@ -119,31 +109,19 @@ func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
 	return timeout, nil
 }
 
-// Returns output channel
+// Returns output channel.
+//
+// If this channel is closed, it means that the discipline is terminated
 func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
 
-// Roughly terminates work of the discipline.
-//
-// Use for wait completion at terminates via context
-func (dsc *Discipline[Type]) Stop() {
-	dsc.breaker.Break()
-}
-
 func (dsc *Discipline[Type]) loop() {
-	defer dsc.breaker.Complete()
-	defer dsc.timeouter.Stop()
 	defer close(dsc.output)
-
-	dsc.resetSendAt()
+	defer dsc.timeouter.Stop()
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
 		case <-dsc.timeouter.C:
 			if dsc.isTimeouted() {
 				dsc.send()
@@ -176,22 +154,10 @@ func (dsc *Discipline[Type]) send() {
 		return
 	}
 
-	select {
-	case <-dsc.breaker.Breaked():
-		return
-	case <-dsc.opts.Ctx.Done():
-		return
-	case dsc.output <- join:
-	}
+	dsc.output <- join
 
 	if dsc.opts.Released != nil {
-		select {
-		case <-dsc.breaker.Breaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
-		case <-dsc.opts.Released:
-		}
+		<-dsc.opts.Released
 	}
 
 	dsc.resetJoin()

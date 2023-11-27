@@ -64,7 +64,6 @@ func (opts gaugerOpts) normalize() gaugerOpts {
 type gauger struct {
 	opts gaugerOpts
 
-	breaker   chan bool
 	ready     *sync.WaitGroup
 	start     chan bool
 	startedAt time.Time
@@ -75,7 +74,7 @@ type gauger struct {
 
 	feedback chan uint
 	inputs   map[uint]chan uint
-	output   chan Prioritized[uint]
+	output   <-chan Prioritized[uint]
 
 	waiter *sync.WaitGroup
 }
@@ -91,22 +90,11 @@ func newGauger(opts gaugerOpts) *gauger {
 
 		feedback: make(chan uint, defaultChannelCapacity),
 		inputs:   make(map[uint]chan uint),
-		output:   make(chan Prioritized[uint], defaultChannelCapacity),
 
 		waiter: &sync.WaitGroup{},
 	}
 
 	return ggr
-}
-
-func (ggr *gauger) Finalize() {
-	close(ggr.feedback)
-
-	for _, channel := range ggr.inputs {
-		close(channel)
-	}
-
-	close(ggr.output)
 }
 
 func (ggr *gauger) AddWrite(priority uint, quantity uint) {
@@ -184,24 +172,25 @@ func (ggr *gauger) GetInputs() map[uint]<-chan uint {
 	return out
 }
 
-func (ggr *gauger) GetOutput() chan<- Prioritized[uint] {
-	return ggr.output
+func (ggr *gauger) SetOutput(output <-chan Prioritized[uint]) {
+	ggr.output = output
 }
 
 func (ggr *gauger) GetFeedback() <-chan uint {
 	return ggr.feedback
 }
 
-func (ggr *gauger) runWriters() {
+func (ggr *gauger) runWriters(ctx context.Context) {
 	for priority := range ggr.inputs {
 		ggr.waiter.Add(1)
 
-		go ggr.writer(priority)
+		go ggr.writer(ctx, priority)
 	}
 }
 
-func (ggr *gauger) writer(priority uint) {
+func (ggr *gauger) writer(ctx context.Context, priority uint) {
 	defer ggr.waiter.Done()
+	defer close(ggr.inputs[priority])
 
 	written := uint(0)
 
@@ -210,7 +199,7 @@ func (ggr *gauger) writer(priority uint) {
 		case actionKindWrite:
 			for id := uint(0); id < action.quantity; id++ {
 				select {
-				case <-ggr.breaker:
+				case <-ctx.Done():
 					return
 				case ggr.inputs[priority] <- written:
 				}
@@ -220,7 +209,7 @@ func (ggr *gauger) writer(priority uint) {
 		case actionKindWriteWithDelay:
 			for id := uint(0); id < action.quantity; id++ {
 				select {
-				case <-ggr.breaker:
+				case <-ctx.Done():
 					return
 				case ggr.inputs[priority] <- written:
 				}
@@ -236,7 +225,7 @@ func (ggr *gauger) writer(priority uint) {
 
 				for {
 					select {
-					case <-ggr.breaker:
+					case <-ctx.Done():
 						return
 					case <-ticker.C:
 						if len(ggr.inputs[priority]) == 0 {
@@ -251,7 +240,7 @@ func (ggr *gauger) writer(priority uint) {
 	}
 }
 
-func (ggr *gauger) runHandlers() {
+func (ggr *gauger) runHandlers(ctx context.Context) {
 	ggr.start = make(chan bool)
 	defer close(ggr.start)
 
@@ -259,7 +248,7 @@ func (ggr *gauger) runHandlers() {
 		ggr.ready.Add(1)
 		ggr.waiter.Add(1)
 
-		go ggr.handler()
+		go ggr.handler(ctx)
 	}
 
 	ggr.ready.Wait()
@@ -267,7 +256,7 @@ func (ggr *gauger) runHandlers() {
 	ggr.startedAt = time.Now()
 }
 
-func (ggr *gauger) handler() {
+func (ggr *gauger) handler(ctx context.Context) {
 	defer ggr.waiter.Done()
 
 	ggr.ready.Done()
@@ -278,9 +267,13 @@ func (ggr *gauger) handler() {
 
 	for {
 		select {
-		case <-ggr.breaker:
+		case <-ctx.Done():
 			return
-		case prioritized := <-ggr.output:
+		case prioritized, opened := <-ggr.output:
+			if !opened {
+				return
+			}
+
 			if ggr.opts.DisableGauges {
 				ggr.feedback <- prioritized.Priority
 				ggr.gauges <- nil
@@ -329,6 +322,8 @@ func (ggr *gauger) handler() {
 }
 
 func (ggr *gauger) Play(ctx context.Context) []gauge {
+	defer close(ggr.feedback)
+
 	expectedGaugesQuantity := ggr.CalcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
@@ -341,18 +336,16 @@ func (ggr *gauger) Play(ctx context.Context) []gauge {
 		gaugesCapacity = 0
 	}
 
-	ggr.breaker = make(chan bool)
 	ggr.gauges = make(chan []gauge, expectedGaugesQuantity)
 
 	received := uint(0)
 	gauges := make([]gauge, 0, gaugesCapacity)
 
-	ggr.runWriters()
-	ggr.runHandlers()
+	ggr.runWriters(ctx)
+	ggr.runHandlers(ctx)
 
 	defer close(ggr.gauges)
 	defer ggr.waiter.Wait()
-	defer close(ggr.breaker)
 
 	for {
 		select {

@@ -14,6 +14,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDisciplineOptsValidation(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	disciplineOpts := Opts[uint]{
+		Feedback:         make(chan uint),
+		HandlersQuantity: handlersQuantity,
+	}
+
+	_, err := New(disciplineOpts)
+	require.Error(t, err)
+
+	disciplineOpts = Opts[uint]{
+		Divider:          FairDivider,
+		HandlersQuantity: handlersQuantity,
+	}
+
+	_, err = New(disciplineOpts)
+	require.Error(t, err)
+
+	disciplineOpts = Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         make(chan uint),
+		HandlersQuantity: handlersQuantity,
+	}
+
+	_, err = New(disciplineOpts)
+	require.NoError(t, err)
+}
+
 func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
@@ -27,7 +56,6 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4100*factor)
 
@@ -56,13 +84,12 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -178,7 +205,6 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 430*factor)
 
@@ -207,13 +233,12 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -329,7 +354,6 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4000*factor)
 
@@ -358,13 +382,12 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -480,7 +503,6 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 450*factor)
 
@@ -509,13 +531,12 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -632,7 +653,6 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4000*factor)
 
@@ -658,13 +678,12 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	unmanagedOpts := unmanagedOpts[uint]{
 		Inputs: gauger.GetInputs(),
-		Output: gauger.GetOutput(),
 	}
 
 	unmanaged, err := newUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
 
-	defer unmanaged.Stop()
+	gauger.SetOutput(unmanaged.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -756,7 +775,6 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 500*factor)
 
@@ -782,13 +800,12 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	unmanagedOpts := unmanagedOpts[uint]{
 		Inputs: gauger.GetInputs(),
-		Output: gauger.GetOutput(),
 	}
 
 	unmanaged, err := newUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
 
-	defer unmanaged.Stop()
+	gauger.SetOutput(unmanaged.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -875,7 +892,6 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
@@ -886,13 +902,12 @@ func BenchmarkDisciplineFair(b *testing.B) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(b, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	_ = gauger.Play(context.Background())
 }
@@ -906,7 +921,6 @@ func BenchmarkDisciplineRate(b *testing.B) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
@@ -917,13 +931,12 @@ func BenchmarkDisciplineRate(b *testing.B) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(b, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	_ = gauger.Play(context.Background())
 }
@@ -938,7 +951,6 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
@@ -949,13 +961,12 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(b, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	_ = gauger.Play(context.Background())
 }
@@ -970,7 +981,6 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
@@ -981,13 +991,12 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(b, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	_ = gauger.Play(context.Background())
 }
@@ -1000,7 +1009,6 @@ func TestDisciplineRate(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1011,13 +1019,12 @@ func TestDisciplineRate(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1032,7 +1039,6 @@ func TestDisciplineFair(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1043,13 +1049,12 @@ func TestDisciplineFair(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1065,7 +1070,6 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1076,13 +1080,12 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1098,7 +1101,6 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1109,119 +1111,14 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
-
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
-}
-
-func TestDisciplineOptsValidation(t *testing.T) {
-	handlersQuantity := uint(6)
-
-	disciplineOpts := Opts[uint]{
-		Feedback:         make(chan uint),
-		HandlersQuantity: handlersQuantity,
-		Output:           make(chan Prioritized[uint]),
-	}
-
-	_, err := New(disciplineOpts)
-	require.Error(t, err)
-
-	disciplineOpts = Opts[uint]{
-		Divider:          FairDivider,
-		HandlersQuantity: handlersQuantity,
-		Output:           make(chan Prioritized[uint]),
-	}
-
-	_, err = New(disciplineOpts)
-	require.Error(t, err)
-
-	disciplineOpts = Opts[uint]{
-		Divider:          FairDivider,
-		Feedback:         make(chan uint),
-		HandlersQuantity: handlersQuantity,
-	}
-
-	_, err = New(disciplineOpts)
-	require.Error(t, err)
-}
-
-func TestDisciplineAddRemoveInput(t *testing.T) {
-	handlersQuantity := uint(6)
-
-	gaugerOpts := gaugerOpts{
-		HandlersQuantity: handlersQuantity,
-	}
-
-	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
-
-	gauger.AddWrite(1, 1000000)
-	gauger.AddWrite(2, 1000000)
-	gauger.AddWrite(3, 1000000)
-
-	inputs := gauger.GetInputs()
-
-	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
-		Feedback:         gauger.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Output:           gauger.GetOutput(),
-	}
-
-	discipline, err := New(disciplineOpts)
-	require.NoError(t, err)
-
-	defer discipline.Stop()
-
-	waiter := make(chan bool)
-
-	go func() {
-		defer close(waiter)
-
-		discipline.AddInput(inputs[2], 2)
-		discipline.AddInput(inputs[2], 2)
-		discipline.AddInput(inputs[1], 1)
-		discipline.AddInput(inputs[1], 1)
-		discipline.AddInput(inputs[3], 3)
-		discipline.AddInput(inputs[3], 3)
-
-		four := make(chan uint, 10)
-		close(four)
-
-		discipline.AddInput(four, 4)
-
-		four = make(chan uint)
-		close(four)
-
-		discipline.AddInput(four, 4)
-
-		time.Sleep(1 * time.Second)
-
-		discipline.RemoveInput(3)
-		discipline.RemoveInput(3)
-		discipline.RemoveInput(2)
-		discipline.RemoveInput(2)
-		discipline.RemoveInput(1)
-		discipline.RemoveInput(1)
-		discipline.RemoveInput(4)
-		discipline.RemoveInput(4)
-
-		discipline.AddInput(inputs[2], 6)
-		discipline.AddInput(inputs[1], 5)
-		discipline.AddInput(inputs[3], 7)
-	}()
-
-	gauges := gauger.Play(context.Background())
-
-	<-waiter
 
 	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
@@ -1234,7 +1131,6 @@ func TestDisciplineBadDivider(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1255,13 +1151,12 @@ func TestDisciplineBadDivider(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1277,85 +1172,6 @@ func TestDisciplineBadDivider(t *testing.T) {
 	require.NotEqual(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
 }
 
-func TestDisciplineStop(t *testing.T) {
-	handlersQuantity := uint(6)
-
-	gaugerOpts := gaugerOpts{
-		HandlersQuantity: handlersQuantity,
-	}
-
-	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
-
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
-
-	gauger.SetProcessDelay(1, 10*time.Microsecond)
-	gauger.SetProcessDelay(2, 10*time.Microsecond)
-	gauger.SetProcessDelay(3, 10*time.Microsecond)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	disciplineOpts := Opts[uint]{
-		Ctx:              ctx,
-		Divider:          RateDivider,
-		Feedback:         gauger.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
-	}
-
-	discipline, err := New(disciplineOpts)
-	require.NoError(t, err)
-
-	defer discipline.Stop()
-	defer discipline.Stop()
-
-	gauges := gauger.Play(ctx)
-
-	require.NotEqual(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
-}
-
-func TestDisciplineGracefulStop(t *testing.T) {
-	handlersQuantity := uint(6)
-
-	gaugerOpts := gaugerOpts{
-		HandlersQuantity: handlersQuantity,
-	}
-
-	gauger := newGauger(gaugerOpts)
-
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
-
-	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
-		Feedback:         gauger.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
-	}
-
-	discipline, err := New(disciplineOpts)
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		defer cancel()
-
-		discipline.GracefulStop()
-	}()
-
-	gauges := gauger.Play(ctx)
-	gauger.Finalize()
-
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
-}
-
 func TestDisciplineRateOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
@@ -1364,7 +1180,6 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1375,13 +1190,12 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1402,7 +1216,6 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 1000000)
 	gauger.AddWrite(2, 100000)
@@ -1413,13 +1226,12 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1440,7 +1252,6 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1451,13 +1262,12 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1472,7 +1282,6 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
@@ -1483,13 +1292,12 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 
@@ -1506,7 +1314,6 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 	}
 
 	gauger := newGauger(gaugerOpts)
-	defer gauger.Finalize()
 
 	gauger.AddWrite(1, 4000)
 
@@ -1541,13 +1348,12 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		Feedback:         gauger.GetFeedback(),
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
-		Output:           gauger.GetOutput(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	gauger.SetOutput(discipline.Output())
 
 	gauges := gauger.Play(context.Background())
 

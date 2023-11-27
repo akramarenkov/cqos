@@ -1,78 +1,12 @@
 package join
 
 import (
-	"context"
-	"sync"
+	"math"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 )
-
-func testDiscipline(t *testing.T, useReleased bool) {
-	quantity := 105
-
-	input := make(chan uint)
-	released := make(chan struct{})
-
-	opts := Opts[uint]{
-		Input:    input,
-		JoinSize: 10,
-	}
-
-	if useReleased {
-		opts.Released = released
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-		defer close(input)
-
-		for stage := 1; stage <= quantity; stage++ {
-			inSequence = append(inSequence, uint(stage))
-
-			input <- uint(stage)
-		}
-	}()
-
-	outSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-		defer close(released)
-
-		for slice := range discipline.Output() {
-			require.NotEqual(t, 0, slice)
-
-			outSequence = append(outSequence, slice...)
-
-			if useReleased {
-				released <- struct{}{}
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	require.Equal(t, inSequence, outSequence)
-}
-
-func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false)
-}
-
-func TestDisciplineReleased(t *testing.T) {
-	testDiscipline(t, true)
-}
 
 func TestDisciplineOptsValidation(t *testing.T) {
 	opts := Opts[uint]{
@@ -99,13 +33,74 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.Error(t, err)
 }
 
+func testDiscipline(t *testing.T, useReleased bool) {
+	quantity := 105
+
+	input := make(chan int)
+	released := make(chan struct{})
+
+	defer close(released)
+
+	opts := Opts[int]{
+		Input:    input,
+		JoinSize: 10,
+	}
+
+	if useReleased {
+		opts.Released = released
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	inSequence := make([]int, 0, quantity)
+
+	go func() {
+		defer close(input)
+
+		for stage := 1; stage <= quantity; stage++ {
+			inSequence = append(inSequence, stage)
+
+			input <- stage
+		}
+	}()
+
+	joins := 0
+	outSequence := make([]int, 0, quantity)
+
+	for slice := range discipline.Output() {
+		require.NotEqual(t, 0, slice)
+
+		joins++
+
+		outSequence = append(outSequence, slice...)
+
+		if useReleased {
+			released <- struct{}{}
+		}
+	}
+
+	expectedJoins := int(math.Ceil(float64(quantity) / float64(opts.JoinSize)))
+
+	require.Equal(t, inSequence, outSequence)
+	require.Equal(t, expectedJoins, joins)
+}
+
+func TestDiscipline(t *testing.T) {
+	testDiscipline(t, false)
+}
+
+func TestDisciplineReleased(t *testing.T) {
+	testDiscipline(t, true)
+}
+
 func TestDisciplineTimeout(t *testing.T) {
 	quantity := 105
 	pauseAt := quantity / 2
 
-	input := make(chan uint)
+	input := make(chan int)
 
-	opts := Opts[uint]{
+	opts := Opts[int]{
 		Input:    input,
 		JoinSize: 10,
 		Timeout:  500 * time.Millisecond,
@@ -114,125 +109,49 @@ func TestDisciplineTimeout(t *testing.T) {
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
+	inSequence := make([]int, 0, quantity)
 
 	go func() {
-		defer wg.Done()
 		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
 			if stage == pauseAt {
-				time.Sleep(4 * opts.Timeout)
+				time.Sleep(3 * opts.Timeout)
 			}
 
-			inSequence = append(inSequence, uint(stage))
+			inSequence = append(inSequence, stage)
 
-			input <- uint(stage)
+			input <- stage
 		}
 	}()
 
-	outSequence := make([]uint, 0, quantity)
+	joins := 0
+	outSequence := make([]int, 0, quantity)
 
-	go func() {
-		defer wg.Done()
+	for slice := range discipline.Output() {
+		require.NotEqual(t, 0, slice)
 
-		for slice := range discipline.Output() {
-			require.NotEqual(t, 0, slice)
+		joins++
 
-			outSequence = append(outSequence, slice...)
-		}
-	}()
+		outSequence = append(outSequence, slice...)
+	}
 
-	wg.Wait()
+	// plus one due to pause
+	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize)) + 1)
 
 	require.Equal(t, inSequence, outSequence)
-}
-
-func testDisciplineStop(t *testing.T, byCtx bool) {
-	quantity := 105
-	stopAt := quantity / 2
-
-	input := make(chan uint)
-	defer close(input)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	opts := Opts[uint]{
-		Ctx:      ctx,
-		Input:    input,
-		JoinSize: 10,
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
-
-	stop := func() {
-		if byCtx {
-			cancel()
-			return
-		}
-
-		discipline.Stop()
-	}
-
-	go func() {
-		defer wg.Done()
-
-		for stage := 1; stage <= quantity; stage++ {
-			if stage == stopAt {
-				stop()
-				return
-			}
-
-			inSequence = append(inSequence, uint(stage))
-
-			input <- uint(stage)
-		}
-	}()
-
-	outSequence := make([]uint, 0, quantity)
-
-	go func() {
-		defer wg.Done()
-
-		for slice := range discipline.Output() {
-			require.NotEqual(t, 0, slice)
-
-			outSequence = append(outSequence, slice...)
-		}
-	}()
-
-	wg.Wait()
-
-	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
-}
-
-func TestDisciplineStop(t *testing.T) {
-	testDisciplineStop(t, false)
-}
-
-func TestDisciplineStopByCtx(t *testing.T) {
-	testDisciplineStop(t, true)
+	require.Equal(t, expectedJoins, joins)
 }
 
 func benchmarkDiscipline(b *testing.B, useReleased bool) {
 	quantity := 10000000
 
-	input := make(chan uint)
+	input := make(chan int)
 	released := make(chan struct{})
 
-	opts := Opts[uint]{
+	defer close(released)
+
+	opts := Opts[int]{
 		Input: input,
 
 		JoinSize: 100,
@@ -245,31 +164,19 @@ func benchmarkDiscipline(b *testing.B, useReleased bool) {
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
 	go func() {
-		defer wg.Done()
 		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
-			input <- uint(stage)
+			input <- stage
 		}
 	}()
 
-	go func() {
-		defer wg.Done()
-		defer close(released)
-
-		for range discipline.Output() {
-			if useReleased {
-				released <- struct{}{}
-			}
+	for range discipline.Output() {
+		if useReleased {
+			released <- struct{}{}
 		}
-	}()
-
-	wg.Wait()
+	}
 }
 
 func BenchmarkDiscipline(b *testing.B) {

@@ -13,21 +13,6 @@ func sortPriorities(priorities []uint) {
 	sort.SliceStable(priorities, less)
 }
 
-func removePriority(priorities []uint, removed uint) []uint {
-	kept := 0
-
-	for _, priority := range priorities {
-		if priority == removed {
-			continue
-		}
-
-		priorities[kept] = priority
-		kept++
-	}
-
-	return priorities[:kept]
-}
-
 func sumPriorities(priorities []uint) uint {
 	sum := uint(0)
 

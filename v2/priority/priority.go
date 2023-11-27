@@ -2,29 +2,21 @@
 package priority
 
 import (
-	"context"
 	"errors"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/breaker"
 )
 
 var (
 	ErrEmptyDivider     = errors.New("priorities divider was not specified")
 	ErrEmptyFeedback    = errors.New("feedback channel was not specified")
-	ErrEmptyOutput      = errors.New("output channel was not specified")
 	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
 )
 
 const (
+	defaultCapacityFactor   = 0.1
 	defaultIdleDelay        = 1 * time.Nanosecond
 	defaultInterruptTimeout = 1 * time.Nanosecond
 )
-
-type input[Type any] struct {
-	channel  <-chan Type
-	priority uint
-}
 
 // Describes the data distributed by the prioritization discipline
 type Prioritized[Type any] struct {
@@ -34,8 +26,6 @@ type Prioritized[Type any] struct {
 
 // Options of the created main prioritization discipline
 type Opts[Type any] struct {
-	// Roughly terminates (cancels) work of the discipline
-	Ctx context.Context
 	// Determines how handlers are distributed among priorities
 	Divider Divider
 	// Handlers must write priority of processed data to feedback channel after it has been processed
@@ -46,8 +36,6 @@ type Opts[Type any] struct {
 	// Map key is a value of priority
 	// For graceful termination need close all input channels or remove them
 	Inputs map[uint]<-chan Type
-	// Handlers should read distributed data from this channel
-	Output chan<- Prioritized[Type]
 }
 
 // Main prioritization discipline.
@@ -62,13 +50,9 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker  *breaker.Breaker
-	graceful *breaker.Breaker
-
 	inputs     map[uint]<-chan Type
 	priorities []uint
-	inputAdds  chan input[Type]
-	inputRmvs  chan uint
+	output     chan Prioritized[Type]
 
 	strategic map[uint]uint
 	tactic    map[uint]uint
@@ -94,19 +78,7 @@ func (opts Opts[Type]) isValid() error {
 		return ErrEmptyFeedback
 	}
 
-	if opts.Output == nil {
-		return ErrEmptyOutput
-	}
-
 	return nil
-}
-
-func (opts Opts[Type]) normalize() Opts[Type] {
-	if opts.Ctx == nil {
-		opts.Ctx = context.Background()
-	}
-
-	return opts
 }
 
 // Creates and runs main prioritization discipline
@@ -115,15 +87,13 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
+	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+
 	dsc := &Discipline[Type]{
-		opts: opts.normalize(),
+		opts: opts,
 
-		breaker:  breaker.New(),
-		graceful: breaker.New(),
-
-		inputs:    make(map[uint]<-chan Type),
-		inputAdds: make(chan input[Type]),
-		inputRmvs: make(chan uint),
+		inputs: make(map[uint]<-chan Type),
+		output: make(chan Prioritized[Type], capacity),
 
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
@@ -144,6 +114,13 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
+// Returns output channel.
+//
+// If this channel is closed, it means that the discipline is terminated
+func (dsc *Discipline[Type]) Output() <-chan Prioritized[Type] {
+	return dsc.output
+}
+
 // Returns a channel with errors. If an error occurs (the value from the channel
 // is not equal to nil) the discipline terminates its work. The most likely cause of
 // the error is an incorrectly working dividing function in which the sum of
@@ -154,88 +131,25 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
 
-// Roughly terminates work of the discipline.
-//
-// Use for wait completion at terminates via context
-func (dsc *Discipline[Type]) Stop() {
-	dsc.breaker.Break()
-}
-
-// Graceful terminates work of the discipline.
-//
-// Waits draining input channels, waits end processing data in handlers and terminates.
-//
-// You must end write to input channels and close them (or remove),
-// otherwise graceful stop not be ended
-func (dsc *Discipline[Type]) GracefulStop() {
-	dsc.graceful.Break()
-}
-
-func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
-	_, exists := dsc.inputs[priority]
-
-	dsc.inputs[priority] = channel
-
-	if cap(channel) == 0 {
-		dsc.unbuffered[priority] = true
-	}
-
-	if exists {
-		return
-	}
-
-	dsc.priorities = append(dsc.priorities, priority)
-}
-
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
-		dsc.addPriority(channel, priority)
+		dsc.inputs[priority] = channel
+
+		if cap(channel) == 0 {
+			dsc.unbuffered[priority] = true
+		}
+
+		dsc.priorities = append(dsc.priorities, priority)
 	}
 
 	sortPriorities(dsc.priorities)
 
-	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
-}
-
-// Adds or updates (if it added previously) input channel for specified priority
-func (dsc *Discipline[Type]) AddInput(channel <-chan Type, priority uint) {
-	in := input[Type]{
-		channel:  channel,
-		priority: priority,
-	}
-
-	dsc.inputAdds <- in
-}
-
-func (dsc *Discipline[Type]) addInput(channel <-chan Type, priority uint) {
-	dsc.addPriority(channel, priority)
-
-	sortPriorities(dsc.priorities)
-
-	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
-}
-
-// Removes input channel for specified priority
-func (dsc *Discipline[Type]) RemoveInput(priority uint) {
-	dsc.inputRmvs <- priority
-}
-
-func (dsc *Discipline[Type]) removeInput(priority uint) {
-	delete(dsc.inputs, priority)
-	delete(dsc.tactic, priority)
-	delete(dsc.unbuffered, priority)
-	delete(dsc.drained, priority)
-
-	dsc.priorities = removePriority(dsc.priorities, priority)
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
 func (dsc *Discipline[Type]) loop() {
-	defer dsc.breaker.Complete()
-	defer dsc.graceful.Complete()
 	defer close(dsc.err)
-	defer close(dsc.inputAdds)
-	defer close(dsc.inputRmvs)
+	defer close(dsc.output)
 	defer dsc.interrupter.Stop()
 
 	defer func() {
@@ -246,39 +160,17 @@ func (dsc *Discipline[Type]) loop() {
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
-		case add := <-dsc.inputAdds:
-			dsc.addInput(add.channel, add.priority)
-		case priority := <-dsc.inputRmvs:
-			dsc.removeInput(priority)
 		case priority := <-dsc.opts.Feedback:
 			dsc.decreaseActual(priority)
 		default:
 		}
 
-		dsc.clearActual()
-
 		if processed := dsc.main(); processed == 0 {
-			select {
-			case <-dsc.graceful.Breaked():
-				if dsc.isZeroActual() && dsc.isDrainedInputs() {
-					return
-				}
-			default:
+			if dsc.isZeroActual() && dsc.isDrainedInputs() {
+				return
 			}
 
 			time.Sleep(defaultIdleDelay)
-		}
-	}
-}
-
-func (dsc *Discipline[Type]) clearActual() {
-	for priority, quantity := range dsc.actual {
-		if quantity == 0 && !dsc.isInputExists(priority) {
-			delete(dsc.actual, priority)
 		}
 	}
 }
@@ -301,11 +193,6 @@ func (dsc *Discipline[Type]) isDrainedInputs() bool {
 	}
 
 	return true
-}
-
-func (dsc *Discipline[Type]) isInputExists(priority uint) bool {
-	_, exists := dsc.inputs[priority]
-	return exists
 }
 
 func (dsc *Discipline[Type]) main() uint {
@@ -347,10 +234,6 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 		}
 
 		select {
-		case <-dsc.breaker.Breaked():
-			return processed
-		case <-dsc.opts.Ctx.Done():
-			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
 				dsc.drained[priority] = true
@@ -377,10 +260,6 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 		}
 
 		select {
-		case <-dsc.breaker.Breaked():
-			return processed
-		case <-dsc.opts.Ctx.Done():
-			return processed
 		case item, opened := <-dsc.inputs[priority]:
 			if !opened {
 				dsc.drained[priority] = true
@@ -410,11 +289,7 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
-			return 0
-		case <-dsc.opts.Ctx.Done():
-			return 0
-		case dsc.opts.Output <- prioritized:
+		case dsc.output <- prioritized:
 			dsc.decreaseTactic(priority)
 			dsc.increaseActual(priority)
 
@@ -440,15 +315,7 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 func (dsc *Discipline[Type]) calcTactic() {
 	for {
 		if !dsc.pickUpTactic() {
-			select {
-			case <-dsc.breaker.Breaked():
-				return
-			case <-dsc.opts.Ctx.Done():
-				return
-			case priority := <-dsc.opts.Feedback:
-				dsc.decreaseActual(priority)
-			}
-
+			dsc.decreaseActual(<-dsc.opts.Feedback)
 			continue
 		}
 
