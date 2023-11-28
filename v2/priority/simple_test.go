@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ func TestSimpleOptsValidation(t *testing.T) {
 	require.Error(t, err)
 
 	opts = SimpleOpts[string]{
-		Divider: RateDivider,
+		Divider: divider.Rate,
 	}
 
 	_, err = NewSimple(opts)
@@ -54,7 +55,7 @@ func TestSimple(t *testing.T) {
 	}
 
 	opts := SimpleOpts[string]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
@@ -126,7 +127,7 @@ func TestSimpleBadDivider(t *testing.T) {
 	}
 
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
-		out := FairDivider(priorities, dividend, distribution)
+		out := divider.Fair(priorities, dividend, distribution)
 
 		for priority := range out {
 			out[priority] *= 2

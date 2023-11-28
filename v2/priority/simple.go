@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"sync"
+
+	"github.com/akramarenkov/cqos/v2/priority/divider"
 )
 
 var (
@@ -19,7 +21,7 @@ type Handle[Type any] func(ctx context.Context, item Type)
 // Options of the created simplified prioritization discipline
 type SimpleOpts[Type any] struct {
 	// Determines how handlers are distributed among priorities
-	Divider Divider
+	Divider divider.Divider
 	// Callback function called in handlers when an item is received
 	Handle Handle[Type]
 	// Between how many handlers you need to distribute data

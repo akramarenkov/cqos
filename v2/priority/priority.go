@@ -4,6 +4,10 @@ package priority
 import (
 	"errors"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/cqos/v2/priority/internal/utils"
+	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
 var (
@@ -17,16 +21,10 @@ const (
 	defaultInterruptTimeout = 1 * time.Nanosecond
 )
 
-// Describes the data distributed by the prioritization discipline
-type Prioritized[Type any] struct {
-	Item     Type
-	Priority uint
-}
-
 // Options of the created main prioritization discipline
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
-	Divider Divider
+	Divider divider.Divider
 	// Between how many handlers you need to distribute data
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons
@@ -49,7 +47,7 @@ type Discipline[Type any] struct {
 
 	feedback chan uint
 	inputs   map[uint]<-chan Type
-	output   chan Prioritized[Type]
+	output   chan types.Prioritized[Type]
 
 	priorities []uint
 
@@ -82,14 +80,14 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+	capacity := utils.CalcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
 
 	dsc := &Discipline[Type]{
 		opts: opts,
 
 		feedback: make(chan uint, capacity),
 		inputs:   make(map[uint]<-chan Type),
-		output:   make(chan Prioritized[Type], capacity),
+		output:   make(chan types.Prioritized[Type], capacity),
 
 		actual:    make(map[uint]uint),
 		strategic: make(map[uint]uint),
@@ -113,7 +111,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // Returns output channel.
 //
 // If this channel is closed, it means that the discipline is terminated
-func (dsc *Discipline[Type]) Output() <-chan Prioritized[Type] {
+func (dsc *Discipline[Type]) Output() <-chan types.Prioritized[Type] {
 	return dsc.output
 }
 
@@ -143,7 +141,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 		dsc.priorities = append(dsc.priorities, priority)
 	}
 
-	sortPriorities(dsc.priorities)
+	utils.SortPriorities(dsc.priorities)
 
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
@@ -298,7 +296,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 }
 
 func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
-	prioritized := Prioritized[Type]{
+	prioritized := types.Prioritized[Type]{
 		Priority: priority,
 		Item:     item,
 	}

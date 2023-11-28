@@ -1,6 +1,10 @@
-package priority
+package divider
 
-import "math"
+import (
+	"math"
+
+	"github.com/akramarenkov/cqos/v2/priority/internal/utils"
+)
 
 // Distributes quantity of something by priorities. Determines how handlers are distributed among priorities.
 //
@@ -19,7 +23,7 @@ type Divider func(priorities []uint, dividend uint, distribution map[uint]uint) 
 //
 //   - 6 / [3 2 1] = map[3:2, 2:2, 1:2]
 //   - 100 / [70 20 10] = map[70:34, 20:33, 10:33]
-func FairDivider(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
+func Fair(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
 	if len(priorities) == 0 {
 		return nil
 	}
@@ -59,7 +63,7 @@ func FairDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 //
 //   - 6 / [3 2 1] = map[3:3, 2:2, 1:1]
 //   - 100 / [70 20 10] = map[70:70, 20:20, 10:10]
-func RateDivider(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
+func Rate(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
 	if len(priorities) == 0 {
 		return nil
 	}
@@ -68,7 +72,7 @@ func RateDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 		distribution = make(map[uint]uint, len(priorities))
 	}
 
-	sum := sumPriorities(priorities)
+	sum := utils.SumPriorities(priorities)
 
 	step := float64(dividend) / float64(sum)
 

@@ -1,6 +1,11 @@
-package priority
+package utils
 
-import "math"
+import (
+	"math"
+
+	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/cqos/v2/priority/internal/utils"
+)
 
 const (
 	oneHundredPercent = 100
@@ -56,7 +61,7 @@ func newCombination(combination []uint, added uint) []uint {
 
 	newed[len(newed)-1] = added
 
-	sortPriorities(newed)
+	utils.SortPriorities(newed)
 
 	return newed
 }
@@ -97,7 +102,7 @@ func isDistributionFilled(distribution map[uint]uint) bool {
 
 func isNonFatalConfig(
 	combinations [][]uint,
-	divider Divider,
+	divider divider.Divider,
 	quantity uint,
 ) bool {
 	for _, combination := range combinations {
@@ -120,7 +125,7 @@ func isNonFatalConfig(
 // not equal to zero)
 func IsNonFatalConfig(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	quantity uint,
 ) bool {
 	combinations := genPriorityCombinations(priorities)
@@ -132,7 +137,7 @@ func IsNonFatalConfig(
 // cause stop processing of one or more priorities
 func PickUpMinNonFatalQuantity(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
 	combinations := genPriorityCombinations(priorities)
@@ -150,7 +155,7 @@ func PickUpMinNonFatalQuantity(
 // cause stop processing of one or more priorities
 func PickUpMaxNonFatalQuantity(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
 	combinations := genPriorityCombinations(priorities)
@@ -196,11 +201,11 @@ func isDistributionSuitable(
 func isSuitableConfig(
 	combinations [][]uint,
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	quantity uint,
 	limit float64,
 ) bool {
-	referenceTotalQuantity := referenceFactor * sumPriorities(priorities)
+	referenceTotalQuantity := referenceFactor * utils.SumPriorities(priorities)
 
 	for _, combination := range combinations {
 		distribution := divider(combination, quantity, nil)
@@ -235,7 +240,7 @@ func isSuitableConfig(
 // the limit
 func IsSuitableConfig(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	quantity uint,
 	limit float64,
 ) bool {
@@ -248,7 +253,7 @@ func IsSuitableConfig(
 // exceed the limit
 func PickUpMinSuitableQuantity(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	maxQuantity uint,
 	limit float64,
 ) uint {
@@ -267,7 +272,7 @@ func PickUpMinSuitableQuantity(
 // exceed the limit
 func PickUpMaxSuitableQuantity(
 	priorities []uint,
-	divider Divider,
+	divider divider.Divider,
 	maxQuantity uint,
 	limit float64,
 ) uint {

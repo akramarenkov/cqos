@@ -1,11 +1,11 @@
-package priority
+package utils
 
 import (
 	"math"
 	"sort"
 )
 
-func sortPriorities(priorities []uint) {
+func SortPriorities(priorities []uint) {
 	less := func(i int, j int) bool {
 		return priorities[j] < priorities[i]
 	}
@@ -13,7 +13,7 @@ func sortPriorities(priorities []uint) {
 	sort.SliceStable(priorities, less)
 }
 
-func sumPriorities(priorities []uint) uint {
+func SumPriorities(priorities []uint) uint {
 	sum := uint(0)
 
 	for _, priority := range priorities {
@@ -23,7 +23,7 @@ func sumPriorities(priorities []uint) uint {
 	return sum
 }
 
-func calcCapacity(base int, factor float64, reserve int) int {
+func CalcCapacity(base int, factor float64, reserve int) int {
 	capacity := int(math.Round(factor * float64(base)))
 
 	if capacity == 0 {

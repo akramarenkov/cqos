@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/research"
+	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/cqos/v2/priority/internal/gauger"
+	"github.com/akramarenkov/cqos/v2/priority/internal/unmanaged"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -25,7 +28,7 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.Error(t, err)
 
 	disciplineOpts = Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
 	}
 
@@ -40,49 +43,49 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 4100*factor)
+	ggr.AddWrite(1, 4100*factor)
 
-	gauger.AddWrite(2, 1500*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 750*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 700*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 3*time.Second)
-	gauger.AddWrite(2, 1200*factor)
+	ggr.AddWrite(2, 1500*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 750*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 700*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 3*time.Second)
+	ggr.AddWrite(2, 1200*factor)
 
-	gauger.AddWrite(3, 1000*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 8*time.Second)
-	gauger.AddWrite(3, 3700*factor)
+	ggr.AddWrite(3, 1000*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 8*time.Second)
+	ggr.AddWrite(3, 3700*factor)
 
-	gauger.SetProcessDelay(1, 10*time.Millisecond)
-	gauger.SetProcessDelay(2, 10*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 10*time.Millisecond)
+	ggr.SetProcessDelay(2, 10*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -188,49 +191,49 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 430*factor)
+	ggr.AddWrite(1, 430*factor)
 
-	gauger.AddWrite(2, 250*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 150*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 300*factor)
+	ggr.AddWrite(2, 250*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 100*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 150*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 300*factor)
 
-	gauger.AddWrite(3, 1000*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 8*time.Second)
-	gauger.AddWrite(3, 3500*factor)
+	ggr.AddWrite(3, 1000*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 8*time.Second)
+	ggr.AddWrite(3, 3500*factor)
 
-	gauger.SetProcessDelay(1, 100*time.Millisecond)
-	gauger.SetProcessDelay(2, 50*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 100*time.Millisecond)
+	ggr.SetProcessDelay(2, 50*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -336,49 +339,49 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 4000*factor)
+	ggr.AddWrite(1, 4000*factor)
 
-	gauger.AddWrite(2, 500*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 500*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 1000*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 2000*factor)
+	ggr.AddWrite(2, 500*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 500*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 1000*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 2000*factor)
 
-	gauger.AddWrite(3, 500*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 5*time.Second)
-	gauger.AddWrite(3, 4000*factor)
+	ggr.AddWrite(3, 500*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 5*time.Second)
+	ggr.AddWrite(3, 4000*factor)
 
-	gauger.SetProcessDelay(1, 10*time.Millisecond)
-	gauger.SetProcessDelay(2, 10*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 10*time.Millisecond)
+	ggr.SetProcessDelay(2, 10*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -484,49 +487,49 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 450*factor)
+	ggr.AddWrite(1, 450*factor)
 
-	gauger.AddWrite(2, 100*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 200*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 400*factor)
+	ggr.AddWrite(2, 100*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 100*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 200*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 400*factor)
 
-	gauger.AddWrite(3, 500*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 6*time.Second)
-	gauger.AddWrite(3, 3000*factor)
+	ggr.AddWrite(3, 500*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 6*time.Second)
+	ggr.AddWrite(3, 3000*factor)
 
-	gauger.SetProcessDelay(1, 100*time.Millisecond)
-	gauger.SetProcessDelay(2, 50*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 100*time.Millisecond)
+	ggr.SetProcessDelay(2, 50*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -632,48 +635,48 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 4000*factor)
+	ggr.AddWrite(1, 4000*factor)
 
-	gauger.AddWrite(2, 500*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 500*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 1000*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 2000*factor)
+	ggr.AddWrite(2, 500*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 500*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 1000*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 2000*factor)
 
-	gauger.AddWrite(3, 500*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 5*time.Second)
-	gauger.AddWrite(3, 4000*factor)
+	ggr.AddWrite(3, 500*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 5*time.Second)
+	ggr.AddWrite(3, 4000*factor)
 
-	gauger.SetProcessDelay(1, 10*time.Millisecond)
-	gauger.SetProcessDelay(2, 10*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 10*time.Millisecond)
+	ggr.SetProcessDelay(2, 10*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
-	unmanagedOpts := unmanagedOpts[uint]{
-		Inputs: gauger.GetInputs(),
+	unmanagedOpts := unmanaged.Opts[uint]{
+		Inputs: ggr.GetInputs(),
 	}
 
-	unmanaged, err := newUnmanaged(unmanagedOpts)
+	unmanaged, err := unmanaged.New(unmanagedOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(unmanaged)
+	ggr.SetDiscipline(unmanaged)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -754,48 +757,48 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	handlersQuantity := uint(6) * factor
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 500*factor)
+	ggr.AddWrite(1, 500*factor)
 
-	gauger.AddWrite(2, 100*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 100*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 200*factor)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 400*factor)
+	ggr.AddWrite(2, 100*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 100*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 200*factor)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 400*factor)
 
-	gauger.AddWrite(3, 100*factor)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 6*time.Second)
-	gauger.AddWrite(3, 1350*factor)
+	ggr.AddWrite(3, 100*factor)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 6*time.Second)
+	ggr.AddWrite(3, 1350*factor)
 
-	gauger.SetProcessDelay(1, 100*time.Millisecond)
-	gauger.SetProcessDelay(2, 50*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 100*time.Millisecond)
+	ggr.SetProcessDelay(2, 50*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
 
-	unmanagedOpts := unmanagedOpts[uint]{
-		Inputs: gauger.GetInputs(),
+	unmanagedOpts := unmanaged.Opts[uint]{
+		Inputs: ggr.GetInputs(),
 	}
 
-	unmanaged, err := newUnmanaged(unmanagedOpts)
+	unmanaged, err := unmanaged.New(unmanagedOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(unmanaged)
+	ggr.SetDiscipline(unmanaged)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),
@@ -872,19 +875,19 @@ func TestUnmanagedUneven(t *testing.T) {
 func BenchmarkDisciplineFair(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -900,19 +903,19 @@ func BenchmarkDisciplineFair(b *testing.B) {
 func BenchmarkDisciplineRate(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -928,20 +931,20 @@ func BenchmarkDisciplineRate(b *testing.B) {
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -957,20 +960,20 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	handlersQuantity := uint(600)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		DisableGauges:    true,
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 5000000)
 	gauger.AddWrite(2, 5000000)
 	gauger.AddWrite(3, 5000000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -986,136 +989,136 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 func TestDisciplineRate(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFair(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineRateUnbuffered(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFairUnbuffered(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 		NoInputBuffer:    true,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineBadDivider(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
-		out := FairDivider(priorities, dividend, distribution)
+		out := divider.Fair(priorities, dividend, distribution)
 
 		for priority := range out {
 			out[priority] *= 2
@@ -1127,13 +1130,13 @@ func TestDisciplineBadDivider(t *testing.T) {
 	disciplineOpts := Opts[uint]{
 		Divider:          divider,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1144,26 +1147,26 @@ func TestDisciplineBadDivider(t *testing.T) {
 		}
 	}()
 
-	gauges := gauger.Play(ctx)
+	gauges := ggr.Play(ctx)
 
-	require.NotEqual(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.NotEqual(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineRateOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 100000)
 	gauger.AddWrite(2, 100000)
 	gauger.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -1187,18 +1190,18 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 func TestDisciplineFairOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	gauger := gauger.New(gaugerOpts)
 
 	gauger.AddWrite(1, 1000000)
 	gauger.AddWrite(2, 100000)
 	gauger.AddWrite(3, 10000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
 		Inputs:           gauger.GetInputs(),
 	}
@@ -1222,59 +1225,59 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 func TestDisciplineRateFatalDividingError(t *testing.T) {
 	handlersQuantity := uint(5)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
 	handlersQuantity := uint(6)
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 100000)
-	gauger.AddWrite(2, 100000)
-	gauger.AddWrite(3, 100000)
+	ggr.AddWrite(1, 100000)
+	ggr.AddWrite(2, 100000)
+	ggr.AddWrite(3, 100000)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(gauger.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
@@ -1282,54 +1285,54 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		t.SkipNow()
 	}
 
-	gaugerOpts := gaugerOpts{
+	gaugerOpts := gauger.Opts{
 		HandlersQuantity: handlersQuantity,
 	}
 
-	gauger := newGauger(gaugerOpts)
+	ggr := gauger.New(gaugerOpts)
 
-	gauger.AddWrite(1, 4000)
+	ggr.AddWrite(1, 4000)
 
-	gauger.AddWrite(2, 500)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 500)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 4*time.Second)
-	gauger.AddWrite(2, 1000)
-	gauger.AddWaitDevastation(2)
-	gauger.AddDelay(2, 2*time.Second)
-	gauger.AddWrite(2, 2000)
+	ggr.AddWrite(2, 500)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 500)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 4*time.Second)
+	ggr.AddWrite(2, 1000)
+	ggr.AddWaitDevastation(2)
+	ggr.AddDelay(2, 2*time.Second)
+	ggr.AddWrite(2, 2000)
 
-	gauger.AddWrite(3, 500)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(3, 5*time.Second)
-	gauger.AddWrite(3, 4000)
+	ggr.AddWrite(3, 500)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(3, 5*time.Second)
+	ggr.AddWrite(3, 4000)
 
-	gauger.AddWrite(4, 500)
-	gauger.AddWaitDevastation(3)
-	gauger.AddDelay(4, 5*time.Second)
-	gauger.AddWrite(4, 4000)
+	ggr.AddWrite(4, 500)
+	ggr.AddWaitDevastation(3)
+	ggr.AddDelay(4, 5*time.Second)
+	ggr.AddWrite(4, 4000)
 
-	gauger.SetProcessDelay(1, 10*time.Millisecond)
-	gauger.SetProcessDelay(2, 10*time.Millisecond)
-	gauger.SetProcessDelay(3, 10*time.Millisecond)
-	gauger.SetProcessDelay(4, 10*time.Millisecond)
+	ggr.SetProcessDelay(1, 10*time.Millisecond)
+	ggr.SetProcessDelay(2, 10*time.Millisecond)
+	ggr.SetProcessDelay(3, 10*time.Millisecond)
+	ggr.SetProcessDelay(4, 10*time.Millisecond)
 
 	disciplineOpts := Opts[uint]{
-		Divider:          FairDivider,
+		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           gauger.GetInputs(),
+		Inputs:           ggr.GetInputs(),
 	}
 
 	discipline, err := New(disciplineOpts)
 	require.NoError(t, err)
 
-	gauger.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
-	gauges := gauger.Play(context.Background())
+	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gaugeKindReceived)
+	received := filterByKind(gauges, gauger.GaugeKindReceived)
 
 	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
 		calcDataQuantity(received, 100*time.Millisecond),

@@ -1,9 +1,11 @@
-package priority
+package gauger
 
 import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
 const (
@@ -12,16 +14,16 @@ const (
 )
 
 type disciplineInterface[Type any] interface {
-	Output() <-chan Prioritized[Type]
+	Output() <-chan types.Prioritized[Type]
 	Release(priority uint)
 }
 
-type gaugeKind int
+type GaugeKind int
 
 const (
-	gaugeKindCompleted gaugeKind = iota + 1
-	gaugeKindProcessed
-	gaugeKindReceived
+	GaugeKindCompleted GaugeKind = iota + 1
+	GaugeKindProcessed
+	GaugeKindReceived
 )
 
 type actionKind int
@@ -39,14 +41,14 @@ type action struct {
 	quantity uint
 }
 
-type gauge struct {
+type Gauge struct {
 	Data         uint
-	Kind         gaugeKind
+	Kind         GaugeKind
 	Priority     uint
 	RelativeTime time.Duration
 }
 
-type gaugerOpts struct {
+type Opts struct {
 	DisableGauges    bool
 	HandlersQuantity uint
 	InputCapacity    uint
@@ -54,7 +56,7 @@ type gaugerOpts struct {
 	NoInputBuffer    bool
 }
 
-func (opts gaugerOpts) normalize() gaugerOpts {
+func (opts Opts) normalize() Opts {
 	if opts.InputCapacity == 0 {
 		opts.InputCapacity = defaultChannelCapacity
 	}
@@ -66,8 +68,8 @@ func (opts gaugerOpts) normalize() gaugerOpts {
 	return opts
 }
 
-type gauger struct {
-	opts gaugerOpts
+type Gauger struct {
+	opts Opts
 
 	ready     *sync.WaitGroup
 	start     chan bool
@@ -75,7 +77,7 @@ type gauger struct {
 
 	actions map[uint][]action
 	delays  map[uint]time.Duration
-	gauges  chan []gauge
+	gauges  chan []Gauge
 
 	inputs     map[uint]chan uint
 	discipline disciplineInterface[uint]
@@ -83,8 +85,8 @@ type gauger struct {
 	waiter *sync.WaitGroup
 }
 
-func newGauger(opts gaugerOpts) *gauger {
-	ggr := &gauger{
+func New(opts Opts) *Gauger {
+	ggr := &Gauger{
 		opts: opts.normalize(),
 
 		ready: &sync.WaitGroup{},
@@ -100,7 +102,7 @@ func newGauger(opts gaugerOpts) *gauger {
 	return ggr
 }
 
-func (ggr *gauger) AddWrite(priority uint, quantity uint) {
+func (ggr *Gauger) AddWrite(priority uint, quantity uint) {
 	if _, exists := ggr.inputs[priority]; !exists {
 		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
@@ -113,7 +115,7 @@ func (ggr *gauger) AddWrite(priority uint, quantity uint) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
+func (ggr *Gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
 	if _, exists := ggr.inputs[priority]; !exists {
 		ggr.inputs[priority] = make(chan uint, ggr.opts.InputCapacity)
 	}
@@ -127,7 +129,7 @@ func (ggr *gauger) AddWriteWithDelay(priority uint, quantity uint, delay time.Du
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *gauger) AddWaitDevastation(priority uint) {
+func (ggr *Gauger) AddWaitDevastation(priority uint) {
 	action := action{
 		kind: actionKindWaitDevastation,
 	}
@@ -135,7 +137,7 @@ func (ggr *gauger) AddWaitDevastation(priority uint) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *gauger) AddDelay(priority uint, delay time.Duration) {
+func (ggr *Gauger) AddDelay(priority uint, delay time.Duration) {
 	action := action{
 		kind:  actionKindDelay,
 		delay: delay,
@@ -144,7 +146,7 @@ func (ggr *gauger) AddDelay(priority uint, delay time.Duration) {
 	ggr.actions[priority] = append(ggr.actions[priority], action)
 }
 
-func (ggr *gauger) CalcExpectedGuagesQuantity() uint {
+func (ggr *Gauger) CalcExpectedGuagesQuantity() uint {
 	quantity := uint(0)
 
 	for _, actions := range ggr.actions {
@@ -161,11 +163,11 @@ func (ggr *gauger) CalcExpectedGuagesQuantity() uint {
 	return quantity
 }
 
-func (ggr *gauger) SetProcessDelay(priority uint, delay time.Duration) {
+func (ggr *Gauger) SetProcessDelay(priority uint, delay time.Duration) {
 	ggr.delays[priority] = delay
 }
 
-func (ggr *gauger) GetInputs() map[uint]<-chan uint {
+func (ggr *Gauger) GetInputs() map[uint]<-chan uint {
 	out := make(map[uint]<-chan uint, len(ggr.inputs))
 
 	for priority, channel := range ggr.inputs {
@@ -175,11 +177,11 @@ func (ggr *gauger) GetInputs() map[uint]<-chan uint {
 	return out
 }
 
-func (ggr *gauger) SetDiscipline(discipline disciplineInterface[uint]) {
+func (ggr *Gauger) SetDiscipline(discipline disciplineInterface[uint]) {
 	ggr.discipline = discipline
 }
 
-func (ggr *gauger) runWriters(ctx context.Context) {
+func (ggr *Gauger) runWriters(ctx context.Context) {
 	for priority := range ggr.inputs {
 		ggr.waiter.Add(1)
 
@@ -187,7 +189,7 @@ func (ggr *gauger) runWriters(ctx context.Context) {
 	}
 }
 
-func (ggr *gauger) writer(ctx context.Context, priority uint) {
+func (ggr *Gauger) writer(ctx context.Context, priority uint) {
 	defer ggr.waiter.Done()
 	defer close(ggr.inputs[priority])
 
@@ -239,7 +241,7 @@ func (ggr *gauger) writer(ctx context.Context, priority uint) {
 	}
 }
 
-func (ggr *gauger) runHandlers(ctx context.Context) {
+func (ggr *Gauger) runHandlers(ctx context.Context) {
 	ggr.start = make(chan bool)
 	defer close(ggr.start)
 
@@ -255,7 +257,7 @@ func (ggr *gauger) runHandlers(ctx context.Context) {
 	ggr.startedAt = time.Now()
 }
 
-func (ggr *gauger) handler(ctx context.Context) {
+func (ggr *Gauger) handler(ctx context.Context) {
 	defer ggr.waiter.Done()
 
 	ggr.ready.Done()
@@ -280,12 +282,12 @@ func (ggr *gauger) handler(ctx context.Context) {
 				continue
 			}
 
-			batch := make([]gauge, 0, batchSize)
+			batch := make([]Gauge, 0, batchSize)
 
-			received := gauge{
+			received := Gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         gaugeKindReceived,
+				Kind:         GaugeKindReceived,
 				Data:         prioritized.Item,
 			}
 
@@ -293,10 +295,10 @@ func (ggr *gauger) handler(ctx context.Context) {
 
 			time.Sleep(ggr.delays[prioritized.Priority])
 
-			processed := gauge{
+			processed := Gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         gaugeKindProcessed,
+				Kind:         GaugeKindProcessed,
 				Data:         prioritized.Item,
 			}
 
@@ -306,10 +308,10 @@ func (ggr *gauger) handler(ctx context.Context) {
 				ggr.discipline.Release(prioritized.Priority)
 			}
 
-			completed := gauge{
+			completed := Gauge{
 				RelativeTime: time.Since(ggr.startedAt),
 				Priority:     prioritized.Priority,
-				Kind:         gaugeKindCompleted,
+				Kind:         GaugeKindCompleted,
 				Data:         prioritized.Item,
 			}
 
@@ -320,7 +322,7 @@ func (ggr *gauger) handler(ctx context.Context) {
 	}
 }
 
-func (ggr *gauger) Play(ctx context.Context) []gauge {
+func (ggr *Gauger) Play(ctx context.Context) []Gauge {
 	expectedGaugesQuantity := ggr.CalcExpectedGuagesQuantity()
 
 	if expectedGaugesQuantity == 0 {
@@ -333,10 +335,10 @@ func (ggr *gauger) Play(ctx context.Context) []gauge {
 		gaugesCapacity = 0
 	}
 
-	ggr.gauges = make(chan []gauge, expectedGaugesQuantity)
+	ggr.gauges = make(chan []Gauge, expectedGaugesQuantity)
 
 	received := uint(0)
-	gauges := make([]gauge, 0, gaugesCapacity)
+	gauges := make([]Gauge, 0, gaugesCapacity)
 
 	ggr.runWriters(ctx)
 	ggr.runHandlers(ctx)

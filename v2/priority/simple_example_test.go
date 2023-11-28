@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/cqos/v2/priority"
+	"github.com/akramarenkov/cqos/v2/priority/divider"
 )
 
 func ExampleSimple() {
@@ -43,7 +44,7 @@ func ExampleSimple() {
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
 	opts := priority.SimpleOpts[string]{
-		Divider:          priority.RateDivider,
+		Divider:          divider.Rate,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,

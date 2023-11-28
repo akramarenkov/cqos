@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/research"
+	"github.com/akramarenkov/cqos/v2/priority/internal/gauger"
 )
 
-func filterByKind(gauges []gauge, kind gaugeKind) []gauge {
-	out := make([]gauge, 0, len(gauges))
+func filterByKind(gauges []gauger.Gauge, kind gauger.GaugeKind) []gauger.Gauge {
+	out := make([]gauger.Gauge, 0, len(gauges))
 
 	for _, gauge := range gauges {
 		if gauge.Kind != kind {
@@ -21,7 +22,7 @@ func filterByKind(gauges []gauge, kind gaugeKind) []gauge {
 	return out
 }
 
-func sortByData(gauges []gauge) {
+func sortByData(gauges []gauger.Gauge) {
 	less := func(i int, j int) bool {
 		return gauges[i].Data < gauges[j].Data
 	}
@@ -29,7 +30,7 @@ func sortByData(gauges []gauge) {
 	sort.SliceStable(gauges, less)
 }
 
-func sortByRelativeTime(gauges []gauge) {
+func sortByRelativeTime(gauges []gauger.Gauge) {
 	less := func(i int, j int) bool {
 		return gauges[i].RelativeTime < gauges[j].RelativeTime
 	}
@@ -38,7 +39,7 @@ func sortByRelativeTime(gauges []gauge) {
 }
 
 func calcDataQuantity(
-	gauges []gauge,
+	gauges []gauger.Gauge,
 	resolution time.Duration,
 ) map[uint][]research.QuantityOverTime {
 	if len(gauges) == 0 {
@@ -103,7 +104,7 @@ func calcDataQuantity(
 }
 
 func calcInProcessing(
-	gauges []gauge,
+	gauges []gauger.Gauge,
 	resolution time.Duration,
 ) map[uint][]research.QuantityOverTime {
 	if len(gauges) == 0 {
@@ -145,9 +146,9 @@ func calcInProcessing(
 			}
 
 			switch gauge.Kind {
-			case gaugeKindReceived:
+			case gauger.GaugeKindReceived:
 				receivedQuantities[gauge.Priority][gauge.Data]++
-			case gaugeKindCompleted:
+			case gauger.GaugeKindCompleted:
 				completedQuantities[gauge.Priority][gauge.Data]++
 			}
 		}
@@ -189,7 +190,7 @@ func calcInProcessing(
 }
 
 func calcWriteToFeedbackLatency(
-	gauges []gauge,
+	gauges []gauger.Gauge,
 	interval time.Duration,
 ) map[uint][]research.QuantityOverTime {
 	if len(gauges) == 0 {
@@ -199,11 +200,11 @@ func calcWriteToFeedbackLatency(
 	sortByData(gauges)
 
 	latencies := make(map[uint][]time.Duration)
-	pairs := make(map[uint]gauge)
+	pairs := make(map[uint]gauger.Gauge)
 
 	for _, gauge := range gauges {
 		switch gauge.Kind {
-		case gaugeKindCompleted:
+		case gauger.GaugeKindCompleted:
 			if _, exists := pairs[gauge.Priority]; !exists {
 				pairs[gauge.Priority] = gauge
 				continue
@@ -214,7 +215,7 @@ func calcWriteToFeedbackLatency(
 			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
 
 			delete(pairs, gauge.Priority)
-		case gaugeKindProcessed:
+		case gauger.GaugeKindProcessed:
 			if _, exists := pairs[gauge.Priority]; !exists {
 				pairs[gauge.Priority] = gauge
 				continue

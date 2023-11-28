@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/cqos/v2/priority"
+	"github.com/akramarenkov/cqos/v2/priority/divider"
 )
 
 func ExampleDiscipline() {
@@ -33,7 +34,7 @@ func ExampleDiscipline() {
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
 	disciplineOpts := priority.Opts[string]{
-		Divider:          priority.RateDivider,
+		Divider:          divider.Rate,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
