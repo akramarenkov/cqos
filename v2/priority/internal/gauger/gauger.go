@@ -1,3 +1,4 @@
+// Internal package with implementation of the gauger which is used for testing
 package gauger
 
 import (

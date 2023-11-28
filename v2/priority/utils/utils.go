@@ -1,3 +1,5 @@
+// Several auxiliary functions for pickup and checking the quantity of
+// handlers are implemented here
 package utils
 
 import (

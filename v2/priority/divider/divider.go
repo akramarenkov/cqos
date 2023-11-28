@@ -1,3 +1,5 @@
+// Several dividers are implemented here that distributes quantity of something by
+// priorities
 package divider
 
 import (
@@ -6,13 +8,15 @@ import (
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 )
 
-// Distributes quantity of something by priorities. Determines how handlers are distributed among priorities.
+// Distributes quantity of something by priorities. Determines how handlers are
+// distributed among priorities.
 //
 // Slice of priorities is passed to this function sorted from highest to lowest.
 //
 // Sum of the distributed quantities must equal the original quantity.
 //
-// If distribution is nil then it must be created and returned, otherwise it must be updated and returned.
+// If distribution is nil then it must be created and returned, otherwise it must be
+// updated and returned.
 type Divider func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint
 
 // Distributes quantity evenly among the priorities.

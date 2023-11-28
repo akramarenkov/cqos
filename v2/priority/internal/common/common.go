@@ -1,3 +1,4 @@
+// Internal package with functions used in other packages
 package common
 
 import (
