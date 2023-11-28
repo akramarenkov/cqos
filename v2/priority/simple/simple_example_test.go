@@ -1,4 +1,4 @@
-package priority_test
+package simple_test
 
 import (
 	"context"
@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/akramarenkov/cqos/v2/priority"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/cqos/v2/priority/simple"
 )
 
-func ExampleSimple() {
+func ExampleDiscipline() {
 	handlersQuantity := 100
 	// Preferably input channels should be buffered
 	inputCapacity := 10
@@ -43,14 +43,14 @@ func ExampleSimple() {
 	}
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	opts := priority.SimpleOpts[string]{
+	opts := simple.Opts[string]{
 		Divider:          divider.Rate,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	_, err := priority.NewSimple(opts)
+	_, err := simple.New(opts)
 	if err != nil {
 		panic(err)
 	}

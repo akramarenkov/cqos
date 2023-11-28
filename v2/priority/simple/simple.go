@@ -1,10 +1,11 @@
-package priority
+package simple
 
 import (
 	"context"
 	"errors"
 	"sync"
 
+	"github.com/akramarenkov/cqos/v2/priority"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 )
 
@@ -19,7 +20,7 @@ var (
 type Handle[Type any] func(ctx context.Context, item Type)
 
 // Options of the created simplified prioritization discipline
-type SimpleOpts[Type any] struct {
+type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
 	Divider divider.Divider
 	// Callback function called in handlers when an item is received
@@ -32,7 +33,7 @@ type SimpleOpts[Type any] struct {
 	Inputs map[uint]<-chan Type
 }
 
-func (opts SimpleOpts[Type]) isValid() error {
+func (opts Opts[Type]) isValid() error {
 	if opts.Handle == nil {
 		return ErrEmptyHandle
 	}
@@ -42,10 +43,10 @@ func (opts SimpleOpts[Type]) isValid() error {
 
 // Simplified version of the discipline that runs handlers on its own and
 // hides the output and feedback channels
-type Simple[Type any] struct {
-	opts SimpleOpts[Type]
+type Discipline[Type any] struct {
+	opts Opts[Type]
 
-	discipline *Discipline[Type]
+	discipline *priority.Discipline[Type]
 
 	wg *sync.WaitGroup
 
@@ -53,23 +54,23 @@ type Simple[Type any] struct {
 }
 
 // Creates and runs simplified prioritization discipline
-func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
+func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
 	}
 
-	disciplineOpts := Opts[Type]{
+	disciplineOpts := priority.Opts[Type]{
 		Divider:          opts.Divider,
 		HandlersQuantity: opts.HandlersQuantity,
 		Inputs:           opts.Inputs,
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := priority.New(disciplineOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	smpl := &Simple[Type]{
+	dsc := &Discipline[Type]{
 		opts: opts,
 
 		discipline: discipline,
@@ -79,9 +80,9 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		err: make(chan error, 1),
 	}
 
-	go smpl.handlers()
+	go dsc.handlers()
 
-	return smpl, nil
+	return dsc, nil
 }
 
 // Returns a channel with errors. If an error occurs (the value from the channel
@@ -90,41 +91,41 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 // the distributed quantities is not equal to the original quantity.
 //
 // The single nil value means that the discipline has terminated in normal mode
-func (smpl *Simple[Type]) Err() <-chan error {
-	return smpl.err
+func (dsc *Discipline[Type]) Err() <-chan error {
+	return dsc.err
 }
 
-func (smpl *Simple[Type]) handlers() {
-	defer close(smpl.err)
-	defer smpl.wg.Wait()
+func (dsc *Discipline[Type]) handlers() {
+	defer close(dsc.err)
+	defer dsc.wg.Wait()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	for id := uint(0); id < smpl.opts.HandlersQuantity; id++ {
-		smpl.wg.Add(1)
+	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
+		dsc.wg.Add(1)
 
-		go smpl.handler(ctx)
+		go dsc.handler(ctx)
 	}
 
-	err := <-smpl.discipline.Err()
-	smpl.err <- err
+	err := <-dsc.discipline.Err()
+	dsc.err <- err
 }
 
-func (smpl *Simple[Type]) handler(ctx context.Context) {
-	defer smpl.wg.Done()
+func (dsc *Discipline[Type]) handler(ctx context.Context) {
+	defer dsc.wg.Done()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case prioritized, opened := <-smpl.discipline.Output():
+		case prioritized, opened := <-dsc.discipline.Output():
 			if !opened {
 				return
 			}
 
-			smpl.opts.Handle(ctx, prioritized.Item)
-			smpl.discipline.Release(prioritized.Priority)
+			dsc.opts.Handle(ctx, prioritized.Item)
+			dsc.discipline.Release(prioritized.Priority)
 		}
 	}
 }

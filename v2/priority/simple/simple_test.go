@@ -1,4 +1,4 @@
-package priority
+package simple
 
 import (
 	"context"
@@ -11,23 +11,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSimpleOptsValidation(t *testing.T) {
-	opts := SimpleOpts[string]{
+func TestOptsValidation(t *testing.T) {
+	opts := Opts[string]{
 		Handle: func(ctx context.Context, item string) {},
 	}
 
-	_, err := NewSimple(opts)
+	_, err := New(opts)
 	require.Error(t, err)
 
-	opts = SimpleOpts[string]{
+	opts = Opts[string]{
 		Divider: divider.Rate,
 	}
 
-	_, err = NewSimple(opts)
+	_, err = New(opts)
 	require.Error(t, err)
 }
 
-func TestSimple(t *testing.T) {
+func TestDiscipline(t *testing.T) {
 	handlersQuantity := 100
 	inputCapacity := 10
 	itemsQuantity := 100000
@@ -54,14 +54,14 @@ func TestSimple(t *testing.T) {
 		}
 	}
 
-	opts := SimpleOpts[string]{
+	opts := Opts[string]{
 		Divider:          divider.Rate,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	_, err := NewSimple(opts)
+	_, err := New(opts)
 	require.NoError(t, err)
 
 	wg := &sync.WaitGroup{}
@@ -97,7 +97,7 @@ func TestSimple(t *testing.T) {
 	require.Equal(t, itemsQuantity*len(inputs), received)
 }
 
-func TestSimpleBadDivider(t *testing.T) {
+func TestBadDivider(t *testing.T) {
 	handlersQuantity := 100
 	inputCapacity := 10
 	itemsQuantity := 100000
@@ -139,14 +139,14 @@ func TestSimpleBadDivider(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	opts := SimpleOpts[string]{
+	opts := Opts[string]{
 		Divider:          divider,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	simple, err := NewSimple(opts)
+	simple, err := New(opts)
 	require.NoError(t, err)
 
 	go func() {
