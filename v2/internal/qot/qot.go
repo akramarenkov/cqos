@@ -1,4 +1,4 @@
-package research
+package qot
 
 import (
 	"sort"
@@ -20,7 +20,7 @@ func SortDurations(durations []time.Duration) {
 	sort.SliceStable(durations, less)
 }
 
-func ConvertQuantityOverTimeToLineEcharts(
+func ConvertToLineEcharts(
 	quantities map[uint][]QuantityOverTime,
 	relativeTimeUnit time.Duration,
 ) (map[uint][]chartsopts.LineData, []uint) {
@@ -53,7 +53,7 @@ func ConvertQuantityOverTimeToLineEcharts(
 	return serieses, xaxis
 }
 
-func ConvertQuantityOverTimeToBarEcharts(
+func ConvertToBarEcharts(
 	quantities map[uint][]QuantityOverTime,
 ) (map[uint][]chartsopts.BarData, []uint) {
 	serieses := make(map[uint][]chartsopts.BarData)

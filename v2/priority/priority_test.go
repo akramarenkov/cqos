@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/research"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/gauger"
+	"github.com/akramarenkov/cqos/v2/priority/internal/research"
 	"github.com/akramarenkov/cqos/v2/priority/internal/unmanaged"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -85,20 +86,20 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
-		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := qot.ConvertToBarEcharts(
+		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -233,20 +234,20 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
-		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := qot.ConvertToBarEcharts(
+		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -381,20 +382,20 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
-		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := qot.ConvertToBarEcharts(
+		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -529,20 +530,20 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := research.ConvertQuantityOverTimeToBarEcharts(
-		calcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
+	wtfl, wtflX := qot.ConvertToBarEcharts(
+		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
 	dqotChart := charts.NewLine()
@@ -676,15 +677,15 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
@@ -798,15 +799,15 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcInProcessing(gauges, 100*time.Millisecond),
+	ipot, ipotX := qot.ConvertToLineEcharts(
+		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
@@ -1012,7 +1013,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFair(t *testing.T) {
@@ -1041,7 +1042,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineRateUnbuffered(t *testing.T) {
@@ -1071,7 +1072,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFairUnbuffered(t *testing.T) {
@@ -1101,7 +1102,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineBadDivider(t *testing.T) {
@@ -1149,7 +1150,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	gauges := ggr.Play(ctx)
 
-	require.NotEqual(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.NotEqual(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineRateOverQuantity(t *testing.T) {
@@ -1178,7 +1179,7 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 
 	gauges := gauger.Play(context.Background())
 
-	quantities := calcInProcessing(gauges, 100*time.Millisecond)
+	quantities := research.CalcInProcessing(gauges, 100*time.Millisecond)
 
 	for priority := range quantities {
 		for id := range quantities[priority] {
@@ -1213,7 +1214,7 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 
 	gauges := gauger.Play(context.Background())
 
-	quantities := calcInProcessing(gauges, 100*time.Millisecond)
+	quantities := research.CalcInProcessing(gauges, 100*time.Millisecond)
 
 	for priority := range quantities {
 		for id := range quantities[priority] {
@@ -1248,7 +1249,7 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
@@ -1277,7 +1278,7 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 
 	gauges := ggr.Play(context.Background())
 
-	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(filterByKind(gauges, gauger.GaugeKindReceived)))
+	require.Equal(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
 }
 
 func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
@@ -1332,10 +1333,10 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 
 	gauges := ggr.Play(context.Background())
 
-	received := filterByKind(gauges, gauger.GaugeKindReceived)
+	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := research.ConvertQuantityOverTimeToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	dqot, dqotX := qot.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
