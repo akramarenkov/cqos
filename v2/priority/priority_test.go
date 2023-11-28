@@ -1150,7 +1150,11 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	gauges := ggr.Play(ctx)
 
-	require.NotEqual(t, int(ggr.CalcExpectedGuagesQuantity()), len(research.FilterByKind(gauges, gauger.GaugeKindReceived)))
+	require.NotEqual(
+		t,
+		int(ggr.CalcExpectedGuagesQuantity()),
+		len(research.FilterByKind(gauges, gauger.GaugeKindReceived)),
+	)
 }
 
 func TestDisciplineRateOverQuantity(t *testing.T) {
