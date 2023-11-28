@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+
 	"github.com/stretchr/testify/require"
 )
 

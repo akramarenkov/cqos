@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/gauger"
 	"github.com/akramarenkov/cqos/v2/priority/internal/research"
 	"github.com/akramarenkov/cqos/v2/priority/internal/unmanaged"
+
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -88,17 +88,17 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := qot.ConvertToBarEcharts(
+	wtfl, wtflX := research.ConvertToBarEcharts(
 		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -236,17 +236,17 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := qot.ConvertToBarEcharts(
+	wtfl, wtflX := research.ConvertToBarEcharts(
 		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -384,17 +384,17 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := qot.ConvertToBarEcharts(
+	wtfl, wtflX := research.ConvertToBarEcharts(
 		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -532,17 +532,17 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	wtfl, wtflX := qot.ConvertToBarEcharts(
+	wtfl, wtflX := research.ConvertToBarEcharts(
 		research.CalcWriteToFeedbackLatency(gauges, 100*time.Nanosecond),
 	)
 
@@ -679,12 +679,12 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
@@ -801,12 +801,12 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
 
-	ipot, ipotX := qot.ConvertToLineEcharts(
+	ipot, ipotX := research.ConvertToLineEcharts(
 		research.CalcInProcessing(gauges, 100*time.Millisecond),
 		1*time.Second,
 	)
@@ -1335,7 +1335,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 
 	received := research.FilterByKind(gauges, gauger.GaugeKindReceived)
 
-	dqot, dqotX := qot.ConvertToLineEcharts(
+	dqot, dqotX := research.ConvertToLineEcharts(
 		research.CalcDataQuantity(received, 100*time.Millisecond),
 		1*time.Second,
 	)
