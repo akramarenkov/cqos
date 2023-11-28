@@ -32,7 +32,8 @@ func ExampleDiscipline() {
 	measurements := make(chan bool)
 	defer close(measurements)
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use divider.Fair divider, for prioritization use
+	// divider.Rate divider or custom divider
 	disciplineOpts := priority.Opts[string]{
 		Divider:          divider.Rate,
 		HandlersQuantity: uint(handlersQuantity),
@@ -77,7 +78,8 @@ func ExampleDiscipline() {
 				// fmt.Println(prioritized.Item)
 				measurements <- true
 
-				// Handlers must indicate that current data has been processed
+				// Handler must indicate that current data has been processed and
+				// handler is ready to receive new data
 				discipline.Release(prioritized.Priority)
 			}
 		}()

@@ -1,3 +1,4 @@
+// Simplified version of the prioritization discipline that runs handlers on its own
 package simple
 
 import (
@@ -13,13 +14,12 @@ var (
 	ErrEmptyHandle = errors.New("handle function was not specified")
 )
 
-// Callback function called in handlers of simplified prioritization
-// discipline when an item is received.
+// Callback function called in handlers when an item is received.
 //
 // Function should be interrupted when context is canceled
 type Handle[Type any] func(ctx context.Context, item Type)
 
-// Options of the created simplified prioritization discipline
+// Options of the created discipline
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
 	Divider divider.Divider
@@ -29,7 +29,7 @@ type Opts[Type any] struct {
 	HandlersQuantity uint
 	// Channels with input data, should be buffered for performance reasons
 	// Map key is a value of priority
-	// For graceful termination need close all input channels
+	// For terminate discipline it is necessary and sufficient to close all input channels
 	Inputs map[uint]<-chan Type
 }
 
@@ -41,8 +41,12 @@ func (opts Opts[Type]) isValid() error {
 	return nil
 }
 
-// Simplified version of the discipline that runs handlers on its own and
-// hides the output and feedback channels
+// Simplified prioritization discipline
+//
+// Preferably input channels should be buffered for performance reasons.
+//
+// For equaling use divider.Fair divider, for prioritization use divider.Rate divider or
+// custom divider
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -53,7 +57,7 @@ type Discipline[Type any] struct {
 	err chan error
 }
 
-// Creates and runs simplified prioritization discipline
+// Creates and runs discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err

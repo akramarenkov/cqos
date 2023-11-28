@@ -1,5 +1,5 @@
-// Accumulates elements from the input channel into a slice and writes it to the
-// output channel when the size or timeout is reached
+// Discipline that used to accumulates elements from the input channel into a slice and
+// writes it to the output channel when the size or timeout is reached
 package join
 
 import (
@@ -25,7 +25,7 @@ const (
 
 // Options of the created discipline
 type Opts[Type any] struct {
-	// Input data channel. For terminate discipline it is enough to
+	// Input data channel. For terminate discipline it is necessary and sufficient to
 	// close the input channel
 	Input <-chan Type
 	// Output slice size
@@ -43,7 +43,7 @@ type Opts[Type any] struct {
 	// the timeout is used and to determine the expiration of the timeout,
 	// the current time is compared with the time of the last recording to
 	// the output channel. This method has an inaccuracy that can be set by
-	// this parameter
+	// this parameter in percents
 	TimeoutInaccuracy uint
 }
 
@@ -71,7 +71,7 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Main discipline
+// Join discipline
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -82,7 +82,7 @@ type Discipline[Type any] struct {
 	ticker  *time.Ticker
 }
 
-// Creates and runs main discipline
+// Creates and runs discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err

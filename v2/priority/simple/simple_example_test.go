@@ -42,7 +42,8 @@ func ExampleDiscipline() {
 		}
 	}
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use divider.Fair divider, for prioritization use
+	// divider.Rate divider or custom divider
 	opts := simple.Opts[string]{
 		Divider:          divider.Rate,
 		Handle:           handle,
