@@ -7,18 +7,13 @@ import (
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
+	"github.com/akramarenkov/cqos/v2/priority/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
 var (
 	ErrEmptyDivider     = errors.New("priorities divider was not specified")
 	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
-)
-
-const (
-	defaultCapacityFactor   = 0.1
-	defaultIdleDelay        = 1 * time.Nanosecond
-	defaultInterruptTimeout = 1 * time.Nanosecond
 )
 
 // Options of the created discipline
@@ -81,20 +76,24 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := common.CalcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+	capacity := common.CalcCapacity(
+		int(opts.HandlersQuantity),
+		consts.DefaultCapacityFactor,
+		len(opts.Inputs),
+	)
 
 	dsc := &Discipline[Type]{
 		opts: opts,
 
 		feedback: make(chan uint, capacity),
-		inputs:   make(map[uint]<-chan Type),
+		inputs:   make(map[uint]<-chan Type, len(opts.Inputs)),
 		output:   make(chan types.Prioritized[Type], capacity),
 
 		actual:    make(map[uint]uint),
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
 
-		interrupter: time.NewTicker(defaultInterruptTimeout),
+		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
 		unbuffered:  make(map[uint]bool),
 
 		drained: make(map[uint]bool),
@@ -169,7 +168,7 @@ func (dsc *Discipline[Type]) loop() {
 				return
 			}
 
-			time.Sleep(defaultIdleDelay)
+			time.Sleep(consts.DefaultIdleDelay)
 		}
 	}()
 
@@ -185,7 +184,7 @@ func (dsc *Discipline[Type]) loop() {
 				return
 			}
 
-			time.Sleep(defaultIdleDelay)
+			time.Sleep(consts.DefaultIdleDelay)
 		}
 	}
 }

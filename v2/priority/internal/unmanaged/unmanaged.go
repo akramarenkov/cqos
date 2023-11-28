@@ -4,65 +4,127 @@ package unmanaged
 
 import (
 	"sync"
+	"time"
 
+	"github.com/akramarenkov/cqos/v2/priority/internal/common"
+	"github.com/akramarenkov/cqos/v2/priority/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
 type Opts[Type any] struct {
-	Inputs map[uint]<-chan Type
+	HandlersQuantity uint
+	Inputs           map[uint]<-chan Type
 }
 
-type Unmanaged[Type any] struct {
+type Discipline[Type any] struct {
 	opts Opts[Type]
 
+	inputs map[uint]<-chan Type
 	output chan types.Prioritized[Type]
+
+	interrupter *time.Ticker
+	unbuffered  map[uint]bool
 }
 
-func New[Type any](opts Opts[Type]) (*Unmanaged[Type], error) {
-	nmn := &Unmanaged[Type]{
+func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
+	capacity := common.CalcCapacity(
+		int(opts.HandlersQuantity),
+		consts.DefaultCapacityFactor,
+		len(opts.Inputs),
+	)
+
+	dsc := &Discipline[Type]{
 		opts: opts,
 
-		output: make(chan types.Prioritized[Type], 1),
+		inputs: make(map[uint]<-chan Type, len(opts.Inputs)),
+		output: make(chan types.Prioritized[Type], capacity),
+
+		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
+		unbuffered:  make(map[uint]bool),
 	}
 
-	go nmn.main()
+	dsc.updateInputs(opts.Inputs)
 
-	return nmn, nil
+	go dsc.main()
+
+	return dsc, nil
 }
 
-func (nmn *Unmanaged[Type]) Output() <-chan types.Prioritized[Type] {
-	return nmn.output
+func (dsc *Discipline[Type]) Output() <-chan types.Prioritized[Type] {
+	return dsc.output
 }
 
-func (nmn *Unmanaged[Type]) Release(uint) {
+func (dsc *Discipline[Type]) Release(uint) {
 }
 
-func (nmn *Unmanaged[Type]) main() {
-	defer close(nmn.output)
+func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
+	for priority, channel := range inputs {
+		dsc.inputs[priority] = channel
+
+		if cap(channel) == 0 {
+			dsc.unbuffered[priority] = true
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) main() {
+	defer close(dsc.output)
+	defer dsc.interrupter.Stop()
 
 	waiter := &sync.WaitGroup{}
 	defer waiter.Wait()
 
-	for priority := range nmn.opts.Inputs {
+	for priority := range dsc.opts.Inputs {
 		waiter.Add(1)
 
-		go nmn.io(waiter, priority)
+		if !dsc.unbuffered[priority] {
+			go dsc.io(waiter, priority)
+		} else {
+			go dsc.iou(waiter, priority)
+		}
 	}
 }
 
-func (nmn *Unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
+func (dsc *Discipline[Type]) io(waiter *sync.WaitGroup, priority uint) {
 	defer waiter.Done()
 
-	for item := range nmn.opts.Inputs[priority] {
-		nmn.send(item, priority)
+	for item := range dsc.opts.Inputs[priority] {
+		dsc.send(item, priority)
 	}
 }
 
-func (nmn *Unmanaged[Type]) send(item Type, priority uint) {
+func (dsc *Discipline[Type]) iou(waiter *sync.WaitGroup, priority uint) {
+	defer waiter.Done()
+
+	sleep := false
+
+	for {
+		select {
+		case item, opened := <-dsc.inputs[priority]:
+			if !opened {
+				return
+			}
+
+			dsc.send(item, priority)
+		case <-dsc.interrupter.C:
+			if sleep {
+				sleep = false
+
+				time.Sleep(consts.DefaultIdleDelay)
+
+				continue
+			}
+
+			sleep = true
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) send(item Type, priority uint) {
 	prioritized := types.Prioritized[Type]{
 		Priority: priority,
 		Item:     item,
 	}
 
-	nmn.output <- prioritized
+	dsc.output <- prioritized
 }
