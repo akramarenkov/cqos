@@ -1,3 +1,4 @@
+// Data types of prioritization discipline
 package types
 
 // Describes the data distributed by the prioritization discipline

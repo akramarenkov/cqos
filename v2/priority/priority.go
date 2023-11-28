@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
-	"github.com/akramarenkov/cqos/v2/priority/internal/utils"
+	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
@@ -81,7 +81,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := utils.CalcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+	capacity := common.CalcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
 
 	dsc := &Discipline[Type]{
 		opts: opts,
@@ -142,7 +142,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 		dsc.priorities = append(dsc.priorities, priority)
 	}
 
-	utils.SortPriorities(dsc.priorities)
+	common.SortPriorities(dsc.priorities)
 
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }

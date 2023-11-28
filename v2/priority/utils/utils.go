@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
-	"github.com/akramarenkov/cqos/v2/priority/internal/utils"
+	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 )
 
 const (
@@ -61,7 +61,7 @@ func newCombination(combination []uint, added uint) []uint {
 
 	newed[len(newed)-1] = added
 
-	utils.SortPriorities(newed)
+	common.SortPriorities(newed)
 
 	return newed
 }
@@ -205,7 +205,7 @@ func isSuitableConfig(
 	quantity uint,
 	limit float64,
 ) bool {
-	referenceTotalQuantity := referenceFactor * utils.SumPriorities(priorities)
+	referenceTotalQuantity := referenceFactor * common.SumPriorities(priorities)
 
 	for _, combination := range combinations {
 		distribution := divider(combination, quantity, nil)
