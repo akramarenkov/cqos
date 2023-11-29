@@ -41,7 +41,7 @@ func (opts Opts[Type]) isValid() error {
 	return nil
 }
 
-// Simplified prioritization discipline
+// Simplified prioritization discipline.
 //
 // Preferably input channels should be buffered for performance reasons.
 //
@@ -51,8 +51,6 @@ type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	discipline *priority.Discipline[Type]
-
-	wg *sync.WaitGroup
 
 	err chan error
 }
@@ -79,8 +77,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		discipline: discipline,
 
-		wg: &sync.WaitGroup{},
-
 		err: make(chan error, 1),
 	}
 
@@ -101,23 +97,25 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 
 func (dsc *Discipline[Type]) handlers() {
 	defer close(dsc.err)
-	defer dsc.wg.Wait()
+
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
-		dsc.wg.Add(1)
+		wg.Add(1)
 
-		go dsc.handler(ctx)
+		go dsc.handler(ctx, wg)
 	}
 
 	err := <-dsc.discipline.Err()
 	dsc.err <- err
 }
 
-func (dsc *Discipline[Type]) handler(ctx context.Context) {
-	defer dsc.wg.Done()
+func (dsc *Discipline[Type]) handler(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 
 	for {
 		select {
