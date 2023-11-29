@@ -2,7 +2,6 @@
 package simple
 
 import (
-	"context"
 	"errors"
 	"sync"
 
@@ -14,10 +13,8 @@ var (
 	ErrEmptyHandle = errors.New("handle function was not specified")
 )
 
-// Callback function called in handlers when an item is received.
-//
-// Function should be interrupted when context is canceled
-type Handle[Type any] func(ctx context.Context, item Type)
+// Callback function called in handlers when an item is received
+type Handle[Type any] func(item Type)
 
 // Options of the created discipline
 type Opts[Type any] struct {
@@ -97,37 +94,27 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 
 func (dsc *Discipline[Type]) handlers() {
 	defer close(dsc.err)
+	defer func() {
+		if err := <-dsc.discipline.Err(); err != nil {
+			dsc.err <- err
+		}
+	}()
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
 		wg.Add(1)
 
-		go dsc.handler(ctx, wg)
+		go dsc.handler(wg)
 	}
-
-	err := <-dsc.discipline.Err()
-	dsc.err <- err
 }
 
-func (dsc *Discipline[Type]) handler(ctx context.Context, wg *sync.WaitGroup) {
+func (dsc *Discipline[Type]) handler(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case prioritized, opened := <-dsc.discipline.Output():
-			if !opened {
-				return
-			}
-
-			dsc.opts.Handle(ctx, prioritized.Item)
-			dsc.discipline.Release(prioritized.Priority)
-		}
+	for prioritized := range dsc.discipline.Output() {
+		dsc.opts.Handle(prioritized.Item)
+		dsc.discipline.Release(prioritized.Priority)
 	}
 }

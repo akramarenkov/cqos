@@ -1,7 +1,6 @@
 package simple_test
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -33,13 +32,10 @@ func ExampleDiscipline() {
 	measurements := make(chan bool)
 	defer close(measurements)
 
-	handle := func(ctx context.Context, item string) {
+	handle := func(item string) {
 		// Data processing
 		// fmt.Println(item)
-		select {
-		case <-ctx.Done():
-		case measurements <- true:
-		}
+		measurements <- true
 	}
 
 	// For equaling use divider.Fair divider, for prioritization use

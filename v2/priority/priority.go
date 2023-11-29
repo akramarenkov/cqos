@@ -147,23 +147,21 @@ func (dsc *Discipline[Type]) loop() {
 	defer dsc.interrupter.Stop()
 
 	defer func() {
-		if value := recover(); value != nil {
-			dsc.err <- value.(error)
+		err := recover()
+
+		if err == nil {
+			return
 		}
 
-		for {
-			select {
-			case priority := <-dsc.feedback:
-				dsc.decreaseActual(priority)
-			default:
-			}
+		for priority := range dsc.feedback {
+			dsc.decreaseActual(priority)
 
 			if dsc.isZeroActual() {
-				return
+				break
 			}
-
-			time.Sleep(consts.DefaultIdleDelay)
 		}
+
+		dsc.err <- err.(error)
 	}()
 
 	for {
