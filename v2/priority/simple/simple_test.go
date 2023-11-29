@@ -2,7 +2,6 @@ package simple
 
 import (
 	"strconv"
-	"sync"
 	"testing"
 	"time"
 
@@ -38,22 +37,26 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		1: make(chan string, inputCapacity),
 	}
 
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
+	inputsOpts := make(map[uint]<-chan string)
+
+	for priority, channel := range inputs {
+		inputsOpts[priority] = channel
 	}
 
 	measurements := make(chan bool)
 	defer close(measurements)
 
 	handle := func(item string) {
-		measurements <- true
-
 		time.Sleep(1 * time.Millisecond)
+
+		measurements <- true
 	}
 
-	badDivider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
+	badDivider := func(
+		priorities []uint,
+		dividend uint,
+		distribution map[uint]uint,
+	) map[uint]uint {
 		out := divider.Fair(priorities, dividend, distribution)
 
 		for priority := range out {
@@ -77,14 +80,8 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 	simple, err := New(opts)
 	require.NoError(t, err)
 
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
 	for priority, input := range inputs {
-		wg.Add(1)
-
 		go func(precedency uint, channel chan string) {
-			defer wg.Done()
 			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
@@ -111,10 +108,6 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 				return
 			case <-measurements:
 				received++
-
-				if received == itemsQuantity*len(inputs) {
-					return
-				}
 			}
 		}
 	}()
