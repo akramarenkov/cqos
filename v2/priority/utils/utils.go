@@ -5,13 +5,13 @@ package utils
 import (
 	"math"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 )
 
 const (
-	oneHundredPercent = 100
-	referenceFactor   = 1000
+	referenceFactor = 1000
 )
 
 // inefficient implementation, but usually there are not so many priorities for
@@ -190,7 +190,7 @@ func isDistributionSuitable(
 
 		diff := 1.0 - ratio*float64(distribution[priority])/float64(referenceQuantity)
 
-		diff = oneHundredPercent * math.Abs(diff)
+		diff = consts.OneHundredPercent * math.Abs(diff)
 
 		if diff > limit {
 			return false

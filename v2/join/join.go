@@ -5,6 +5,8 @@ package join
 import (
 	"errors"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -17,10 +19,6 @@ var (
 const (
 	defaultTimeout           = 1 * time.Millisecond
 	defaultTimeoutInaccuracy = 25
-)
-
-const (
-	oneHundredPercent = 100
 )
 
 // Options of the created discipline
@@ -119,7 +117,7 @@ func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, 
 		return 0, ErrInvalidTimeoutInaccuracy
 	}
 
-	divider := oneHundredPercent / inaccuracy
+	divider := consts.OneHundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrInvalidTimeoutInaccuracy
