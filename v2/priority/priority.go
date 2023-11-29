@@ -42,7 +42,7 @@ type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	feedback chan uint
-	inputs   map[uint]<-chan Type
+	inputs   map[uint]common.Input[Type]
 	output   chan types.Prioritized[Type]
 
 	priorities []uint
@@ -55,9 +55,6 @@ type Discipline[Type any] struct {
 	useful    []uint
 
 	interrupter *time.Ticker
-	unbuffered  map[uint]bool
-
-	drained map[uint]bool
 
 	err chan error
 }
@@ -86,7 +83,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		opts: opts,
 
 		feedback: make(chan uint, capacity),
-		inputs:   make(map[uint]<-chan Type, len(opts.Inputs)),
+		inputs:   make(map[uint]common.Input[Type], len(opts.Inputs)),
 		output:   make(chan types.Prioritized[Type], capacity),
 
 		actual:    make(map[uint]uint),
@@ -94,9 +91,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		tactic:    make(map[uint]uint),
 
 		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
-		unbuffered:  make(map[uint]bool),
-
-		drained: make(map[uint]bool),
 
 		err: make(chan error, 1),
 	}
@@ -132,11 +126,11 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
-		dsc.inputs[priority] = channel
-
-		if cap(channel) == 0 {
-			dsc.unbuffered[priority] = true
+		input := common.Input[Type]{
+			Channel: channel,
 		}
+
+		dsc.inputs[priority] = input
 
 		dsc.priorities = append(dsc.priorities, priority)
 	}
@@ -200,8 +194,8 @@ func (dsc *Discipline[Type]) isZeroActual() bool {
 }
 
 func (dsc *Discipline[Type]) isDrainedInputs() bool {
-	for priority := range dsc.inputs {
-		if !dsc.drained[priority] {
+	for _, input := range dsc.inputs {
+		if !input.Drained {
 			return false
 		}
 	}
@@ -229,7 +223,7 @@ func (dsc *Discipline[Type]) prioritize() uint {
 	processed := uint(0)
 
 	for _, priority := range dsc.priorities {
-		if !dsc.unbuffered[priority] {
+		if cap(dsc.inputs[priority].Channel) != 0 {
 			processed += dsc.io(priority)
 		} else {
 			processed += dsc.iou(priority)
@@ -248,9 +242,9 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 		}
 
 		select {
-		case item, opened := <-dsc.inputs[priority]:
+		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
-				dsc.drained[priority] = true
+				dsc.markInputAsDrained(priority)
 				return processed
 			}
 
@@ -274,9 +268,9 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 		}
 
 		select {
-		case item, opened := <-dsc.inputs[priority]:
+		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
-				dsc.drained[priority] = true
+				dsc.markInputAsDrained(priority)
 				return processed
 			}
 
@@ -293,6 +287,12 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = true
 		}
 	}
+}
+
+func (dsc *Discipline[Type]) markInputAsDrained(priority uint) {
+	input := dsc.inputs[priority]
+	input.Drained = true
+	dsc.inputs[priority] = input
 }
 
 func (dsc *Discipline[Type]) send(item Type, priority uint) uint {

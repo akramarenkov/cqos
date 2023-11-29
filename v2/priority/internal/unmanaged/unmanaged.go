@@ -23,7 +23,6 @@ type Discipline[Type any] struct {
 	output chan types.Prioritized[Type]
 
 	interrupter *time.Ticker
-	unbuffered  map[uint]bool
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
@@ -40,7 +39,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		output: make(chan types.Prioritized[Type], capacity),
 
 		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
-		unbuffered:  make(map[uint]bool),
 	}
 
 	dsc.updateInputs(opts.Inputs)
@@ -60,10 +58,6 @@ func (dsc *Discipline[Type]) Release(uint) {
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
 		dsc.inputs[priority] = channel
-
-		if cap(channel) == 0 {
-			dsc.unbuffered[priority] = true
-		}
 	}
 }
 
@@ -77,7 +71,7 @@ func (dsc *Discipline[Type]) main() {
 	for priority := range dsc.opts.Inputs {
 		waiter.Add(1)
 
-		if !dsc.unbuffered[priority] {
+		if cap(dsc.inputs[priority]) != 0 {
 			go dsc.io(waiter, priority)
 		} else {
 			go dsc.iou(waiter, priority)
