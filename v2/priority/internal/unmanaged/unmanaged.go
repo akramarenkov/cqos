@@ -19,7 +19,7 @@ type Opts[Type any] struct {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	inputs map[uint]<-chan Type
+	inputs map[uint]common.Input[Type]
 	output chan types.Prioritized[Type]
 
 	interrupter *time.Ticker
@@ -35,7 +35,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		inputs: make(map[uint]<-chan Type, len(opts.Inputs)),
+		inputs: make(map[uint]common.Input[Type], len(opts.Inputs)),
 		output: make(chan types.Prioritized[Type], capacity),
 
 		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
@@ -57,7 +57,11 @@ func (dsc *Discipline[Type]) Release(uint) {
 
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
-		dsc.inputs[priority] = channel
+		input := common.Input[Type]{
+			Channel: channel,
+		}
+
+		dsc.inputs[priority] = input
 	}
 }
 
@@ -71,7 +75,7 @@ func (dsc *Discipline[Type]) main() {
 	for priority := range dsc.opts.Inputs {
 		waiter.Add(1)
 
-		if cap(dsc.inputs[priority]) != 0 {
+		if cap(dsc.inputs[priority].Channel) != 0 {
 			go dsc.io(waiter, priority)
 		} else {
 			go dsc.iou(waiter, priority)
@@ -94,7 +98,7 @@ func (dsc *Discipline[Type]) iou(waiter *sync.WaitGroup, priority uint) {
 
 	for {
 		select {
-		case item, opened := <-dsc.inputs[priority]:
+		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
 				return
 			}
