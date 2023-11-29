@@ -23,6 +23,8 @@ type Discipline[Type any] struct {
 	output chan types.Prioritized[Type]
 
 	interrupter *time.Ticker
+
+	err chan error
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
@@ -39,6 +41,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		output: make(chan types.Prioritized[Type], capacity),
 
 		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
+
+		err: make(chan error, 1),
 	}
 
 	dsc.updateInputs(opts.Inputs)
@@ -55,6 +59,10 @@ func (dsc *Discipline[Type]) Output() <-chan types.Prioritized[Type] {
 func (dsc *Discipline[Type]) Release(uint) {
 }
 
+func (dsc *Discipline[Type]) Err() <-chan error {
+	return dsc.err
+}
+
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
 		input := common.Input[Type]{
@@ -66,33 +74,34 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 }
 
 func (dsc *Discipline[Type]) main() {
+	defer close(dsc.err)
 	defer close(dsc.output)
 	defer dsc.interrupter.Stop()
 
-	waiter := &sync.WaitGroup{}
-	defer waiter.Wait()
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	for priority := range dsc.opts.Inputs {
-		waiter.Add(1)
+		wg.Add(1)
 
 		if cap(dsc.inputs[priority].Channel) != 0 {
-			go dsc.io(waiter, priority)
+			go dsc.io(wg, priority)
 		} else {
-			go dsc.iou(waiter, priority)
+			go dsc.iou(wg, priority)
 		}
 	}
 }
 
-func (dsc *Discipline[Type]) io(waiter *sync.WaitGroup, priority uint) {
-	defer waiter.Done()
+func (dsc *Discipline[Type]) io(wg *sync.WaitGroup, priority uint) {
+	defer wg.Done()
 
 	for item := range dsc.opts.Inputs[priority] {
 		dsc.send(item, priority)
 	}
 }
 
-func (dsc *Discipline[Type]) iou(waiter *sync.WaitGroup, priority uint) {
-	defer waiter.Done()
+func (dsc *Discipline[Type]) iou(wg *sync.WaitGroup, priority uint) {
+	defer wg.Done()
 
 	sleep := false
 
