@@ -48,8 +48,6 @@ type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	discipline *priority.Discipline[Type]
-
-	err chan error
 }
 
 // Creates and runs discipline
@@ -73,11 +71,9 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		opts: opts,
 
 		discipline: discipline,
-
-		err: make(chan error, 1),
 	}
 
-	go dsc.handlers()
+	go dsc.main()
 
 	return dsc, nil
 }
@@ -89,17 +85,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 //
 // The single nil value means that the discipline has terminated in normal mode
 func (dsc *Discipline[Type]) Err() <-chan error {
-	return dsc.err
+	return dsc.discipline.Err()
 }
 
-func (dsc *Discipline[Type]) handlers() {
-	defer close(dsc.err)
-	defer func() {
-		if err := <-dsc.discipline.Err(); err != nil {
-			dsc.err <- err
-		}
-	}()
-
+func (dsc *Discipline[Type]) main() {
 	wg := &sync.WaitGroup{}
 
 	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
