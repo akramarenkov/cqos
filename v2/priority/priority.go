@@ -149,16 +149,12 @@ func (dsc *Discipline[Type]) loop() {
 	defer func() {
 		err := recover()
 
-		if err == nil {
-			return
+		for !dsc.isZeroActual() {
+			dsc.decreaseActual(<-dsc.feedback)
 		}
 
-		for priority := range dsc.feedback {
-			dsc.decreaseActual(priority)
-
-			if dsc.isZeroActual() {
-				break
-			}
+		if err == nil {
+			return
 		}
 
 		dsc.err <- err.(error)
@@ -172,7 +168,7 @@ func (dsc *Discipline[Type]) loop() {
 		}
 
 		if processed := dsc.main(); processed == 0 {
-			if dsc.isZeroActual() && dsc.isDrainedInputs() {
+			if dsc.isDrainedInputs() {
 				return
 			}
 
@@ -325,13 +321,8 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 }
 
 func (dsc *Discipline[Type]) calcTactic() {
-	for {
-		if !dsc.pickUpTactic() {
-			dsc.decreaseActual(<-dsc.feedback)
-			continue
-		}
-
-		return
+	for !dsc.pickUpTactic() {
+		dsc.decreaseActual(<-dsc.feedback)
 	}
 }
 
