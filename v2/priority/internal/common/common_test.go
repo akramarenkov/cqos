@@ -32,10 +32,10 @@ func TestSumPriorities(t *testing.T) {
 	require.Equal(t, uint(10), SumPriorities([]uint{4, 3, 2, 1}))
 }
 
-func TestCalcCapacity(t *testing.T) {
-	require.Equal(t, 1, CalcCapacity(10, 0.1, 100))
-	require.Equal(t, 100, CalcCapacity(10, 0.01, 100))
-	require.Equal(t, 2, CalcCapacity(3, 0.5, 100))
-	require.Equal(t, 1, CalcCapacity(4, 0.333, 100))
-	require.Equal(t, 100, CalcCapacity(1, 0.166, 100))
+func TestCalcByFactor(t *testing.T) {
+	require.Equal(t, 1, CalcByFactor(10, 0.1, 100))
+	require.Equal(t, 100, CalcByFactor(10, 0.01, 100))
+	require.Equal(t, 2, CalcByFactor(3, 0.5, 100))
+	require.Equal(t, 1, CalcByFactor(4, 0.333, 100))
+	require.Equal(t, 100, CalcByFactor(1, 0.166, 100))
 }

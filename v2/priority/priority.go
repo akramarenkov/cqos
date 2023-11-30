@@ -17,9 +17,9 @@ var (
 )
 
 const (
-	defaultIdleDelay        = 1 * time.Nanosecond
-	defaultInterruptTimeout = 1 * time.Nanosecond
-	defaultMaxFeedback      = 10
+	defaultGetFeedbackFactor = 0.1
+	defaultIdleDelay         = 1 * time.Nanosecond
+	defaultInterruptTimeout  = 1 * time.Nanosecond
 )
 
 // Options of the created discipline
@@ -60,6 +60,8 @@ type Discipline[Type any] struct {
 	uncrowded []uint
 	useful    []uint
 
+	maxGetFeedback int
+
 	interrupter *time.Ticker
 
 	err chan error
@@ -79,9 +81,15 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := common.CalcCapacity(
+	capacity := common.CalcByFactor(
 		int(opts.HandlersQuantity),
 		consts.DefaultCapacityFactor,
+		len(opts.Inputs),
+	)
+
+	maxGetFeedback := common.CalcByFactor(
+		int(opts.HandlersQuantity),
+		defaultGetFeedbackFactor,
 		len(opts.Inputs),
 	)
 
@@ -95,6 +103,8 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		actual:    make(map[uint]uint),
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
+
+		maxGetFeedback: maxGetFeedback,
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
 
@@ -167,7 +177,7 @@ func (dsc *Discipline[Type]) loop() {
 	}()
 
 	for {
-		dsc.collectFeedback(defaultMaxFeedback)
+		dsc.getFeedback()
 
 		if processed := dsc.main(); processed == 0 {
 			if dsc.isDrainedInputs() {
@@ -179,8 +189,8 @@ func (dsc *Discipline[Type]) loop() {
 	}
 }
 
-func (dsc *Discipline[Type]) collectFeedback(max uint) {
-	for collected := uint(0); collected < max; collected++ {
+func (dsc *Discipline[Type]) getFeedback() {
+	for collected := 0; collected < dsc.maxGetFeedback; collected++ {
 		select {
 		case priority := <-dsc.feedback:
 			dsc.decreaseActual(priority)

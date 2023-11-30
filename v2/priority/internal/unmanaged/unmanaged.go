@@ -25,7 +25,7 @@ type Discipline[Type any] struct {
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
-	capacity := common.CalcCapacity(
+	capacity := common.CalcByFactor(
 		int(opts.HandlersQuantity),
 		consts.DefaultCapacityFactor,
 		len(opts.Inputs),

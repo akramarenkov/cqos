@@ -24,7 +24,7 @@ func SumPriorities(priorities []uint) uint {
 	return sum
 }
 
-func CalcCapacity(base int, factor float64, reserve int) int {
+func CalcByFactor(base int, factor float64, reserve int) int {
 	capacity := int(math.Round(factor * float64(base)))
 
 	if capacity == 0 {
