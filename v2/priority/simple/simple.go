@@ -101,13 +101,14 @@ func (dsc *Discipline[Type]) handlers() {
 	}()
 
 	wg := &sync.WaitGroup{}
-	defer wg.Wait()
 
 	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
 		wg.Add(1)
 
 		go dsc.handler(wg)
 	}
+
+	wg.Wait()
 }
 
 func (dsc *Discipline[Type]) handler(wg *sync.WaitGroup) {

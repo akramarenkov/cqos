@@ -4,7 +4,6 @@ package unmanaged
 
 import (
 	"sync"
-	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/consts"
@@ -22,8 +21,6 @@ type Discipline[Type any] struct {
 	inputs map[uint]common.Input[Type]
 	output chan types.Prioritized[Type]
 
-	interrupter *time.Ticker
-
 	err chan error
 }
 
@@ -39,8 +36,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		inputs: make(map[uint]common.Input[Type], len(opts.Inputs)),
 		output: make(chan types.Prioritized[Type], capacity),
-
-		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
 
 		err: make(chan error, 1),
 	}
@@ -76,20 +71,16 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 func (dsc *Discipline[Type]) main() {
 	defer close(dsc.err)
 	defer close(dsc.output)
-	defer dsc.interrupter.Stop()
 
 	wg := &sync.WaitGroup{}
-	defer wg.Wait()
 
 	for priority := range dsc.opts.Inputs {
 		wg.Add(1)
 
-		if cap(dsc.inputs[priority].Channel) != 0 {
-			go dsc.io(wg, priority)
-		} else {
-			go dsc.iou(wg, priority)
-		}
+		go dsc.io(wg, priority)
 	}
+
+	wg.Wait()
 }
 
 func (dsc *Discipline[Type]) io(wg *sync.WaitGroup, priority uint) {
@@ -97,33 +88,6 @@ func (dsc *Discipline[Type]) io(wg *sync.WaitGroup, priority uint) {
 
 	for item := range dsc.opts.Inputs[priority] {
 		dsc.send(item, priority)
-	}
-}
-
-func (dsc *Discipline[Type]) iou(wg *sync.WaitGroup, priority uint) {
-	defer wg.Done()
-
-	sleep := false
-
-	for {
-		select {
-		case item, opened := <-dsc.inputs[priority].Channel:
-			if !opened {
-				return
-			}
-
-			dsc.send(item, priority)
-		case <-dsc.interrupter.C:
-			if sleep {
-				sleep = false
-
-				time.Sleep(consts.DefaultIdleDelay)
-
-				continue
-			}
-
-			sleep = true
-		}
 	}
 }
 
