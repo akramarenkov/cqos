@@ -16,6 +16,12 @@ var (
 	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
 )
 
+const (
+	defaultIdleDelay        = 1 * time.Nanosecond
+	defaultInterruptTimeout = 1 * time.Nanosecond
+	defaultMaxFeedback      = 10
+)
+
 // Options of the created discipline
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
@@ -90,7 +96,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
 
-		interrupter: time.NewTicker(consts.DefaultInterruptTimeout),
+		interrupter: time.NewTicker(defaultInterruptTimeout),
 
 		err: make(chan error, 1),
 	}
@@ -161,18 +167,25 @@ func (dsc *Discipline[Type]) loop() {
 	}()
 
 	for {
-		select {
-		case priority := <-dsc.feedback:
-			dsc.decreaseActual(priority)
-		default:
-		}
+		dsc.collectFeedback(defaultMaxFeedback)
 
 		if processed := dsc.main(); processed == 0 {
 			if dsc.isDrainedInputs() {
 				return
 			}
 
-			time.Sleep(consts.DefaultIdleDelay)
+			time.Sleep(defaultIdleDelay)
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) collectFeedback(max uint) {
+	for collected := uint(0); collected < max; collected++ {
+		select {
+		case priority := <-dsc.feedback:
+			dsc.decreaseActual(priority)
+		default:
+			return
 		}
 	}
 }
