@@ -33,9 +33,19 @@ func TestSumPriorities(t *testing.T) {
 }
 
 func TestCalcByFactor(t *testing.T) {
-	require.Equal(t, 1, CalcByFactor(10, 0.1, 100))
-	require.Equal(t, 100, CalcByFactor(10, 0.01, 100))
-	require.Equal(t, 2, CalcByFactor(3, 0.5, 100))
-	require.Equal(t, 1, CalcByFactor(4, 0.333, 100))
-	require.Equal(t, 100, CalcByFactor(1, 0.166, 100))
+	require.Equal(t, 3, CalcByFactor(10, 0.1, 3))
+	require.Equal(t, 1, CalcByFactor(10, 0.1, 0))
+	require.Equal(t, 10, CalcByFactor(100, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(14, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(15, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(16, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(24, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(25, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(26, 0.1, 3))
+	require.Equal(t, 3, CalcByFactor(34, 0.1, 3))
+	require.Equal(t, 4, CalcByFactor(35, 0.1, 3))
+	require.Equal(t, 4, CalcByFactor(36, 0.1, 3))
+	require.Equal(t, 0, CalcByFactor(4, 0.1, 0))
+	require.Equal(t, 1, CalcByFactor(5, 0.1, 0))
+	require.Equal(t, 1, CalcByFactor(6, 0.1, 0))
 }
