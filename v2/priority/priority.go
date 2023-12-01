@@ -97,7 +97,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		opts: opts,
 
 		feedback: make(chan uint, capacity),
-		inputs:   make(map[uint]common.Input[Type], len(opts.Inputs)),
+		inputs:   make(map[uint]common.Input[Type]),
 		output:   make(chan types.Prioritized[Type], capacity),
 
 		actual:    make(map[uint]uint),
