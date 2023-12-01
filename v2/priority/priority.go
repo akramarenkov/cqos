@@ -404,22 +404,6 @@ func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
 	return dsc.isTacticFilled(dsc.uncrowded)
 }
 
-func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
-	for _, priority := range priorities {
-		if dsc.tactic[priority] == 0 {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (dsc *Discipline[Type]) resetTactic() {
-	for priority := range dsc.tactic {
-		dsc.tactic[priority] = 0
-	}
-}
-
 func (dsc *Discipline[Type]) updateUncrowded() {
 	dsc.uncrowded = dsc.uncrowded[:0]
 
@@ -430,6 +414,22 @@ func (dsc *Discipline[Type]) updateUncrowded() {
 
 		dsc.uncrowded = append(dsc.uncrowded, priority)
 	}
+}
+
+func (dsc *Discipline[Type]) resetTactic() {
+	for priority := range dsc.tactic {
+		dsc.tactic[priority] = 0
+	}
+}
+
+func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
+	for _, priority := range priorities {
+		if dsc.tactic[priority] == 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (dsc *Discipline[Type]) recalcTactic() bool {
