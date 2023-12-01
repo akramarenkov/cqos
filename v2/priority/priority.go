@@ -363,12 +363,19 @@ func (dsc *Discipline[Type]) pickUpTactic() bool {
 	return dsc.pickUpTacticBase(vacants)
 }
 
-func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
-	dsc.resetTactic()
-	dsc.updateUncrowded()
-	dsc.opts.Divider(dsc.uncrowded, vacants, dsc.tactic)
+func (dsc *Discipline[Type]) calcVacants() uint {
+	busy := uint(0)
 
-	return dsc.isTacticFilled(dsc.uncrowded)
+	for _, quantity := range dsc.actual {
+		busy += quantity
+	}
+
+	// In order not to overload the code with error returns due to one possible error
+	if dsc.opts.HandlersQuantity < busy {
+		panic(ErrQuantityExceeded)
+	}
+
+	return dsc.opts.HandlersQuantity - busy
 }
 
 func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
@@ -389,6 +396,14 @@ func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
 	return picked != 0 && picked <= vacants
 }
 
+func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
+	dsc.resetTactic()
+	dsc.updateUncrowded()
+	dsc.opts.Divider(dsc.uncrowded, vacants, dsc.tactic)
+
+	return dsc.isTacticFilled(dsc.uncrowded)
+}
+
 func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
 	for _, priority := range priorities {
 		if dsc.tactic[priority] == 0 {
@@ -403,21 +418,6 @@ func (dsc *Discipline[Type]) resetTactic() {
 	for priority := range dsc.tactic {
 		dsc.tactic[priority] = 0
 	}
-}
-
-func (dsc *Discipline[Type]) calcVacants() uint {
-	busy := uint(0)
-
-	for _, quantity := range dsc.actual {
-		busy += quantity
-	}
-
-	// In order not to overload the code with error returns due to one possible error
-	if dsc.opts.HandlersQuantity < busy {
-		panic(ErrQuantityExceeded)
-	}
-
-	return dsc.opts.HandlersQuantity - busy
 }
 
 func (dsc *Discipline[Type]) updateUncrowded() {
