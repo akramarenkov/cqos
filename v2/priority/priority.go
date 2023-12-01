@@ -383,7 +383,7 @@ func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
 
 	picked := uint(0)
 
-	for priority := range dsc.actual {
+	for _, priority := range dsc.priorities {
 		if dsc.actual[priority] > dsc.strategic[priority] {
 			return false
 		}
@@ -433,8 +433,9 @@ func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
 }
 
 func (dsc *Discipline[Type]) recalcTactic() bool {
-	remainder := dsc.updateUseful()
+	remainder := dsc.calcRemainder()
 
+	dsc.updateUseful()
 	dsc.resetTactic()
 	dsc.opts.Divider(dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
 
@@ -445,21 +446,29 @@ func (dsc *Discipline[Type]) recalcTactic() bool {
 	return dsc.isTacticFilled(dsc.useful)
 }
 
-func (dsc *Discipline[Type]) updateUseful() uint {
+func (dsc *Discipline[Type]) calcRemainder() uint {
 	remainder := uint(0)
-
-	dsc.useful = dsc.useful[:0]
 
 	for _, priority := range dsc.priorities {
 		if dsc.tactic[priority] != 0 {
 			remainder += dsc.tactic[priority]
 			continue
 		}
-
-		dsc.useful = append(dsc.useful, priority)
 	}
 
 	return remainder
+}
+
+func (dsc *Discipline[Type]) updateUseful() {
+	dsc.useful = dsc.useful[:0]
+
+	for _, priority := range dsc.priorities {
+		if dsc.tactic[priority] != 0 {
+			continue
+		}
+
+		dsc.useful = append(dsc.useful, priority)
+	}
 }
 
 func (dsc *Discipline[Type]) reUpdateUseful() {
