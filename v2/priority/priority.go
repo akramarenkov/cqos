@@ -415,11 +415,12 @@ func (dsc *Discipline[Type]) calcTacticBase(vacants uint) (bool, error) {
 	dsc.resetTactic()
 	dsc.updateUncrowded()
 
-	if len(dsc.uncrowded) == 0 {
-		return false, nil
-	}
-
-	err := safeDivide(dsc.opts.Divider, dsc.uncrowded, vacants, dsc.tactic)
+	err := safeDivide(
+		dsc.opts.Divider,
+		dsc.uncrowded,
+		vacants,
+		dsc.tactic,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -461,11 +462,12 @@ func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 	dsc.updateUseful()
 	dsc.resetTactic()
 
-	if len(dsc.useful) == 0 {
-		return false, nil
-	}
-
-	err := safeDivide(dsc.opts.Divider, dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
+	err := safeDivide(
+		dsc.opts.Divider,
+		dsc.useful,
+		dsc.opts.HandlersQuantity,
+		dsc.tactic,
+	)
 	if err != nil {
 		return false, err
 	}
@@ -473,11 +475,12 @@ func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 	dsc.updateUsefulLikeUncrowded()
 	dsc.resetTactic()
 
-	if len(dsc.useful) == 0 {
-		return false, nil
-	}
-
-	err = safeDivide(dsc.opts.Divider, dsc.useful, remainder, dsc.tactic)
+	err = safeDivide(
+		dsc.opts.Divider,
+		dsc.useful,
+		remainder,
+		dsc.tactic,
+	)
 	if err != nil {
 		return false, err
 	}
