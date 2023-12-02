@@ -34,11 +34,18 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	}
 
 	_, err = New(disciplineOpts)
+	require.Error(t, err)
+
+	disciplineOpts = Opts[uint]{
+		Divider:          divider.Fair,
+		HandlersQuantity: handlersQuantity,
+		Inputs: map[uint]<-chan uint{
+			1: make(chan uint),
+		},
+	}
+
+	_, err = New(disciplineOpts)
 	require.NoError(t, err)
-}
-
-func TestPrepare(t *testing.T) {
-
 }
 
 func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
@@ -1122,8 +1129,15 @@ func TestDisciplineBadDivider(t *testing.T) {
 	ggr.AddWrite(2, 100000)
 	ggr.AddWrite(3, 100000)
 
+	dividerCalled := 0
+
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
 		divider.Fair(priorities, dividend, distribution)
+
+		if dividerCalled < 1 {
+			dividerCalled++
+			return
+		}
 
 		for priority := range distribution {
 			distribution[priority] *= 2
@@ -1136,10 +1150,10 @@ func TestDisciplineBadDivider(t *testing.T) {
 		Inputs:           ggr.GetInputs(),
 	}
 
-	_, err := New(disciplineOpts)
-	require.Error(t, err)
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
 
-	/*ggr.SetDiscipline(discipline)
+	ggr.SetDiscipline(discipline)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1156,7 +1170,38 @@ func TestDisciplineBadDivider(t *testing.T) {
 		t,
 		int(ggr.CalcExpectedGuagesQuantity()),
 		len(research.FilterByKind(gauges, gauger.GaugeKindReceived)),
-	)*/
+	)
+}
+
+func TestDisciplineBadDividerInNew(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gauger.Opts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	ggr := gauger.New(gaugerOpts)
+
+	ggr.AddWrite(1, 1)
+	ggr.AddWrite(2, 1)
+	ggr.AddWrite(3, 1)
+
+	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
+		divider.Fair(priorities, dividend, distribution)
+
+		for priority := range distribution {
+			distribution[priority] *= 2
+		}
+	}
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider,
+		HandlersQuantity: handlersQuantity,
+		Inputs:           ggr.GetInputs(),
+	}
+
+	_, err := New(disciplineOpts)
+	require.Error(t, err)
 }
 
 func TestDisciplineRateOverQuantity(t *testing.T) {

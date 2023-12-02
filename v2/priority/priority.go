@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ErrEmptyInput               = errors.New("input channels was not specified")
 	ErrEmptyDivider             = errors.New("priorities divider was not specified")
 	ErrHandlersQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
 )
@@ -70,6 +71,10 @@ type Discipline[Type any] struct {
 func (opts Opts[Type]) isValid() error {
 	if opts.Divider == nil {
 		return ErrEmptyDivider
+	}
+
+	if len(opts.Inputs) == 0 {
+		return ErrEmptyInput
 	}
 
 	return nil

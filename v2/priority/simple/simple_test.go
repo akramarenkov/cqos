@@ -52,12 +52,19 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		measurements <- true
 	}
 
+	dividerCalled := 0
+
 	badDivider := func(
 		priorities []uint,
 		dividend uint,
 		distribution map[uint]uint,
 	) {
 		divider.Fair(priorities, dividend, distribution)
+
+		if dividerCalled < 2 {
+			dividerCalled++
+			return
+		}
 
 		for priority := range distribution {
 			distribution[priority] *= 2

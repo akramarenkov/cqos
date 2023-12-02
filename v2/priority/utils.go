@@ -32,6 +32,10 @@ func safeDivide(
 
 	after := calcDistributionQuantity(distribution)
 
+	if after == 0 {
+		return nil
+	}
+
 	if after-before != dividend {
 		return ErrBadDivider
 	}
