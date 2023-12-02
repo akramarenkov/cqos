@@ -145,7 +145,12 @@ func prepare[Type any](opts Opts[Type]) (
 
 	common.SortPriorities(priorities)
 
-	err := safeDivide(opts.Divider, priorities, opts.HandlersQuantity, strategic)
+	err := safeDivide(
+		opts.Divider,
+		priorities,
+		opts.HandlersQuantity,
+		strategic,
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
