@@ -1173,6 +1173,64 @@ func TestDisciplineBadDivider(t *testing.T) {
 	)
 }
 
+func TestDisciplineBadDividerInRecalc(t *testing.T) {
+	handlersQuantity := uint(6)
+
+	gaugerOpts := gauger.Opts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	ggr := gauger.New(gaugerOpts)
+
+	ggr.AddWrite(1, 1)
+	ggr.AddWrite(2, 1)
+	ggr.AddWrite(3, 100)
+
+	dividerCalled := 0
+
+	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
+		divider.Fair(priorities, dividend, distribution)
+
+		dividerCalled++
+
+		if dividerCalled == 1 || dividerCalled%2 == 0 {
+			return
+		}
+
+		for priority := range distribution {
+			distribution[priority] *= 2
+		}
+	}
+
+	disciplineOpts := Opts[uint]{
+		Divider:          divider,
+		HandlersQuantity: handlersQuantity,
+		Inputs:           ggr.GetInputs(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	ggr.SetDiscipline(discipline)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		if <-discipline.Err() != nil {
+			cancel()
+		}
+	}()
+
+	gauges := ggr.Play(ctx)
+
+	require.NotEqual(
+		t,
+		int(ggr.CalcExpectedGuagesQuantity()),
+		len(research.FilterByKind(gauges, gauger.GaugeKindReceived)),
+	)
+}
+
 func TestDisciplineBadDividerInNew(t *testing.T) {
 	handlersQuantity := uint(6)
 
