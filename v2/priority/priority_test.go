@@ -37,6 +37,10 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestPrepare(t *testing.T) {
+
+}
+
 func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
@@ -1134,10 +1138,10 @@ func TestDisciplineBadDivider(t *testing.T) {
 		Inputs:           ggr.GetInputs(),
 	}
 
-	discipline, err := New(disciplineOpts)
-	require.NoError(t, err)
+	_, err := New(disciplineOpts)
+	require.Error(t, err)
 
-	ggr.SetDiscipline(discipline)
+	/*ggr.SetDiscipline(discipline)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -1154,7 +1158,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 		t,
 		int(ggr.CalcExpectedGuagesQuantity()),
 		len(research.FilterByKind(gauges, gauger.GaugeKindReceived)),
-	)
+	)*/
 }
 
 func TestDisciplineRateOverQuantity(t *testing.T) {
