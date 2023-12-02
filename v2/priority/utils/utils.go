@@ -108,7 +108,9 @@ func isNonFatalConfig(
 	quantity uint,
 ) bool {
 	for _, combination := range combinations {
-		distribution := divider(combination, quantity, nil)
+		distribution := make(map[uint]uint)
+
+		divider(combination, quantity, distribution)
 
 		if !isDistributionFilled(distribution) {
 			return false
@@ -210,13 +212,16 @@ func isSuitableConfig(
 	referenceTotalQuantity := referenceFactor * common.SumPriorities(priorities)
 
 	for _, combination := range combinations {
-		distribution := divider(combination, quantity, nil)
+		distribution := make(map[uint]uint)
+		reference := make(map[uint]uint)
+
+		divider(combination, quantity, distribution)
 
 		if !isDistributionFilled(distribution) {
 			return false
 		}
 
-		reference := divider(combination, referenceTotalQuantity, nil)
+		divider(combination, referenceTotalQuantity, reference)
 
 		suitable := isDistributionSuitable(
 			distribution,

@@ -285,14 +285,20 @@ func TestPickUpMaxNonFatalQuantity(t *testing.T) {
 func TestIsDistributionSuitable(t *testing.T) {
 	quantity := uint(100)
 
-	distribution := divider.Rate([]uint{3, 2, 0}, quantity, nil)
-	reference := divider.Rate([]uint{3, 2, 0}, referenceFactor*quantity, nil)
+	distribution := make(map[uint]uint)
+	reference := make(map[uint]uint)
+
+	divider.Rate([]uint{3, 2, 0}, quantity, distribution)
+	divider.Rate([]uint{3, 2, 0}, referenceFactor*quantity, reference)
 
 	suitable := isDistributionSuitable(distribution, reference, quantity, referenceFactor*quantity, 10.0)
 	require.Equal(t, false, suitable)
 
-	distribution = divider.Rate([]uint{3, 2, 1}, quantity, nil)
-	reference = divider.Rate([]uint{3, 2, 1}, referenceFactor*quantity, nil)
+	distribution = make(map[uint]uint)
+	reference = make(map[uint]uint)
+
+	divider.Rate([]uint{3, 2, 1}, quantity, nil)
+	divider.Rate([]uint{3, 2, 1}, referenceFactor*quantity, nil)
 
 	suitable = isDistributionSuitable(distribution, reference, quantity, referenceFactor*quantity, 10.0)
 	require.Equal(t, true, suitable)

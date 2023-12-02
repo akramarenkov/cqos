@@ -131,6 +131,7 @@ func prepare[Type any](opts Opts[Type]) (
 ) {
 	inputs := make(map[uint]common.Input[Type])
 	priorities := make([]uint, 0)
+	strategic := make(map[uint]uint)
 
 	for priority, channel := range opts.Inputs {
 		input := common.Input[Type]{
@@ -144,7 +145,7 @@ func prepare[Type any](opts Opts[Type]) (
 
 	common.SortPriorities(priorities)
 
-	strategic, err := safeDivide(opts.Divider, priorities, opts.HandlersQuantity, nil)
+	err := safeDivide(opts.Divider, priorities, opts.HandlersQuantity, strategic)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -418,7 +419,7 @@ func (dsc *Discipline[Type]) calcTacticBase(vacants uint) (bool, error) {
 		return false, nil
 	}
 
-	_, err := safeDivide(dsc.opts.Divider, dsc.uncrowded, vacants, dsc.tactic)
+	err := safeDivide(dsc.opts.Divider, dsc.uncrowded, vacants, dsc.tactic)
 	if err != nil {
 		return false, err
 	}
@@ -464,7 +465,7 @@ func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 		return false, nil
 	}
 
-	_, err := safeDivide(dsc.opts.Divider, dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
+	err := safeDivide(dsc.opts.Divider, dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
 	if err != nil {
 		return false, err
 	}
@@ -476,7 +477,7 @@ func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 		return false, nil
 	}
 
-	_, err = safeDivide(dsc.opts.Divider, dsc.useful, remainder, dsc.tactic)
+	err = safeDivide(dsc.opts.Divider, dsc.useful, remainder, dsc.tactic)
 	if err != nil {
 		return false, err
 	}

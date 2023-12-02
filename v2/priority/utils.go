@@ -25,16 +25,16 @@ func safeDivide(
 	priorities []uint,
 	dividend uint,
 	distribution map[uint]uint,
-) (map[uint]uint, error) {
+) error {
 	before := calcDistributionQuantity(distribution)
 
-	updated := divider(priorities, dividend, distribution)
+	divider(priorities, dividend, distribution)
 
-	after := calcDistributionQuantity(updated)
+	after := calcDistributionQuantity(distribution)
 
 	if after-before != dividend {
-		return nil, ErrBadDivider
+		return ErrBadDivider
 	}
 
-	return updated, nil
+	return nil
 }

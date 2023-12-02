@@ -1122,14 +1122,12 @@ func TestDisciplineBadDivider(t *testing.T) {
 	ggr.AddWrite(2, 100000)
 	ggr.AddWrite(3, 100000)
 
-	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
-		out := divider.Fair(priorities, dividend, distribution)
+	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
+		divider.Fair(priorities, dividend, distribution)
 
-		for priority := range out {
-			out[priority] *= 2
+		for priority := range distribution {
+			distribution[priority] *= 2
 		}
-
-		return out
 	}
 
 	disciplineOpts := Opts[uint]{
