@@ -13,6 +13,8 @@ func TestFairDivider(t *testing.T) {
 	Fair(nil, 3, distribution)
 	require.Equal(t, map[uint]uint{}, distribution)
 
+	require.NotPanics(t, func() { Fair(priorities, 3, nil) })
+
 	distribution = make(map[uint]uint)
 	Fair(priorities, 0, distribution)
 	require.Equal(t, map[uint]uint{3: 0, 2: 0, 1: 0}, distribution)
@@ -268,6 +270,8 @@ func TestRateDivider(t *testing.T) {
 	distribution := make(map[uint]uint)
 	Rate(nil, 3, distribution)
 	require.Equal(t, map[uint]uint{}, distribution)
+
+	require.NotPanics(t, func() { Rate(priorities, 3, nil) })
 
 	distribution = make(map[uint]uint)
 	Rate(priorities, 0, distribution)
