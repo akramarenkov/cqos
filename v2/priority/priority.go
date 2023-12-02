@@ -180,25 +180,26 @@ func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.feedback)
 	defer dsc.interrupter.Stop()
 
-	defer func() {
-		err := recover()
-
-		for !dsc.isZeroActual() {
-			dsc.decreaseActual(<-dsc.feedback)
-		}
-
-		if err == nil {
-			return
-		}
-
-		dsc.err <- err.(error)
-	}()
-
 	for {
 		dsc.getFeedback()
 
-		if processed := dsc.main(); processed == 0 {
+		processed, err := dsc.main()
+		if err != nil {
+			for !dsc.isZeroActual() {
+				dsc.decreaseActual(<-dsc.feedback)
+			}
+
+			dsc.err <- err
+
+			return
+		}
+
+		if processed == 0 {
 			if dsc.isDrainedInputs() {
+				for !dsc.isZeroActual() {
+					dsc.decreaseActual(<-dsc.feedback)
+				}
+
 				return
 			}
 
@@ -238,22 +239,32 @@ func (dsc *Discipline[Type]) isDrainedInputs() bool {
 	return true
 }
 
-func (dsc *Discipline[Type]) main() uint {
+func (dsc *Discipline[Type]) main() (uint, error) {
 	processed := uint(0)
 
-	if proceed := dsc.calcTactic(); !proceed {
-		return processed
+	proceed, err := dsc.calcTactic()
+	if err != nil {
+		return processed, err
+	}
+
+	if !proceed {
+		return processed, nil
 	}
 
 	processed += dsc.prioritize()
 
-	if proceed := dsc.recalcTactic(); !proceed {
-		return processed
+	proceed, err = dsc.recalcTactic()
+	if err != nil {
+		return processed, err
+	}
+
+	if !proceed {
+		return processed, nil
 	}
 
 	processed += dsc.prioritize()
 
-	return processed
+	return processed, nil
 }
 
 func (dsc *Discipline[Type]) prioritize() uint {
@@ -354,29 +365,31 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 	dsc.tactic[priority]--
 }
 
-func (dsc *Discipline[Type]) calcTactic() bool {
-	vacants := dsc.calcVacants()
+func (dsc *Discipline[Type]) calcTactic() (bool, error) {
+	vacants, err := dsc.calcVacants()
+	if err != nil {
+		return false, err
+	}
 
 	if vacants == 0 {
-		return false
+		return false, nil
 	}
 
 	if picked := dsc.calcTacticSimpleAddition(vacants); picked {
-		return true
+		return true, nil
 	}
 
 	return dsc.calcTacticBase(vacants)
 }
 
-func (dsc *Discipline[Type]) calcVacants() uint {
+func (dsc *Discipline[Type]) calcVacants() (uint, error) {
 	busy := calcDistributionQuantity(dsc.actual)
 
-	// In order not to overload the code with error returns due to one possible error
 	if dsc.opts.HandlersQuantity < busy {
-		panic(ErrHandlersQuantityExceeded)
+		return 0, ErrHandlersQuantityExceeded
 	}
 
-	return dsc.opts.HandlersQuantity - busy
+	return dsc.opts.HandlersQuantity - busy, nil
 }
 
 func (dsc *Discipline[Type]) calcTacticSimpleAddition(vacants uint) bool {
@@ -397,20 +410,20 @@ func (dsc *Discipline[Type]) calcTacticSimpleAddition(vacants uint) bool {
 	return picked != 0 && picked <= vacants
 }
 
-func (dsc *Discipline[Type]) calcTacticBase(vacants uint) bool {
+func (dsc *Discipline[Type]) calcTacticBase(vacants uint) (bool, error) {
 	dsc.resetTactic()
 	dsc.updateUncrowded()
 
 	if len(dsc.uncrowded) == 0 {
-		return false
+		return false, nil
 	}
 
 	_, err := safeDivide(dsc.opts.Divider, dsc.uncrowded, vacants, dsc.tactic)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return dsc.isTacticFilled(dsc.uncrowded)
+	return dsc.isTacticFilled(dsc.uncrowded), nil
 }
 
 func (dsc *Discipline[Type]) updateUncrowded() {
@@ -441,34 +454,34 @@ func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
 	return true
 }
 
-func (dsc *Discipline[Type]) recalcTactic() bool {
+func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 	remainder := dsc.calcVacantsRemainder()
 
 	dsc.updateUseful()
 	dsc.resetTactic()
 
 	if len(dsc.useful) == 0 {
-		return false
+		return false, nil
 	}
 
 	_, err := safeDivide(dsc.opts.Divider, dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	dsc.updateUsefulLikeUncrowded()
 	dsc.resetTactic()
 
 	if len(dsc.useful) == 0 {
-		return false
+		return false, nil
 	}
 
 	_, err = safeDivide(dsc.opts.Divider, dsc.useful, remainder, dsc.tactic)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
-	return dsc.isTacticFilled(dsc.useful)
+	return dsc.isTacticFilled(dsc.useful), nil
 }
 
 func (dsc *Discipline[Type]) calcVacantsRemainder() uint {
