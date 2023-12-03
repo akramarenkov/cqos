@@ -1,6 +1,7 @@
 package priority
 
 import (
+	"math"
 	"testing"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
@@ -8,18 +9,61 @@ import (
 )
 
 func TestCalcDistributionQuantity(t *testing.T) {
-	require.Equal(t, uint(0), calcDistributionQuantity(nil))
-	require.Equal(t, uint(0), calcDistributionQuantity(map[uint]uint{}))
-	require.Equal(t, uint(0), calcDistributionQuantity(map[uint]uint{1: 0, 2: 0, 3: 0}))
-	require.Equal(t, uint(1), calcDistributionQuantity(map[uint]uint{1: 1, 2: 0, 3: 0}))
-	require.Equal(t, uint(1), calcDistributionQuantity(map[uint]uint{1: 0, 2: 1, 3: 0}))
-	require.Equal(t, uint(1), calcDistributionQuantity(map[uint]uint{1: 0, 2: 0, 3: 1}))
-	require.Equal(t, uint(2), calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 0}))
-	require.Equal(t, uint(2), calcDistributionQuantity(map[uint]uint{1: 0, 2: 1, 3: 1}))
-	require.Equal(t, uint(2), calcDistributionQuantity(map[uint]uint{1: 1, 2: 0, 3: 1}))
-	require.Equal(t, uint(3), calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1}))
-	require.Equal(t, uint(3), calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1}))
-	require.Equal(t, uint(3), calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1}))
+	quantity, err := calcDistributionQuantity(nil)
+	require.Equal(t, uint(0), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{})
+	require.Equal(t, uint(0), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 0, 2: 0, 3: 0})
+	require.Equal(t, uint(0), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 0, 3: 0})
+	require.Equal(t, uint(1), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 0, 2: 1, 3: 0})
+	require.Equal(t, uint(1), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 0, 2: 0, 3: 1})
+	require.Equal(t, uint(1), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 0})
+	require.Equal(t, uint(2), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 0, 2: 1, 3: 1})
+	require.Equal(t, uint(2), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 0, 3: 1})
+	require.Equal(t, uint(2), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1})
+	require.Equal(t, uint(3), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1})
+	require.Equal(t, uint(3), quantity)
+	require.NoError(t, err)
+
+	quantity, err = calcDistributionQuantity(map[uint]uint{1: 1, 2: 1, 3: 1})
+	require.Equal(t, uint(3), quantity)
+	require.NoError(t, err)
+}
+
+func TestCalcDistributionQuantityError(t *testing.T) {
+	distribution := map[uint]uint{1: math.MaxUint - 2, 2: 2, 3: 1}
+
+	quantity, err := calcDistributionQuantity(distribution)
+	require.Equal(t, uint(0), quantity)
+	require.Error(t, err)
 }
 
 func TestSafeDivide(t *testing.T) {
@@ -57,5 +101,13 @@ func TestSafeDivide(t *testing.T) {
 
 	distribution = map[uint]uint{3: 1, 2: 2, 1: 0}
 	err = safeDivide(badDivider, []uint{3, 2, 1}, 6, distribution)
+	require.Error(t, err)
+
+	distribution = map[uint]uint{3: math.MaxUint - 2, 2: 2, 1: 0}
+	err = safeDivide(badDivider, []uint{3, 2, 1}, 1, distribution)
+	require.Error(t, err)
+
+	distribution = map[uint]uint{3: math.MaxUint - 2, 2: 2, 1: 1}
+	err = safeDivide(badDivider, []uint{3, 2, 1}, 1, distribution)
 	require.Error(t, err)
 }

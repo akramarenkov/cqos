@@ -394,7 +394,10 @@ func (dsc *Discipline[Type]) calcTactic() (bool, error) {
 }
 
 func (dsc *Discipline[Type]) calcVacants() (uint, error) {
-	busy := calcDistributionQuantity(dsc.actual)
+	busy, err := calcDistributionQuantity(dsc.actual)
+	if err != nil {
+		return 0, err
+	}
 
 	if dsc.opts.HandlersQuantity < busy {
 		return 0, ErrHandlersQuantityExceeded

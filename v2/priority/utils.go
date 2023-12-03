@@ -4,20 +4,26 @@ import (
 	"errors"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/safe"
 )
 
 var (
 	ErrBadDivider = errors.New("divider produces an incorrect distribution")
 )
 
-func calcDistributionQuantity(distribution map[uint]uint) uint {
+func calcDistributionQuantity(distribution map[uint]uint) (uint, error) {
 	quantity := uint(0)
 
 	for _, amount := range distribution {
-		quantity += amount
+		sum, err := safe.SumInt(quantity, amount)
+		if err != nil {
+			return 0, err
+		}
+
+		quantity = sum
 	}
 
-	return quantity
+	return quantity, nil
 }
 
 func safeDivide(
@@ -26,11 +32,17 @@ func safeDivide(
 	dividend uint,
 	distribution map[uint]uint,
 ) error {
-	before := calcDistributionQuantity(distribution)
+	before, err := calcDistributionQuantity(distribution)
+	if err != nil {
+		return err
+	}
 
 	divider(priorities, dividend, distribution)
 
-	after := calcDistributionQuantity(distribution)
+	after, err := calcDistributionQuantity(distribution)
+	if err != nil {
+		return err
+	}
 
 	if after == 0 {
 		return nil
