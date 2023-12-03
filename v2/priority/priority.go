@@ -299,11 +299,7 @@ func (dsc *Discipline[Type]) prioritize() uint {
 func (dsc *Discipline[Type]) io(priority uint) uint {
 	processed := uint(0)
 
-	for {
-		if dsc.tactic[priority] == 0 {
-			return processed
-		}
-
+	for dsc.tactic[priority] != 0 {
 		select {
 		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
@@ -316,6 +312,8 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			return processed
 		}
 	}
+
+	return processed
 }
 
 func (dsc *Discipline[Type]) iou(priority uint) uint {
@@ -323,11 +321,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 
 	interrupt := false
 
-	for {
-		if dsc.tactic[priority] == 0 {
-			return processed
-		}
-
+	for dsc.tactic[priority] != 0 {
 		select {
 		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
@@ -346,6 +340,8 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = true
 		}
 	}
+
+	return processed
 }
 
 func (dsc *Discipline[Type]) markInputAsDrained(priority uint) {
@@ -508,7 +504,6 @@ func (dsc *Discipline[Type]) calcVacantsRemainder() uint {
 	for _, priority := range dsc.priorities {
 		if dsc.tactic[priority] != 0 {
 			remainder += dsc.tactic[priority]
-			continue
 		}
 	}
 
