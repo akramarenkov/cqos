@@ -197,11 +197,7 @@ func (dsc *Discipline[Type]) main() {
 }
 
 func (dsc *Discipline[Type]) loop() error {
-	defer func() {
-		for !dsc.isZeroActual() {
-			dsc.decreaseActual(<-dsc.feedback)
-		}
-	}()
+	defer dsc.getFeedback()
 
 	for {
 		processed, err := dsc.base()
@@ -217,11 +213,17 @@ func (dsc *Discipline[Type]) loop() error {
 			time.Sleep(defaultIdleDelay)
 		}
 
-		dsc.getFeedback()
+		dsc.getLimitedFeedback()
 	}
 }
 
 func (dsc *Discipline[Type]) getFeedback() {
+	for !dsc.isZeroActual() {
+		dsc.decreaseActual(<-dsc.feedback)
+	}
+}
+
+func (dsc *Discipline[Type]) getLimitedFeedback() {
 	for collected := 0; collected < dsc.feedbackLimit; collected++ {
 		select {
 		case priority := <-dsc.feedback:
