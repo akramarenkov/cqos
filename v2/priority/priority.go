@@ -123,7 +123,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		err: make(chan error, 1),
 	}
 
-	go dsc.loop()
+	go dsc.main()
 
 	return dsc, nil
 }
@@ -185,37 +185,39 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
 
-func (dsc *Discipline[Type]) loop() {
+func (dsc *Discipline[Type]) main() {
 	defer close(dsc.err)
 	defer close(dsc.output)
 	defer close(dsc.feedback)
 	defer dsc.interrupter.Stop()
 
+	if err := dsc.loop(); err != nil {
+		dsc.err <- err
+	}
+}
+
+func (dsc *Discipline[Type]) loop() error {
+	defer func() {
+		for !dsc.isZeroActual() {
+			dsc.decreaseActual(<-dsc.feedback)
+		}
+	}()
+
 	for {
-		dsc.getFeedback()
-
-		processed, err := dsc.main()
+		processed, err := dsc.base()
 		if err != nil {
-			for !dsc.isZeroActual() {
-				dsc.decreaseActual(<-dsc.feedback)
-			}
-
-			dsc.err <- err
-
-			return
+			return err
 		}
 
 		if processed == 0 {
 			if dsc.isDrainedInputs() {
-				for !dsc.isZeroActual() {
-					dsc.decreaseActual(<-dsc.feedback)
-				}
-
-				return
+				return nil
 			}
 
 			time.Sleep(defaultIdleDelay)
 		}
+
+		dsc.getFeedback()
 	}
 }
 
@@ -250,7 +252,7 @@ func (dsc *Discipline[Type]) isDrainedInputs() bool {
 	return true
 }
 
-func (dsc *Discipline[Type]) main() (uint, error) {
+func (dsc *Discipline[Type]) base() (uint, error) {
 	processed := uint(0)
 
 	proceed, err := dsc.calcTactic()
