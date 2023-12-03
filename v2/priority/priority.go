@@ -61,7 +61,7 @@ type Discipline[Type any] struct {
 	uncrowded []uint
 	useful    []uint
 
-	maxGetFeedback int
+	feedbackLimit int
 
 	interrupter *time.Ticker
 
@@ -92,7 +92,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		len(opts.Inputs),
 	)
 
-	maxGetFeedback := common.CalcByFactor(
+	feedbackLimit := common.CalcByFactor(
 		int(opts.HandlersQuantity),
 		defaultGetFeedbackFactor,
 		len(opts.Inputs),
@@ -116,7 +116,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		strategic: strategic,
 		tactic:    make(map[uint]uint),
 
-		maxGetFeedback: maxGetFeedback,
+		feedbackLimit: feedbackLimit,
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
 
@@ -220,7 +220,7 @@ func (dsc *Discipline[Type]) loop() {
 }
 
 func (dsc *Discipline[Type]) getFeedback() {
-	for collected := 0; collected < dsc.maxGetFeedback; collected++ {
+	for collected := 0; collected < dsc.feedbackLimit; collected++ {
 		select {
 		case priority := <-dsc.feedback:
 			dsc.decreaseActual(priority)
