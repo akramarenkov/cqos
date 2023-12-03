@@ -56,13 +56,13 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	disciplineOpts := priority.Opts[Type]{
+	priorityOpts := priority.Opts[Type]{
 		Divider:          opts.Divider,
 		HandlersQuantity: opts.HandlersQuantity,
 		Inputs:           opts.Inputs,
 	}
 
-	priority, err := priority.New(disciplineOpts)
+	priority, err := priority.New(priorityOpts)
 	if err != nil {
 		return nil, err
 	}
