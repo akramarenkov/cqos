@@ -47,7 +47,7 @@ func (opts Opts[Type]) isValid() error {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	discipline *priority.Discipline[Type]
+	priority *priority.Discipline[Type]
 }
 
 // Creates and runs discipline
@@ -62,7 +62,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		Inputs:           opts.Inputs,
 	}
 
-	discipline, err := priority.New(disciplineOpts)
+	priority, err := priority.New(disciplineOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		discipline: discipline,
+		priority: priority,
 	}
 
 	go dsc.main()
@@ -85,7 +85,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 //
 // The single nil value means that the discipline has terminated in normal mode
 func (dsc *Discipline[Type]) Err() <-chan error {
-	return dsc.discipline.Err()
+	return dsc.priority.Err()
 }
 
 func (dsc *Discipline[Type]) main() {
@@ -103,8 +103,8 @@ func (dsc *Discipline[Type]) main() {
 func (dsc *Discipline[Type]) handler(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for prioritized := range dsc.discipline.Output() {
+	for prioritized := range dsc.priority.Output() {
 		dsc.opts.Handle(prioritized.Item)
-		dsc.discipline.Release(prioritized.Priority)
+		dsc.priority.Release(prioritized.Priority)
 	}
 }

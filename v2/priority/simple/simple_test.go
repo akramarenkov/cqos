@@ -82,7 +82,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		opts.Divider = badDivider
 	}
 
-	simple, err := New(opts)
+	discipline, err := New(opts)
 	require.NoError(t, err)
 
 	for priority, input := range inputs {
@@ -95,7 +95,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 				item := base + ":" + strconv.Itoa(id)
 
 				select {
-				case <-simple.Err():
+				case <-discipline.Err():
 					return
 				case channel <- item:
 				}
@@ -109,7 +109,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 	func() {
 		for {
 			select {
-			case <-simple.Err():
+			case <-discipline.Err():
 				return
 			case <-measurements:
 				received++
