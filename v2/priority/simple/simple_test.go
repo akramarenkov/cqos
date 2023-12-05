@@ -52,7 +52,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		measurements <- true
 	}
 
-	dividerCalled := 0
+	dividerCallsQuantity := 0
 
 	badDivider := func(
 		priorities []uint,
@@ -61,8 +61,9 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 	) {
 		divider.Fair(priorities, dividend, distribution)
 
-		if dividerCalled < 2 {
-			dividerCalled++
+		dividerCallsQuantity++
+
+		if dividerCallsQuantity == 1 {
 			return
 		}
 

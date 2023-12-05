@@ -1129,13 +1129,14 @@ func TestDisciplineBadDivider(t *testing.T) {
 	ggr.AddWrite(2, 100000)
 	ggr.AddWrite(3, 100000)
 
-	dividerCalled := 0
+	dividerCallsQuantity := 0
 
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
 		divider.Fair(priorities, dividend, distribution)
 
-		if dividerCalled < 1 {
-			dividerCalled++
+		dividerCallsQuantity++
+
+		if dividerCallsQuantity == 1 {
 			return
 		}
 
@@ -1182,18 +1183,18 @@ func TestDisciplineBadDividerInRecalc(t *testing.T) {
 
 	ggr := gauger.New(gaugerOpts)
 
-	ggr.AddWrite(1, 1)
-	ggr.AddWrite(2, 1)
-	ggr.AddWrite(3, 100)
+	ggr.AddWrite(1, 0)
+	ggr.AddWrite(2, 0)
+	ggr.AddWrite(3, 100000)
 
-	dividerCalled := 0
+	dividerCallsQuantity := 0
 
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) {
 		divider.Fair(priorities, dividend, distribution)
 
-		dividerCalled++
+		dividerCallsQuantity++
 
-		if dividerCalled == 1 || dividerCalled%2 == 0 {
+		if dividerCallsQuantity == 1 || dividerCallsQuantity%2 == 0 {
 			return
 		}
 
