@@ -3,7 +3,6 @@ package simple
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/akramarenkov/cqos/v2/priority"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
@@ -73,7 +72,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		priority: priority,
 	}
 
-	go dsc.main()
+	dsc.main()
 
 	return dsc, nil
 }
@@ -89,20 +88,12 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 }
 
 func (dsc *Discipline[Type]) main() {
-	wg := &sync.WaitGroup{}
-
 	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
-		wg.Add(1)
-
-		go dsc.handler(wg)
+		go dsc.handler()
 	}
-
-	wg.Wait()
 }
 
-func (dsc *Discipline[Type]) handler(wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (dsc *Discipline[Type]) handler() {
 	for prioritized := range dsc.priority.Output() {
 		dsc.opts.Handle(prioritized.Item)
 		dsc.priority.Release(prioritized.Priority)
