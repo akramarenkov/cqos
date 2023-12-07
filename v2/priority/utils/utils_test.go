@@ -225,7 +225,7 @@ func TestIsNonFatalConfig(t *testing.T) {
 	require.Equal(t, false, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 3))
 	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 4))
 	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 5))
-	require.Equal(t, false, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 6))
+	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 6))
 	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 7))
 	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 8))
 	require.Equal(t, true, IsNonFatalConfig([]uint{4, 3, 2, 1}, divider.Fair, 9))

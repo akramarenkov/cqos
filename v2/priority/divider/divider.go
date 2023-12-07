@@ -33,25 +33,21 @@ func Fair(priorities []uint, dividend uint, distribution map[uint]uint) {
 		return
 	}
 
-	step := float64(dividend) / float64(len(priorities))
-	part := uint(math.Round(step))
+	divider := uint(len(priorities))
+	base := dividend / divider
+	remainder := dividend - base*divider
 
-	remainder := dividend
-
+	// max value of remainder is len(priorities), so we simply increase distribution by one
 	for _, priority := range priorities {
-		if remainder < part {
-			distribution[priority] += remainder
-			remainder = 0
+		distribution[priority] += base
 
+		if remainder == 0 {
 			continue
 		}
 
-		distribution[priority] += part
-
-		remainder -= part
+		distribution[priority]++
+		remainder--
 	}
-
-	distribution[priorities[0]] += remainder
 }
 
 // Distributes quantity between priorities in proportion to the priority value.

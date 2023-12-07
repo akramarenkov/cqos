@@ -99,10 +99,9 @@ func TestFairDividerEven(t *testing.T) {
 	Fair(priorities, 5, distribution)
 	require.Equal(t, map[uint]uint{4: 2, 3: 1, 2: 1, 1: 1}, distribution)
 
-	// sequence of low priorities is not monotonic due to rounding in highest priorities
 	distribution = make(map[uint]uint)
 	Fair(priorities, 6, distribution)
-	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 0}, distribution)
+	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 1, 1: 1}, distribution)
 
 	distribution = make(map[uint]uint)
 	Fair(priorities, 7, distribution)
@@ -116,10 +115,9 @@ func TestFairDividerEven(t *testing.T) {
 	Fair(priorities, 9, distribution)
 	require.Equal(t, map[uint]uint{4: 3, 3: 2, 2: 2, 1: 2}, distribution)
 
-	// sequence of low priorities is not monotonic due to rounding in highest priorities
 	distribution = make(map[uint]uint)
 	Fair(priorities, 10, distribution)
-	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 1}, distribution)
+	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 2, 1: 2}, distribution)
 
 	distribution = make(map[uint]uint)
 	Fair(priorities, 11, distribution)
@@ -228,40 +226,27 @@ func TestFairDividerDiscontinuous(t *testing.T) {
 }
 
 func TestFairDividerError(t *testing.T) {
+	// Fatal dividing error - values for one or more priorities are zero
+	// They also occurs because of the small value of the dividend
 	distribution := make(map[uint]uint)
+	Fair([]uint{6, 5, 4, 3, 2, 1}, 5, distribution)
+	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 0}, distribution)
+
+	// At large values of the dividend values of the distribution are no longer zero
+	distribution = make(map[uint]uint)
 	Fair([]uint{6, 5, 4, 3, 2, 1}, 6, distribution)
 	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
 
-	distribution = make(map[uint]uint)
-	Fair([]uint{5, 4, 3, 2, 1}, 6, distribution)
-	require.Equal(t, map[uint]uint{5: 2, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
-
-	// Fatal dividing error - values for one or more priorities are zero
-	// They also occurs because of the small value of the dividend
-	distribution = make(map[uint]uint)
-	Fair([]uint{4, 3, 2, 1}, 6, distribution)
-	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 0}, distribution)
-
-	// At large values of the dividend values of the distribution are no longer zero
-	distribution = make(map[uint]uint)
-	Fair([]uint{4, 3, 2, 1}, 12, distribution)
-	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 3}, distribution)
-
-	// At large values of the dividend values of the distribution are no longer zero
-	distribution = make(map[uint]uint)
-	Fair([]uint{4, 3, 2, 1}, 60, distribution)
-	require.Equal(t, map[uint]uint{4: 15, 3: 15, 2: 15, 1: 15}, distribution)
-
-	// Non-fatal dividing error - poor proportions
+	// Non-fatal dividing error - poor relative proportions
 	// Occurs because of the small value of the dividend
 	distribution = make(map[uint]uint)
 	Fair([]uint{4, 3, 2, 1}, 7, distribution)
 	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 1}, distribution)
 
-	// At larger values of the dividend, the proportions differ not so significantly
+	// At larger values of the dividend, the relative proportions differ not so significantly
 	distribution = make(map[uint]uint)
 	Fair([]uint{4, 3, 2, 1}, 70, distribution)
-	require.Equal(t, map[uint]uint{4: 18, 3: 18, 2: 18, 1: 16}, distribution)
+	require.Equal(t, map[uint]uint{4: 18, 3: 18, 2: 17, 1: 17}, distribution)
 }
 
 func TestRateDivider(t *testing.T) {
