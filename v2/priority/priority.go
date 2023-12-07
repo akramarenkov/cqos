@@ -12,15 +12,14 @@ import (
 )
 
 var (
-	ErrEmptyInput               = errors.New("input channels was not specified")
-	ErrEmptyDivider             = errors.New("priorities divider was not specified")
-	ErrHandlersQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
+	ErrEmptyInput   = errors.New("input channels was not specified")
+	ErrEmptyDivider = errors.New("priorities divider was not specified")
 )
 
 const (
-	defaultGetFeedbackFactor = 0.1
-	defaultIdleDelay         = 1 * time.Nanosecond
-	defaultInterruptTimeout  = 1 * time.Nanosecond
+	defaultFeedbackLimitFactor = 0.1
+	defaultIdleDelay           = 1 * time.Nanosecond
+	defaultInterruptTimeout    = 1 * time.Nanosecond
 )
 
 // Options of the created discipline
@@ -94,7 +93,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	feedbackLimit := common.CalcByFactor(
 		int(opts.HandlersQuantity),
-		defaultGetFeedbackFactor,
+		defaultFeedbackLimitFactor,
 		len(opts.Inputs),
 	)
 
