@@ -377,36 +377,28 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 }
 
 func (dsc *Discipline[Type]) calcTactic() (bool, error) {
-	vacants, err := dsc.calcVacants()
-	if err != nil {
-		return false, err
-	}
+	vacants := dsc.calcVacants()
 
 	if vacants == 0 {
 		return false, nil
 	}
 
-	if picked := dsc.calcTacticSimpleAddition(vacants); picked {
+	if picked := dsc.calcTacticByAddUpToStrategic(vacants); picked {
 		return true, nil
 	}
 
 	return dsc.calcTacticBase(vacants)
 }
 
-func (dsc *Discipline[Type]) calcVacants() (uint, error) {
-	busy, err := calcDistributionQuantity(dsc.actual)
-	if err != nil {
-		return 0, err
-	}
+func (dsc *Discipline[Type]) calcVacants() uint {
+	busy := calcDistributionQuantity(dsc.actual)
 
-	if dsc.opts.HandlersQuantity < busy {
-		return 0, ErrHandlersQuantityExceeded
-	}
-
-	return dsc.opts.HandlersQuantity - busy, nil
+	//we will not get an overflow because the correspondence of the quantities is
+	// checked at all stages of distribution
+	return dsc.opts.HandlersQuantity - busy
 }
 
-func (dsc *Discipline[Type]) calcTacticSimpleAddition(vacants uint) bool {
+func (dsc *Discipline[Type]) calcTacticByAddUpToStrategic(vacants uint) bool {
 	dsc.resetTactic()
 
 	picked := uint(0)
@@ -470,7 +462,7 @@ func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
 }
 
 func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
-	remainder := dsc.calcVacantsRemainder()
+	remainder := calcDistributionQuantity(dsc.tactic)
 
 	dsc.updateUseful()
 	dsc.resetTactic()
@@ -499,18 +491,6 @@ func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
 	}
 
 	return dsc.isTacticFilled(dsc.useful), nil
-}
-
-func (dsc *Discipline[Type]) calcVacantsRemainder() uint {
-	remainder := uint(0)
-
-	for _, priority := range dsc.priorities {
-		if dsc.tactic[priority] != 0 {
-			remainder += dsc.tactic[priority]
-		}
-	}
-
-	return remainder
 }
 
 func (dsc *Discipline[Type]) updateUseful() {

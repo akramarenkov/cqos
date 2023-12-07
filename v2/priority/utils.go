@@ -11,7 +11,17 @@ var (
 	ErrBadDivider = errors.New("divider produces an incorrect distribution")
 )
 
-func calcDistributionQuantity(distribution map[uint]uint) (uint, error) {
+func calcDistributionQuantity(distribution map[uint]uint) uint {
+	quantity := uint(0)
+
+	for _, amount := range distribution {
+		quantity += amount
+	}
+
+	return quantity
+}
+
+func safeCalcDistributionQuantity(distribution map[uint]uint) (uint, error) {
 	quantity := uint(0)
 
 	for _, amount := range distribution {
@@ -32,14 +42,14 @@ func safeDivide(
 	dividend uint,
 	distribution map[uint]uint,
 ) error {
-	before, err := calcDistributionQuantity(distribution)
+	before, err := safeCalcDistributionQuantity(distribution)
 	if err != nil {
 		return err
 	}
 
 	divider(priorities, dividend, distribution)
 
-	after, err := calcDistributionQuantity(distribution)
+	after, err := safeCalcDistributionQuantity(distribution)
 	if err != nil {
 		return err
 	}
