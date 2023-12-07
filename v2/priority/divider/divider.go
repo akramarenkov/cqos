@@ -67,20 +67,16 @@ func Rate(priorities []uint, dividend uint, distribution map[uint]uint) {
 		return
 	}
 
-	sum := common.SumPriorities(priorities)
-
-	step := float64(dividend) / float64(sum)
-
+	divider := common.SumPriorities(priorities)
+	base := float64(dividend) / float64(divider)
 	remainder := dividend
 
 	for _, priority := range priorities {
-		part := uint(math.Round(step * float64(priority)))
+		part := uint(math.Round(base * float64(priority)))
 
 		if remainder < part {
 			distribution[priority] += remainder
-			remainder = 0
-
-			continue
+			return
 		}
 
 		distribution[priority] += part
