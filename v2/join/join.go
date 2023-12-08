@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 )
 
 var (
@@ -117,7 +117,7 @@ func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, 
 		return 0, ErrInvalidTimeoutInaccuracy
 	}
 
-	divider := consts.OneHundredPercent / inaccuracy
+	divider := general.OneHundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrInvalidTimeoutInaccuracy

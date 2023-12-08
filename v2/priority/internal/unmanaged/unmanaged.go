@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
-	"github.com/akramarenkov/cqos/v2/priority/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
@@ -27,7 +26,7 @@ type Discipline[Type any] struct {
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	capacity := common.CalcByFactor(
 		int(opts.HandlersQuantity),
-		consts.DefaultCapacityFactor,
+		common.DefaultCapacityFactor,
 		len(opts.Inputs),
 	)
 

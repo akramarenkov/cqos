@@ -1,6 +1,6 @@
 // Internal package with common constants
-package consts
+package general
 
 const (
-	DefaultCapacityFactor = 0.1
+	OneHundredPercent = 100
 )

@@ -7,7 +7,6 @@ import (
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
-	"github.com/akramarenkov/cqos/v2/priority/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
@@ -87,7 +86,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	capacity := common.CalcByFactor(
 		int(opts.HandlersQuantity),
-		consts.DefaultCapacityFactor,
+		common.DefaultCapacityFactor,
 		len(opts.Inputs),
 	)
 
