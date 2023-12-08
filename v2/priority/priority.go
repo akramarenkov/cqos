@@ -256,18 +256,13 @@ func (dsc *Discipline[Type]) isDrainedInputs() bool {
 func (dsc *Discipline[Type]) base() (uint, error) {
 	processed := uint(0)
 
-	proceed, err := dsc.calcTactic()
-	if err != nil {
+	if err := dsc.waitCalcTactic(); err != nil {
 		return processed, err
-	}
-
-	if !proceed {
-		return processed, nil
 	}
 
 	processed += dsc.prioritize()
 
-	proceed, err = dsc.recalcTactic()
+	proceed, err := dsc.recalcTactic()
 	if err != nil {
 		return processed, err
 	}
@@ -279,6 +274,21 @@ func (dsc *Discipline[Type]) base() (uint, error) {
 	processed += dsc.prioritize()
 
 	return processed, nil
+}
+
+func (dsc *Discipline[Type]) waitCalcTactic() error {
+	for {
+		proceed, err := dsc.calcTactic()
+		if err != nil {
+			return err
+		}
+
+		if proceed {
+			return nil
+		}
+
+		dsc.decreaseActual(<-dsc.feedback)
+	}
 }
 
 func (dsc *Discipline[Type]) prioritize() uint {
