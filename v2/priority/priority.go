@@ -359,7 +359,9 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 
 func (dsc *Discipline[Type]) markInputAsDrained(priority uint) {
 	input := dsc.inputs[priority]
+
 	input.Drained = true
+
 	dsc.inputs[priority] = input
 }
 
@@ -450,11 +452,9 @@ func (dsc *Discipline[Type]) updateUncrowded() {
 	dsc.uncrowded = dsc.uncrowded[:0]
 
 	for _, priority := range dsc.priorities {
-		if dsc.actual[priority] >= dsc.strategic[priority] {
-			continue
+		if dsc.actual[priority] < dsc.strategic[priority] {
+			dsc.uncrowded = append(dsc.uncrowded, priority)
 		}
-
-		dsc.uncrowded = append(dsc.uncrowded, priority)
 	}
 }
 
@@ -510,11 +510,9 @@ func (dsc *Discipline[Type]) updateUseful() {
 	dsc.useful = dsc.useful[:0]
 
 	for _, priority := range dsc.priorities {
-		if dsc.tactic[priority] != 0 {
-			continue
+		if dsc.tactic[priority] == 0 {
+			dsc.useful = append(dsc.useful, priority)
 		}
-
-		dsc.useful = append(dsc.useful, priority)
 	}
 }
 
@@ -522,10 +520,8 @@ func (dsc *Discipline[Type]) updateUsefulLikeUncrowded() {
 	dsc.useful = dsc.useful[:0]
 
 	for _, priority := range dsc.priorities {
-		if dsc.actual[priority] >= dsc.tactic[priority] {
-			continue
+		if dsc.actual[priority] < dsc.tactic[priority] {
+			dsc.useful = append(dsc.useful, priority)
 		}
-
-		dsc.useful = append(dsc.useful, priority)
 	}
 }
