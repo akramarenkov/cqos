@@ -196,7 +196,7 @@ func (dsc *Discipline[Type]) main() {
 }
 
 func (dsc *Discipline[Type]) loop() error {
-	defer dsc.getFeedback()
+	defer dsc.waitZeroActual()
 
 	for {
 		processed, err := dsc.base()
@@ -216,10 +216,14 @@ func (dsc *Discipline[Type]) loop() error {
 	}
 }
 
-func (dsc *Discipline[Type]) getFeedback() {
+func (dsc *Discipline[Type]) waitZeroActual() {
 	for !dsc.isZeroActual() {
 		dsc.decreaseActual(<-dsc.feedback)
 	}
+}
+
+func (dsc *Discipline[Type]) getFeedback() {
+	dsc.decreaseActual(<-dsc.feedback)
 }
 
 func (dsc *Discipline[Type]) getLimitedFeedback() {
@@ -287,7 +291,7 @@ func (dsc *Discipline[Type]) waitCalcTactic() error {
 			return nil
 		}
 
-		dsc.decreaseActual(<-dsc.feedback)
+		dsc.getFeedback()
 	}
 }
 
