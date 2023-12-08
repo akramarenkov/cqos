@@ -29,8 +29,8 @@ func ExampleDiscipline() {
 	}
 
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan bool)
+	defer close(measures)
 
 	// For equaling use divider.Fair divider, for prioritization use
 	// divider.Rate divider or custom divider
@@ -76,7 +76,7 @@ func ExampleDiscipline() {
 			for prioritized := range discipline.Output() {
 				// Data processing
 				// fmt.Println(prioritized.Item)
-				measurements <- true
+				measures <- true
 
 				// Handler must indicate that current data has been processed and
 				// handler is ready to receive new data
@@ -88,7 +88,7 @@ func ExampleDiscipline() {
 	received := 0
 
 	// Wait for process all written data
-	for range measurements {
+	for range measures {
 		received++
 
 		if received == itemsQuantity*len(inputs) {

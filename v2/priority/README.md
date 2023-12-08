@@ -80,8 +80,8 @@ func main() {
     defer close(feedback)
 
     // Used only in this example for detect that all written data are processed
-    measurements := make(chan bool)
-    defer close(measurements)
+    measures := make(chan bool)
+    defer close(measures)
 
     // For equaling use FairDivider, for prioritization use RateDivider or custom divider
     disciplineOpts := priority.Opts[string]{
@@ -112,7 +112,7 @@ func main() {
             for prioritized := range output {
                 // Data processing
                 // fmt.Println(prioritized.Item)
-                measurements <- true
+                measures <- true
 
                 feedback <- prioritized.Priority
             }
@@ -142,7 +142,7 @@ func main() {
     received := 0
 
     // Wait for process all written data
-    for range measurements {
+    for range measures {
         received++
 
         if received == itemsQuantity*len(inputs) {

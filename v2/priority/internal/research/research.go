@@ -5,20 +5,20 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/qot"
-	"github.com/akramarenkov/cqos/v2/priority/internal/gauger"
+	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
 
-func FilterByKind(gauges []gauger.Gauge, kind gauger.GaugeKind) []gauger.Gauge {
-	out := make([]gauger.Gauge, 0, len(gauges))
+func FilterByKind(measures []measurer.Measure, kind measurer.MeasureKind) []measurer.Measure {
+	out := make([]measurer.Measure, 0, len(measures))
 
-	for _, gauge := range gauges {
-		if gauge.Kind != kind {
+	for _, measure := range measures {
+		if measure.Kind != kind {
 			continue
 		}
 
-		out = append(out, gauge)
+		out = append(out, measure)
 	}
 
 	return out
@@ -32,59 +32,59 @@ func sortDurations(durations []time.Duration) {
 	sort.SliceStable(durations, less)
 }
 
-func sortByData(gauges []gauger.Gauge) {
+func sortByData(measures []measurer.Measure) {
 	less := func(i int, j int) bool {
-		return gauges[i].Data < gauges[j].Data
+		return measures[i].Data < measures[j].Data
 	}
 
-	sort.SliceStable(gauges, less)
+	sort.SliceStable(measures, less)
 }
 
-func sortByRelativeTime(gauges []gauger.Gauge) {
+func sortByRelativeTime(measures []measurer.Measure) {
 	less := func(i int, j int) bool {
-		return gauges[i].RelativeTime < gauges[j].RelativeTime
+		return measures[i].RelativeTime < measures[j].RelativeTime
 	}
 
-	sort.SliceStable(gauges, less)
+	sort.SliceStable(measures, less)
 }
 
 func CalcDataQuantity(
-	gauges []gauger.Gauge,
+	measures []measurer.Measure,
 	resolution time.Duration,
 ) map[uint][]qot.QuantityOverTime {
-	if len(gauges) == 0 {
+	if len(measures) == 0 {
 		return nil
 	}
 
-	sortByRelativeTime(gauges)
+	sortByRelativeTime(measures)
 
 	minRelativeTime := time.Duration(0)
-	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+	maxRelativeTime := measures[len(measures)-1].RelativeTime
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
 
-	for _, gauge := range gauges {
-		if _, exists := quantities[gauge.Priority]; exists {
+	for _, measure := range measures {
+		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[gauge.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
 	}
 
-	gaugesEdge := 0
+	measuresEdge := 0
 
 	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
 		intervalQuantities := make(map[uint]uint)
 
-		for id, gauge := range gauges[gaugesEdge:] {
-			if gauge.RelativeTime > relativeTime {
-				gaugesEdge += id
+		for id, measure := range measures[measuresEdge:] {
+			if measure.RelativeTime > relativeTime {
+				measuresEdge += id
 				break
 			}
 
-			intervalQuantities[gauge.Priority]++
+			intervalQuantities[measure.Priority]++
 		}
 
 		for priority, quantity := range intervalQuantities {
@@ -114,31 +114,31 @@ func CalcDataQuantity(
 }
 
 func CalcInProcessing(
-	gauges []gauger.Gauge,
+	measures []measurer.Measure,
 	resolution time.Duration,
 ) map[uint][]qot.QuantityOverTime {
-	if len(gauges) == 0 {
+	if len(measures) == 0 {
 		return nil
 	}
 
-	sortByRelativeTime(gauges)
+	sortByRelativeTime(measures)
 
 	minRelativeTime := time.Duration(0)
-	maxRelativeTime := gauges[len(gauges)-1].RelativeTime
+	maxRelativeTime := measures[len(measures)-1].RelativeTime
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
 
-	for _, gauge := range gauges {
-		if _, exists := quantities[gauge.Priority]; exists {
+	for _, measure := range measures {
+		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[gauge.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
 	}
 
-	gaugesEdge := 0
+	measuresEdge := 0
 
 	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
 		receivedQuantities := make(map[uint]map[uint]uint)
@@ -149,17 +149,17 @@ func CalcInProcessing(
 			completedQuantities[priority] = make(map[uint]uint)
 		}
 
-		for id, gauge := range gauges[gaugesEdge:] {
-			if gauge.RelativeTime > relativeTime {
-				gaugesEdge += id
+		for id, measure := range measures[measuresEdge:] {
+			if measure.RelativeTime > relativeTime {
+				measuresEdge += id
 				break
 			}
 
-			switch gauge.Kind {
-			case gauger.GaugeKindReceived:
-				receivedQuantities[gauge.Priority][gauge.Data]++
-			case gauger.GaugeKindCompleted:
-				completedQuantities[gauge.Priority][gauge.Data]++
+			switch measure.Kind {
+			case measurer.MeasureKindReceived:
+				receivedQuantities[measure.Priority][measure.Data]++
+			case measurer.MeasureKindCompleted:
+				completedQuantities[measure.Priority][measure.Data]++
 			}
 		}
 
@@ -200,42 +200,42 @@ func CalcInProcessing(
 }
 
 func CalcWriteToFeedbackLatency(
-	gauges []gauger.Gauge,
+	measures []measurer.Measure,
 	interval time.Duration,
 ) map[uint][]qot.QuantityOverTime {
-	if len(gauges) == 0 {
+	if len(measures) == 0 {
 		return nil
 	}
 
-	sortByData(gauges)
+	sortByData(measures)
 
 	latencies := make(map[uint][]time.Duration)
-	pairs := make(map[uint]gauger.Gauge)
+	pairs := make(map[uint]measurer.Measure)
 
-	for _, gauge := range gauges {
-		switch gauge.Kind {
-		case gauger.GaugeKindCompleted:
-			if _, exists := pairs[gauge.Priority]; !exists {
-				pairs[gauge.Priority] = gauge
+	for _, measure := range measures {
+		switch measure.Kind {
+		case measurer.MeasureKindCompleted:
+			if _, exists := pairs[measure.Priority]; !exists {
+				pairs[measure.Priority] = measure
 				continue
 			}
 
-			latency := gauge.RelativeTime - pairs[gauge.Priority].RelativeTime
+			latency := measure.RelativeTime - pairs[measure.Priority].RelativeTime
 
-			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
+			latencies[measure.Priority] = append(latencies[measure.Priority], latency)
 
-			delete(pairs, gauge.Priority)
-		case gauger.GaugeKindProcessed:
-			if _, exists := pairs[gauge.Priority]; !exists {
-				pairs[gauge.Priority] = gauge
+			delete(pairs, measure.Priority)
+		case measurer.MeasureKindProcessed:
+			if _, exists := pairs[measure.Priority]; !exists {
+				pairs[measure.Priority] = measure
 				continue
 			}
 
-			latency := pairs[gauge.Priority].RelativeTime - gauge.RelativeTime
+			latency := pairs[measure.Priority].RelativeTime - measure.RelativeTime
 
-			latencies[gauge.Priority] = append(latencies[gauge.Priority], latency)
+			latencies[measure.Priority] = append(latencies[measure.Priority], latency)
 
-			delete(pairs, gauge.Priority)
+			delete(pairs, measure.Priority)
 		}
 	}
 

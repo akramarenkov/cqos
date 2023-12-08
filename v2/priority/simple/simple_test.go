@@ -43,13 +43,13 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		inputsOpts[priority] = channel
 	}
 
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan bool)
+	defer close(measures)
 
 	handle := func(item string) {
 		time.Sleep(1 * time.Millisecond)
 
-		measurements <- true
+		measures <- true
 	}
 
 	dividerCallsQuantity := 0
@@ -112,7 +112,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 			select {
 			case <-discipline.Err():
 				return
-			case <-measurements:
+			case <-measures:
 				received++
 			}
 		}

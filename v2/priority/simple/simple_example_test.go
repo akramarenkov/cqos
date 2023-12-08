@@ -29,13 +29,13 @@ func ExampleDiscipline() {
 	}
 
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan bool)
+	defer close(measures)
 
 	handle := func(item string) {
 		// Data processing
 		// fmt.Println(item)
-		measurements <- true
+		measures <- true
 	}
 
 	// For equaling use divider.Fair divider, for prioritization use
@@ -76,7 +76,7 @@ func ExampleDiscipline() {
 	received := 0
 
 	// Wait for process all written data
-	for range measurements {
+	for range measures {
 		received++
 
 		if received == itemsQuantity*len(inputs) {
