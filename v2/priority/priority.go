@@ -222,7 +222,7 @@ func (dsc *Discipline[Type]) waitZeroActual() {
 	}
 }
 
-func (dsc *Discipline[Type]) getFeedback() {
+func (dsc *Discipline[Type]) getOneFeedback() {
 	dsc.decreaseActual(<-dsc.feedback)
 }
 
@@ -291,7 +291,7 @@ func (dsc *Discipline[Type]) waitCalcTactic() error {
 			return nil
 		}
 
-		dsc.getFeedback()
+		dsc.getOneFeedback()
 	}
 }
 
