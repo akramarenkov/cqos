@@ -139,7 +139,7 @@ func TestDisciplineTimeout(t *testing.T) {
 	}
 
 	// plus one slice with incomplete size due to pause on write to input
-	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize)) + 1)
+	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize))) + 1
 
 	require.Equal(t, inSequence, outSequence)
 	require.Equal(t, expectedJoins, joins)
