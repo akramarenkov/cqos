@@ -6,19 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/priority/types"
+	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 )
 
 const (
 	defaultChannelCapacity      = 100
 	defaultWaitDevastationDelay = 1 * time.Nanosecond
 )
-
-type Discipline[Type any] interface {
-	Output() <-chan types.Prioritized[Type]
-	Release(priority uint)
-	Err() <-chan error
-}
 
 type MeasureKind int
 
@@ -240,7 +234,7 @@ func (msr *Measurer) writer(ctx context.Context, priority uint) {
 	}
 }
 
-func (msr *Measurer) runHandlers(ctx context.Context, discipline Discipline[uint]) {
+func (msr *Measurer) runHandlers(ctx context.Context, discipline common.Discipline[uint]) {
 	msr.start = make(chan bool)
 	defer close(msr.start)
 
@@ -256,7 +250,7 @@ func (msr *Measurer) runHandlers(ctx context.Context, discipline Discipline[uint
 	msr.startedAt = time.Now()
 }
 
-func (msr *Measurer) handler(ctx context.Context, discipline Discipline[uint]) {
+func (msr *Measurer) handler(ctx context.Context, discipline common.Discipline[uint]) {
 	defer msr.waiter.Done()
 
 	msr.ready.Done()
@@ -321,7 +315,7 @@ func (msr *Measurer) handler(ctx context.Context, discipline Discipline[uint]) {
 	}
 }
 
-func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
+func (msr *Measurer) Play(discipline common.Discipline[uint]) []Measure {
 	expectedMeasuresQuantity := msr.GetExpectedMeasuresQuantity()
 
 	if expectedMeasuresQuantity == 0 {
