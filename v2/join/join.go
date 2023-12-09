@@ -5,8 +5,6 @@ package join
 import (
 	"errors"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/general"
 )
 
 var (
@@ -109,29 +107,6 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	return dsc, nil
 }
 
-// Maximum timeout error is calculated as timeout + timeout/divider.
-//
-// Relative timeout error in percent (inaccuracy) is calculated as 100/divider
-func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, error) {
-	if inaccuracy == 0 {
-		return 0, ErrInvalidTimeoutInaccuracy
-	}
-
-	divider := general.OneHundredPercent / inaccuracy
-
-	if divider == 0 {
-		return 0, ErrInvalidTimeoutInaccuracy
-	}
-
-	timeout /= time.Duration(divider)
-
-	if timeout == 0 {
-		return 0, ErrTimeoutTooSmall
-	}
-
-	return timeout, nil
-}
-
 // Returns output channel.
 //
 // If this channel is closed, it means that the discipline is terminated
@@ -179,6 +154,8 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) send() {
+	defer dsc.resetSendAt()
+
 	join := dsc.prepareJoin()
 
 	if len(join) == 0 {
@@ -192,7 +169,6 @@ func (dsc *Discipline[Type]) send() {
 	}
 
 	dsc.resetJoin()
-	dsc.resetSendAt()
 }
 
 func (dsc *Discipline[Type]) resetSendAt() {

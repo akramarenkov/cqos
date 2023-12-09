@@ -8,25 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCalcTickerDuration(t *testing.T) {
-	duration, err := calcTickerDuration(1*time.Millisecond, 25)
-	require.NoError(t, err)
-	require.Equal(t, 250*time.Microsecond, duration)
-
-	duration, err = calcTickerDuration(2*time.Nanosecond, 25)
-	require.Error(t, err)
-	require.Equal(t, time.Duration(0), duration)
-
-	duration, err = calcTickerDuration(1*time.Millisecond, 0)
-	require.Error(t, err)
-	require.Equal(t, time.Duration(0), duration)
-
-	duration, err = calcTickerDuration(1*time.Millisecond, 101)
-	require.Error(t, err)
-	require.Equal(t, time.Duration(0), duration)
-}
-
-func TestDisciplineOptsValidation(t *testing.T) {
+func TestOptsValidation(t *testing.T) {
 	opts := Opts[uint]{
 		JoinSize: 10,
 	}
@@ -116,7 +98,7 @@ func TestDisciplineNoCopy(t *testing.T) {
 
 func TestDisciplineTimeout(t *testing.T) {
 	quantity := 105
-	pauseAt := quantity / 2
+	pauseAt := 52
 
 	input := make(chan int)
 
@@ -156,7 +138,7 @@ func TestDisciplineTimeout(t *testing.T) {
 		outSequence = append(outSequence, slice...)
 	}
 
-	// plus one (slice with incomplete size) due to pause on write to input
+	// plus one slice with incomplete size due to pause on write to input
 	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize)) + 1)
 
 	require.Equal(t, inSequence, outSequence)
