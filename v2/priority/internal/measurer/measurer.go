@@ -79,6 +79,10 @@ func (msr *Measurer) updateInput(priority uint) {
 	}
 }
 
+func (msr *Measurer) addAction(priority uint, action action) {
+	msr.actions[priority] = append(msr.actions[priority], action)
+}
+
 func (msr *Measurer) AddWrite(priority uint, quantity uint) {
 	msr.updateInput(priority)
 
@@ -87,7 +91,7 @@ func (msr *Measurer) AddWrite(priority uint, quantity uint) {
 		quantity: quantity,
 	}
 
-	msr.actions[priority] = append(msr.actions[priority], action)
+	msr.addAction(priority, action)
 }
 
 func (msr *Measurer) AddWriteWithDelay(priority uint, quantity uint, delay time.Duration) {
@@ -99,7 +103,7 @@ func (msr *Measurer) AddWriteWithDelay(priority uint, quantity uint, delay time.
 		delay:    delay,
 	}
 
-	msr.actions[priority] = append(msr.actions[priority], action)
+	msr.addAction(priority, action)
 }
 
 func (msr *Measurer) AddWaitDevastation(priority uint) {
@@ -107,7 +111,7 @@ func (msr *Measurer) AddWaitDevastation(priority uint) {
 		kind: actionKindWaitDevastation,
 	}
 
-	msr.actions[priority] = append(msr.actions[priority], action)
+	msr.addAction(priority, action)
 }
 
 func (msr *Measurer) AddDelay(priority uint, delay time.Duration) {
@@ -116,7 +120,7 @@ func (msr *Measurer) AddDelay(priority uint, delay time.Duration) {
 		delay: delay,
 	}
 
-	msr.actions[priority] = append(msr.actions[priority], action)
+	msr.addAction(priority, action)
 }
 
 func (msr *Measurer) SetProcessDelay(priority uint, delay time.Duration) {
@@ -216,15 +220,14 @@ func (msr *Measurer) runHandlers(
 	discipline Discipline[uint],
 ) {
 	starter := starter.New()
+	defer starter.Go()
 
-	for counter := uint(0); counter < msr.opts.HandlersQuantity; counter++ {
+	for id := uint(0); id < msr.opts.HandlersQuantity; id++ {
 		wg.Add(1)
 		starter.Ready(1)
 
 		go msr.handler(ctx, wg, starter, discipline)
 	}
-
-	starter.Go()
 }
 
 func (msr *Measurer) handler(
