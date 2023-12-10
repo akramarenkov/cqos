@@ -1,9 +1,6 @@
 package priority
 
 import (
-	"fmt"
-	"os"
-	"strconv"
 	"testing"
 	"time"
 
@@ -11,8 +8,6 @@ import (
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 	"github.com/akramarenkov/cqos/v2/priority/internal/research"
 
-	"github.com/go-echarts/go-echarts/v2/charts"
-	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -142,31 +137,6 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	_ = measurer.Play(discipline)
 }
 
-func TestDisciplineRate(t *testing.T) {
-	measurerOpts := measurer.Opts{
-		HandlersQuantity: 6,
-	}
-
-	msr := measurer.New(measurerOpts)
-
-	msr.AddWrite(1, 100000)
-	msr.AddWrite(2, 100000)
-	msr.AddWrite(3, 100000)
-
-	opts := Opts[uint]{
-		Divider:          divider.Rate,
-		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           msr.GetInputs(),
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	measures := msr.Play(discipline)
-
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
-}
-
 func TestDisciplineFair(t *testing.T) {
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: 6,
@@ -192,10 +162,9 @@ func TestDisciplineFair(t *testing.T) {
 	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
-func TestDisciplineRateUnbuffered(t *testing.T) {
+func TestDisciplineRate(t *testing.T) {
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: 6,
-		UnbufferedInput:  true,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -232,6 +201,32 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	opts := Opts[uint]{
 		Divider:          divider.Fair,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	measures := msr.Play(discipline)
+
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+}
+
+func TestDisciplineRateUnbuffered(t *testing.T) {
+	measurerOpts := measurer.Opts{
+		HandlersQuantity: 6,
+		UnbufferedInput:  true,
+	}
+
+	msr := measurer.New(measurerOpts)
+
+	msr.AddWrite(1, 100000)
+	msr.AddWrite(2, 100000)
+	msr.AddWrite(3, 100000)
+
+	opts := Opts[uint]{
+		Divider:          divider.Rate,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
@@ -355,39 +350,6 @@ func TestDisciplineBadDividerInNew(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestDisciplineRateOverQuantity(t *testing.T) {
-	handlersQuantity := uint(6)
-
-	measurerOpts := measurer.Opts{
-		HandlersQuantity: 2 * handlersQuantity,
-	}
-
-	measurer := measurer.New(measurerOpts)
-
-	measurer.AddWrite(1, 100000)
-	measurer.AddWrite(2, 100000)
-	measurer.AddWrite(3, 100000)
-
-	opts := Opts[uint]{
-		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	measures := measurer.Play(discipline)
-
-	quantities := research.CalcInProcessing(measures, 100*time.Millisecond)
-
-	for priority := range quantities {
-		for id := range quantities[priority] {
-			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
-		}
-	}
-}
-
 func TestDisciplineFairOverQuantity(t *testing.T) {
 	handlersQuantity := uint(6)
 
@@ -421,29 +383,37 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 	}
 }
 
-func TestDisciplineRateFatalDividingError(t *testing.T) {
+func TestDisciplineRateOverQuantity(t *testing.T) {
+	handlersQuantity := uint(6)
+
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: 5,
+		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	msr := measurer.New(measurerOpts)
+	measurer := measurer.New(measurerOpts)
 
-	msr.AddWrite(1, 100000)
-	msr.AddWrite(2, 100000)
-	msr.AddWrite(3, 100000)
+	measurer.AddWrite(1, 100000)
+	measurer.AddWrite(2, 100000)
+	measurer.AddWrite(3, 100000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           msr.GetInputs(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           measurer.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	measures := msr.Play(discipline)
+	measures := measurer.Play(discipline)
 
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	quantities := research.CalcInProcessing(measures, 100*time.Millisecond)
+
+	for priority := range quantities {
+		for id := range quantities[priority] {
+			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
+		}
+	}
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
@@ -471,47 +441,19 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
-func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
-		t.SkipNow()
-	}
-
+func TestDisciplineRateFatalDividingError(t *testing.T) {
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 5,
 	}
 
 	msr := measurer.New(measurerOpts)
 
-	msr.AddWrite(1, 4000)
-
-	msr.AddWrite(2, 500)
-	msr.AddWaitDevastation(2)
-	msr.AddDelay(2, 2*time.Second)
-	msr.AddWrite(2, 500)
-	msr.AddWaitDevastation(2)
-	msr.AddDelay(2, 4*time.Second)
-	msr.AddWrite(2, 1000)
-	msr.AddWaitDevastation(2)
-	msr.AddDelay(2, 2*time.Second)
-	msr.AddWrite(2, 2000)
-
-	msr.AddWrite(3, 500)
-	msr.AddWaitDevastation(3)
-	msr.AddDelay(3, 5*time.Second)
-	msr.AddWrite(3, 4000)
-
-	msr.AddWrite(4, 500)
-	msr.AddWaitDevastation(3)
-	msr.AddDelay(4, 5*time.Second)
-	msr.AddWrite(4, 4000)
-
-	msr.SetProcessDelay(1, 10*time.Millisecond)
-	msr.SetProcessDelay(2, 10*time.Millisecond)
-	msr.SetProcessDelay(3, 10*time.Millisecond)
-	msr.SetProcessDelay(4, 10*time.Millisecond)
+	msr.AddWrite(1, 100000)
+	msr.AddWrite(2, 100000)
+	msr.AddWrite(3, 100000)
 
 	opts := Opts[uint]{
-		Divider:          divider.Fair,
+		Divider:          divider.Rate,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
@@ -521,59 +463,5 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	dqotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, "+
-			"significant dividing error, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
-		measurerOpts.HandlersQuantity,
-		!measurerOpts.UnbufferedInput,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("4", dqot[4]).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	baseName := "graph_fair_even_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-}
-
-func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
-	testDisciplineFairEvenProcessingTimeDividingError(t, 6)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 7)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 8)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 9)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 10)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 11)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 12)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
