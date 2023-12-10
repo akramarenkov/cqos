@@ -19,7 +19,7 @@ func TestOptsValidation(t *testing.T) {
 	require.Error(t, err)
 
 	opts = Opts[string]{
-		Divider: divider.Rate,
+		Divider: divider.Fair,
 	}
 
 	_, err = New(opts)
@@ -73,7 +73,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 	}
 
 	opts := Opts[string]{
-		Divider:          divider.Rate,
+		Divider:          divider.Fair,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
