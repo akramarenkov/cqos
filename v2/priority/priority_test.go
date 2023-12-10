@@ -116,7 +116,9 @@ func testDisciplineRateEvenProcessingTime(
 
 	subtitle := fmt.Sprintf(
 		"Rate divider, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -164,8 +166,10 @@ func testDisciplineRateEvenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_rate_even_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -264,7 +268,9 @@ func testDisciplineRateUnevenProcessingTime(
 
 	subtitle := fmt.Sprintf(
 		"Rate divider, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -312,8 +318,10 @@ func testDisciplineRateUnevenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_rate_uneven_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -412,7 +420,9 @@ func testDisciplineFairEvenProcessingTime(
 
 	subtitle := fmt.Sprintf(
 		"Fair divider, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -460,8 +470,10 @@ func testDisciplineFairEvenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_fair_even_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -560,7 +572,9 @@ func testDisciplineFairUnevenProcessingTime(
 
 	subtitle := fmt.Sprintf(
 		"Fair divider, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -608,8 +622,10 @@ func testDisciplineFairUnevenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_fair_uneven_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -697,7 +713,9 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	subtitle := fmt.Sprintf(
 		"Unmanaged, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -731,8 +749,10 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_unmanaged_even_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -814,7 +834,9 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	subtitle := fmt.Sprintf(
 		"Unmanaged, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -848,8 +870,10 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!unbufferedInput)
+	baseName := "graph_unmanaged_uneven_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -1360,7 +1384,9 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 	subtitle := fmt.Sprintf(
 		"Fair divider, even time processing, "+
 			"significant dividing error, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		measurerOpts.HandlersQuantity,
 		!measurerOpts.UnbufferedInput,
 		time.Now().Format(time.RFC3339),
@@ -1381,8 +1407,10 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		AddSeries("2", dqot[2]).
 		AddSeries("1", dqot[1])
 
-	baseName := "graph_fair_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
+	baseName := "graph_fair_even_" +
+		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
