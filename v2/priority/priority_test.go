@@ -18,10 +18,8 @@ import (
 )
 
 func TestDisciplineOptsValidation(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	disciplineOpts := Opts[uint]{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	_, err := New(disciplineOpts)
@@ -29,7 +27,7 @@ func TestDisciplineOptsValidation(t *testing.T) {
 
 	disciplineOpts = Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	_, err = New(disciplineOpts)
@@ -37,7 +35,7 @@ func TestDisciplineOptsValidation(t *testing.T) {
 
 	disciplineOpts = Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 		Inputs: map[uint]<-chan uint{
 			1: make(chan uint),
 		},
@@ -56,10 +54,8 @@ func testDisciplineRateEvenProcessingTime(
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -89,7 +85,7 @@ func testDisciplineRateEvenProcessingTime(
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -121,7 +117,7 @@ func testDisciplineRateEvenProcessingTime(
 	subtitle := fmt.Sprintf(
 		"Rate divider, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -168,7 +164,7 @@ func testDisciplineRateEvenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_rate_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -206,10 +202,8 @@ func testDisciplineRateUnevenProcessingTime(
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -239,7 +233,7 @@ func testDisciplineRateUnevenProcessingTime(
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -271,7 +265,7 @@ func testDisciplineRateUnevenProcessingTime(
 	subtitle := fmt.Sprintf(
 		"Rate divider, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -318,7 +312,7 @@ func testDisciplineRateUnevenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_rate_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -356,10 +350,8 @@ func testDisciplineFairEvenProcessingTime(
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -389,7 +381,7 @@ func testDisciplineFairEvenProcessingTime(
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -421,7 +413,7 @@ func testDisciplineFairEvenProcessingTime(
 	subtitle := fmt.Sprintf(
 		"Fair divider, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -468,7 +460,7 @@ func testDisciplineFairEvenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_fair_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -506,10 +498,8 @@ func testDisciplineFairUnevenProcessingTime(
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -539,7 +529,7 @@ func testDisciplineFairUnevenProcessingTime(
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -571,7 +561,7 @@ func testDisciplineFairUnevenProcessingTime(
 	subtitle := fmt.Sprintf(
 		"Fair divider, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -618,7 +608,7 @@ func testDisciplineFairUnevenProcessingTime(
 		AddSeries("2", wtfl[2]).
 		AddSeries("1", wtfl[1])
 
-	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_fair_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -652,10 +642,8 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -710,7 +698,7 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	subtitle := fmt.Sprintf(
 		"Unmanaged, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -743,7 +731,7 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -771,10 +759,8 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		UnbufferedInput:  unbufferedInput,
 	}
 
@@ -829,7 +815,7 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	subtitle := fmt.Sprintf(
 		"Unmanaged, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -862,7 +848,7 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 		AddSeries("2", ipot[2]).
 		AddSeries("1", ipot[1])
 
-	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
@@ -886,11 +872,9 @@ func TestUnmanagedUneven(t *testing.T) {
 }
 
 func BenchmarkDisciplineFair(b *testing.B) {
-	handlersQuantity := uint(600)
-
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 600,
 	}
 
 	measurer := measurer.New(measurerOpts)
@@ -901,7 +885,7 @@ func BenchmarkDisciplineFair(b *testing.B) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           measurer.GetInputs(),
 	}
 
@@ -912,11 +896,9 @@ func BenchmarkDisciplineFair(b *testing.B) {
 }
 
 func BenchmarkDisciplineRate(b *testing.B) {
-	handlersQuantity := uint(600)
-
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 600,
 	}
 
 	measurer := measurer.New(measurerOpts)
@@ -927,7 +909,7 @@ func BenchmarkDisciplineRate(b *testing.B) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           measurer.GetInputs(),
 	}
 
@@ -938,11 +920,9 @@ func BenchmarkDisciplineRate(b *testing.B) {
 }
 
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
-	handlersQuantity := uint(600)
-
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 600,
 		UnbufferedInput:  true,
 	}
 
@@ -954,7 +934,7 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           measurer.GetInputs(),
 	}
 
@@ -965,11 +945,9 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 }
 
 func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
-	handlersQuantity := uint(600)
-
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 600,
 		UnbufferedInput:  true,
 	}
 
@@ -981,7 +959,7 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           measurer.GetInputs(),
 	}
 
@@ -992,10 +970,8 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 }
 
 func TestDisciplineRate(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1006,7 +982,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1019,10 +995,8 @@ func TestDisciplineRate(t *testing.T) {
 }
 
 func TestDisciplineFair(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1033,7 +1007,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1046,10 +1020,8 @@ func TestDisciplineFair(t *testing.T) {
 }
 
 func TestDisciplineRateUnbuffered(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 		UnbufferedInput:  true,
 	}
 
@@ -1061,7 +1033,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1074,10 +1046,8 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 }
 
 func TestDisciplineFairUnbuffered(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 		UnbufferedInput:  true,
 	}
 
@@ -1089,7 +1059,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1102,10 +1072,8 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 }
 
 func TestDisciplineBadDivider(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1132,7 +1100,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1145,10 +1113,8 @@ func TestDisciplineBadDivider(t *testing.T) {
 }
 
 func TestDisciplineBadDividerInRecalc(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1175,7 +1141,7 @@ func TestDisciplineBadDividerInRecalc(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1188,10 +1154,8 @@ func TestDisciplineBadDividerInRecalc(t *testing.T) {
 }
 
 func TestDisciplineBadDividerInNew(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1210,7 +1174,7 @@ func TestDisciplineBadDividerInNew(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1285,10 +1249,8 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 }
 
 func TestDisciplineRateFatalDividingError(t *testing.T) {
-	handlersQuantity := uint(5)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 5,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1299,7 +1261,7 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Rate,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1312,10 +1274,8 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
-	handlersQuantity := uint(2)
-
 	measurerOpts := measurer.Opts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 2,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1326,7 +1286,7 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1379,7 +1339,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 
 	disciplineOpts := Opts[uint]{
 		Divider:          divider.Fair,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: measurerOpts.HandlersQuantity,
 		Inputs:           msr.GetInputs(),
 	}
 
@@ -1401,7 +1361,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		"Fair divider, even time processing, "+
 			"significant dividing error, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
+		measurerOpts.HandlersQuantity,
 		!measurerOpts.UnbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
@@ -1421,7 +1381,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		AddSeries("2", dqot[2]).
 		AddSeries("1", dqot[1])
 
-	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
+	baseName := "graph_fair_even_" + strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
 		"_buffered_" + strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
