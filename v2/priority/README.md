@@ -44,7 +44,8 @@ import (
     "strconv"
     "sync"
 
-    "github.com/akramarenkov/cqos/priority"
+    "github.com/akramarenkov/cqos/v2/priority"
+    "github.com/akramarenkov/cqos/v2/priority/divider"
 )
 
 func main() {
@@ -66,58 +67,25 @@ func main() {
         1: inputs[1],
     }
 
-    defer func() {
-        for _, input := range inputs {
-            close(input)
-        }
-    }()
-
-    // Data from input channels passed to handlers by output channel
-    output := make(chan priority.Prioritized[string])
-
-    // Handlers must write priority of processed data to feedback channel after it has been processed
-    feedback := make(chan uint)
-    defer close(feedback)
-
     // Used only in this example for detect that all written data are processed
     measures := make(chan bool)
     defer close(measures)
 
-    // For equaling use FairDivider, for prioritization use RateDivider or custom divider
-    disciplineOpts := priority.Opts[string]{
-        Divider:          priority.RateDivider,
-        Feedback:         feedback,
+    // For equaling use divider.Fair divider, for prioritization use
+    // divider.Rate divider or custom divider
+    opts := priority.Opts[string]{
+        Divider:          divider.Rate,
         HandlersQuantity: uint(handlersQuantity),
         Inputs:           inputsOpts,
-        Output:           output,
     }
 
-    discipline, err := priority.New(disciplineOpts)
+    discipline, err := priority.New(opts)
     if err != nil {
         panic(err)
     }
 
-    defer discipline.Stop()
-
     wg := &sync.WaitGroup{}
     defer wg.Wait()
-
-    // Run handlers, that process data
-    for handler := 0; handler < handlersQuantity; handler++ {
-        wg.Add(1)
-
-        go func() {
-            defer wg.Done()
-
-            for prioritized := range output {
-                // Data processing
-                // fmt.Println(prioritized.Item)
-                measures <- true
-
-                feedback <- prioritized.Priority
-            }
-        }()
-    }
 
     // Run writers, that write data to input channels
     for priority, input := range inputs {
@@ -125,6 +93,7 @@ func main() {
 
         go func(precedency uint, channel chan string) {
             defer wg.Done()
+            defer close(channel)
 
             base := strconv.Itoa(int(precedency))
 
@@ -136,8 +105,24 @@ func main() {
         }(priority, input)
     }
 
-    // Terminate handlers
-    defer close(output)
+    // Run handlers, that process data
+    for handler := 0; handler < handlersQuantity; handler++ {
+        wg.Add(1)
+
+        go func() {
+            defer wg.Done()
+
+            for prioritized := range discipline.Output() {
+                // Data processing
+                // fmt.Println(prioritized.Item)
+                measures <- true
+
+                // Handler must indicate that current data has been processed and
+                // handler is ready to receive new data
+                discipline.Release(prioritized.Priority)
+            }
+        }()
+    }
 
     received := 0
 

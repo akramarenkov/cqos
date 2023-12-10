@@ -34,13 +34,13 @@ func ExampleDiscipline() {
 
 	// For equaling use divider.Fair divider, for prioritization use
 	// divider.Rate divider or custom divider
-	disciplineOpts := priority.Opts[string]{
+	opts := priority.Opts[string]{
 		Divider:          divider.Rate,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
 	}
 
-	discipline, err := priority.New(disciplineOpts)
+	discipline, err := priority.New(opts)
 	if err != nil {
 		panic(err)
 	}
