@@ -1296,7 +1296,7 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
-	handlersQuantity := uint(6)
+	handlersQuantity := uint(2)
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
