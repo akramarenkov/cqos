@@ -243,15 +243,15 @@ func (msr *Measurer) runHandlers(
 		wg.Add(1)
 		starter.Ready(1)
 
-		go msr.handler(ctx, wg, starter, channel, discipline)
+		go msr.handler(ctx, wg, channel, starter, discipline)
 	}
 }
 
 func (msr *Measurer) handler(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	starter *starter.Starter,
 	channel chan Measure,
+	starter *starter.Starter,
 	discipline Discipline[uint],
 ) {
 	defer wg.Done()
@@ -267,15 +267,15 @@ func (msr *Measurer) handler(
 				return
 			}
 
-			msr.handle(item, starter, channel, discipline)
+			msr.handle(item, channel, starter, discipline)
 		}
 	}
 }
 
 func (msr *Measurer) handle(
 	item types.Prioritized[uint],
-	starter *starter.Starter,
 	channel chan Measure,
+	starter *starter.Starter,
 	discipline Discipline[uint],
 ) {
 	if msr.opts.DisableMeasures {
