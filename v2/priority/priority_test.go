@@ -640,7 +640,6 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 
@@ -760,7 +759,6 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoFeedback:       true,
 		NoInputBuffer:    !inputBuffered,
 	}
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/internal/starter"
+	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
 const (
@@ -33,7 +34,6 @@ type Opts struct {
 	DisableMeasures  bool
 	HandlersQuantity uint
 	InputCapacity    uint
-	NoFeedback       bool
 	NoInputBuffer    bool
 }
 
@@ -252,62 +252,68 @@ func (msr *Measurer) handler(
 
 	starter.Set()
 
-	const batchSize = 3
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case prioritized, opened := <-discipline.Output():
+		case item, opened := <-discipline.Output():
 			if !opened {
 				return
 			}
 
-			if msr.opts.DisableMeasures {
-				discipline.Release(prioritized.Priority)
-				msr.measures <- nil
-
-				continue
-			}
-
-			batch := make([]Measure, 0, batchSize)
-
-			received := Measure{
-				RelativeTime: time.Since(starter.StartedAt),
-				Priority:     prioritized.Priority,
-				Kind:         MeasureKindReceived,
-				Data:         prioritized.Item,
-			}
-
-			batch = append(batch, received)
-
-			time.Sleep(msr.delays[prioritized.Priority])
-
-			processed := Measure{
-				RelativeTime: time.Since(starter.StartedAt),
-				Priority:     prioritized.Priority,
-				Kind:         MeasureKindProcessed,
-				Data:         prioritized.Item,
-			}
-
-			batch = append(batch, processed)
-
-			if !msr.opts.NoFeedback {
-				discipline.Release(prioritized.Priority)
-			}
-
-			completed := Measure{
-				RelativeTime: time.Since(starter.StartedAt),
-				Priority:     prioritized.Priority,
-				Kind:         MeasureKindCompleted,
-				Data:         prioritized.Item,
-			}
-
-			batch = append(batch, completed)
-
-			msr.measures <- batch
+			msr.handle(item, starter, discipline)
 		}
 	}
+}
+
+func (msr *Measurer) handle(
+	item types.Prioritized[uint],
+	starter *starter.Starter,
+	discipline Discipline[uint],
+) {
+	const batchSize = 3
+
+	if msr.opts.DisableMeasures {
+		discipline.Release(item.Priority)
+		msr.measures <- nil
+
+		return
+	}
+
+	batch := make([]Measure, 0, batchSize)
+
+	received := Measure{
+		RelativeTime: time.Since(starter.StartedAt),
+		Priority:     item.Priority,
+		Kind:         MeasureKindReceived,
+		Data:         item.Item,
+	}
+
+	batch = append(batch, received)
+
+	time.Sleep(msr.delays[item.Priority])
+
+	processed := Measure{
+		RelativeTime: time.Since(starter.StartedAt),
+		Priority:     item.Priority,
+		Kind:         MeasureKindProcessed,
+		Data:         item.Item,
+	}
+
+	batch = append(batch, processed)
+
+	discipline.Release(item.Priority)
+
+	completed := Measure{
+		RelativeTime: time.Since(starter.StartedAt),
+		Priority:     item.Priority,
+		Kind:         MeasureKindCompleted,
+		Data:         item.Item,
+	}
+
+	batch = append(batch, completed)
+
+	msr.measures <- batch
 }
 
 func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
