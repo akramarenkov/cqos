@@ -47,7 +47,11 @@ func TestDisciplineOptsValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testDisciplineRateEvenProcessingTime(
+	t *testing.T,
+	factor uint,
+	unbufferedInput bool,
+) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -56,7 +60,7 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -118,7 +122,7 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		"Rate divider, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -165,7 +169,7 @@ func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		AddSeries("1", wtfl[1])
 
 	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -193,7 +197,11 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 	testDisciplineRateEvenProcessingTime(t, 10, false)
 }
 
-func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testDisciplineRateUnevenProcessingTime(
+	t *testing.T,
+	factor uint,
+	unbufferedInput bool,
+) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -202,7 +210,7 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -264,7 +272,7 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		"Rate divider, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -311,7 +319,7 @@ func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		AddSeries("1", wtfl[1])
 
 	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -339,7 +347,11 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 	testDisciplineRateUnevenProcessingTime(t, 10, false)
 }
 
-func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testDisciplineFairEvenProcessingTime(
+	t *testing.T,
+	factor uint,
+	unbufferedInput bool,
+) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -348,7 +360,7 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -410,7 +422,7 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		"Fair divider, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -457,7 +469,7 @@ func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffer
 		AddSeries("1", wtfl[1])
 
 	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -485,7 +497,11 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 	testDisciplineFairEvenProcessingTime(t, 10, false)
 }
 
-func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testDisciplineFairUnevenProcessingTime(
+	t *testing.T,
+	factor uint,
+	unbufferedInput bool,
+) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -494,7 +510,7 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -556,7 +572,7 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		"Fair divider, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -603,7 +619,7 @@ func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuff
 		AddSeries("1", wtfl[1])
 
 	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -631,7 +647,7 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 	testDisciplineFairUnevenProcessingTime(t, 10, false)
 }
 
-func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
+func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -640,7 +656,7 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -695,7 +711,7 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 		"Unmanaged, even time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -728,7 +744,7 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 		AddSeries("1", ipot[1])
 
 	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -750,7 +766,7 @@ func TestUnmanagedEven(t *testing.T) {
 	testUnmanagedEven(t, 10, false)
 }
 
-func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
+func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
@@ -759,7 +775,7 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    !inputBuffered,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -814,7 +830,7 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 		"Unmanaged, uneven time processing, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -847,7 +863,7 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 		AddSeries("1", ipot[1])
 
 	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
+		"_buffered_" + strconv.FormatBool(!unbufferedInput)
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)
@@ -927,7 +943,7 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    true,
+		UnbufferedInput:  true,
 	}
 
 	measurer := measurer.New(measurerOpts)
@@ -954,7 +970,7 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	measurerOpts := measurer.Opts{
 		DisableMeasures:  true,
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    true,
+		UnbufferedInput:  true,
 	}
 
 	measurer := measurer.New(measurerOpts)
@@ -1034,7 +1050,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    true,
+		UnbufferedInput:  true,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1062,7 +1078,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: handlersQuantity,
-		NoInputBuffer:    true,
+		UnbufferedInput:  true,
 	}
 
 	msr := measurer.New(measurerOpts)
@@ -1386,7 +1402,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 			"significant dividing error, "+
 			"handlers quantity: %d, buffered: %t, time: %s",
 		handlersQuantity,
-		!measurerOpts.NoInputBuffer,
+		!measurerOpts.UnbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -1406,7 +1422,7 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		AddSeries("1", dqot[1])
 
 	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!measurerOpts.NoInputBuffer) + "_dividing_error"
+		"_buffered_" + strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
 
 	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
 	require.NoError(t, err)

@@ -38,7 +38,7 @@ type Opts struct {
 	DisableMeasures  bool
 	HandlersQuantity uint
 	InputCapacity    uint
-	NoInputBuffer    bool
+	UnbufferedInput  bool
 }
 
 func (opts Opts) normalize() Opts {
@@ -46,7 +46,7 @@ func (opts Opts) normalize() Opts {
 		opts.InputCapacity = defaultChannelCapacity
 	}
 
-	if opts.NoInputBuffer {
+	if opts.UnbufferedInput {
 		opts.InputCapacity = 0
 	}
 
