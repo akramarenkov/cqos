@@ -17,23 +17,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDisciplineOptsValidation(t *testing.T) {
-	disciplineOpts := Opts[uint]{
+func TestOptsValidation(t *testing.T) {
+	opts := Opts[uint]{
 		HandlersQuantity: 6,
 	}
 
-	_, err := New(disciplineOpts)
+	_, err := New(opts)
 	require.Error(t, err)
 
-	disciplineOpts = Opts[uint]{
+	opts = Opts[uint]{
 		Divider:          divider.Fair,
 		HandlersQuantity: 6,
 	}
 
-	_, err = New(disciplineOpts)
+	_, err = New(opts)
 	require.Error(t, err)
 
-	disciplineOpts = Opts[uint]{
+	opts = Opts[uint]{
 		Divider:          divider.Fair,
 		HandlersQuantity: 6,
 		Inputs: map[uint]<-chan uint{
@@ -41,7 +41,7 @@ func TestDisciplineOptsValidation(t *testing.T) {
 		},
 	}
 
-	_, err = New(disciplineOpts)
+	_, err = New(opts)
 	require.NoError(t, err)
 }
 
