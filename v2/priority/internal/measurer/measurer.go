@@ -233,8 +233,8 @@ func waitDevastation(ctx context.Context, channel chan uint) bool {
 func (msr *Measurer) runHandlers(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	discipline Discipline[uint],
 	channel chan Measure,
+	discipline Discipline[uint],
 ) {
 	starter := starter.New()
 	defer starter.Go()
@@ -243,7 +243,7 @@ func (msr *Measurer) runHandlers(
 		wg.Add(1)
 		starter.Ready(1)
 
-		go msr.handler(ctx, wg, starter, discipline, channel)
+		go msr.handler(ctx, wg, starter, channel, discipline)
 	}
 }
 
@@ -251,8 +251,8 @@ func (msr *Measurer) handler(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	starter *starter.Starter,
-	discipline Discipline[uint],
 	channel chan Measure,
+	discipline Discipline[uint],
 ) {
 	defer wg.Done()
 
@@ -267,7 +267,7 @@ func (msr *Measurer) handler(
 				return
 			}
 
-			msr.handle(item, starter, discipline, channel)
+			msr.handle(item, starter, channel, discipline)
 		}
 	}
 }
@@ -275,8 +275,8 @@ func (msr *Measurer) handler(
 func (msr *Measurer) handle(
 	item types.Prioritized[uint],
 	starter *starter.Starter,
-	discipline Discipline[uint],
 	channel chan Measure,
+	discipline Discipline[uint],
 ) {
 	if msr.opts.DisableMeasures {
 		discipline.Release(item.Priority)
@@ -342,7 +342,7 @@ func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
 	defer wg.Wait()
 
 	msr.runWriters(ctx, wg)
-	msr.runHandlers(ctx, wg, discipline, channel)
+	msr.runHandlers(ctx, wg, channel, discipline)
 
 	if msr.opts.DisableMeasures {
 		return nil
