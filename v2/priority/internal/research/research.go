@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -51,7 +51,7 @@ func sortByRelativeTime(measures []measurer.Measure) {
 func CalcDataQuantity(
 	measures []measurer.Measure,
 	resolution time.Duration,
-) map[uint][]general.QuantityOverTime {
+) map[uint][]qot.QuantityOverTime {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -63,14 +63,14 @@ func CalcDataQuantity(
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
-	quantities := make(map[uint][]general.QuantityOverTime)
+	quantities := make(map[uint][]qot.QuantityOverTime)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]general.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
 	}
 
 	measuresEdge := 0
@@ -88,7 +88,7 @@ func CalcDataQuantity(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     quantity,
 			}
@@ -101,7 +101,7 @@ func CalcDataQuantity(
 				continue
 			}
 
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     0,
 			}
@@ -116,7 +116,7 @@ func CalcDataQuantity(
 func CalcInProcessing(
 	measures []measurer.Measure,
 	resolution time.Duration,
-) map[uint][]general.QuantityOverTime {
+) map[uint][]qot.QuantityOverTime {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -128,14 +128,14 @@ func CalcInProcessing(
 
 	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
 
-	quantities := make(map[uint][]general.QuantityOverTime)
+	quantities := make(map[uint][]qot.QuantityOverTime)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]general.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
 	}
 
 	measuresEdge := 0
@@ -174,7 +174,7 @@ func CalcInProcessing(
 				quantity += amount
 			}
 
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     quantity,
 			}
@@ -187,7 +187,7 @@ func CalcInProcessing(
 				continue
 			}
 
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: relativeTime,
 				Quantity:     0,
 			}
@@ -202,7 +202,7 @@ func CalcInProcessing(
 func CalcWriteToFeedbackLatency(
 	measures []measurer.Measure,
 	interval time.Duration,
-) map[uint][]general.QuantityOverTime {
+) map[uint][]qot.QuantityOverTime {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -245,7 +245,7 @@ func CalcWriteToFeedbackLatency(
 func ProcessLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
-) map[uint][]general.QuantityOverTime {
+) map[uint][]qot.QuantityOverTime {
 	for priority := range latencies {
 		sortDurations(latencies[priority])
 	}
@@ -267,14 +267,14 @@ func ProcessLatencies(
 
 	quantitiesCapacity := (maxLatency - minLatency) / interval
 
-	quantities := make(map[uint][]general.QuantityOverTime)
+	quantities := make(map[uint][]qot.QuantityOverTime)
 
 	for priority := range latencies {
 		if _, exists := quantities[priority]; exists {
 			continue
 		}
 
-		quantities[priority] = make([]general.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
 	}
 
 	latenciesEdge := make(map[uint]int)
@@ -294,7 +294,7 @@ func ProcessLatencies(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: intervalLatency,
 				Quantity:     quantity,
 			}
@@ -307,7 +307,7 @@ func ProcessLatencies(
 				continue
 			}
 
-			item := general.QuantityOverTime{
+			item := qot.QuantityOverTime{
 				RelativeTime: intervalLatency,
 				Quantity:     0,
 			}
@@ -320,7 +320,7 @@ func ProcessLatencies(
 }
 
 func ConvertToLineEcharts(
-	quantities map[uint][]general.QuantityOverTime,
+	quantities map[uint][]qot.QuantityOverTime,
 	relativeTimeUnit time.Duration,
 ) (map[uint][]chartsopts.LineData, []uint) {
 	serieses := make(map[uint][]chartsopts.LineData)
@@ -353,7 +353,7 @@ func ConvertToLineEcharts(
 }
 
 func ConvertToBarEcharts(
-	quantities map[uint][]general.QuantityOverTime,
+	quantities map[uint][]qot.QuantityOverTime,
 ) (map[uint][]chartsopts.BarData, []uint) {
 	serieses := make(map[uint][]chartsopts.BarData)
 	xaxis := []uint(nil)

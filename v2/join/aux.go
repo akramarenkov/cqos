@@ -3,7 +3,7 @@ package join
 import (
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 // Maximum timeout error is calculated as timeout + timeout/divider.
@@ -14,7 +14,7 @@ func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, 
 		return 0, ErrInvalidTimeoutInaccuracy
 	}
 
-	divider := general.OneHundredPercent / inaccuracy
+	divider := consts.OneHundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrInvalidTimeoutInaccuracy

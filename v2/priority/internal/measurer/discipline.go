@@ -1,4 +1,4 @@
-package common
+package measurer
 
 import "github.com/akramarenkov/cqos/v2/priority/types"
 

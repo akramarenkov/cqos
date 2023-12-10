@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/starter"
 )
 
@@ -214,7 +213,7 @@ func (msr *Measurer) writer(ctx context.Context, wg *sync.WaitGroup, priority ui
 func (msr *Measurer) runHandlers(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	discipline common.Discipline[uint],
+	discipline Discipline[uint],
 ) {
 	starter := starter.New()
 
@@ -232,7 +231,7 @@ func (msr *Measurer) handler(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	starter *starter.Starter,
-	discipline common.Discipline[uint],
+	discipline Discipline[uint],
 ) {
 	defer wg.Done()
 
@@ -296,7 +295,7 @@ func (msr *Measurer) handler(
 	}
 }
 
-func (msr *Measurer) Play(discipline common.Discipline[uint]) []Measure {
+func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
 	expectedMeasuresQuantity := msr.GetExpectedMeasuresQuantity()
 
 	if expectedMeasuresQuantity == 0 {

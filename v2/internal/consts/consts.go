@@ -1,5 +1,5 @@
 // Internal package with common constants
-package general
+package consts
 
 const (
 	OneHundredPercent = 100
