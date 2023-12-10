@@ -19,7 +19,6 @@ package main
 
 import (
     "fmt"
-    "sync"
 
     "github.com/akramarenkov/cqos/v2/join"
 )
