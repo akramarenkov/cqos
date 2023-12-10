@@ -166,50 +166,62 @@ func (msr *Measurer) writer(ctx context.Context, wg *sync.WaitGroup, priority ui
 	defer wg.Done()
 	defer close(msr.inputs[priority])
 
-	written := uint(0)
+	sequence := uint(0)
 
 	for _, action := range msr.actions[priority] {
 		switch action.kind {
-		case actionKindWrite:
-			for id := uint(0); id < action.quantity; id++ {
-				select {
-				case <-ctx.Done():
-					return
-				case msr.inputs[priority] <- written:
-				}
-
-				written++
+		case actionKindWrite, actionKindWriteWithDelay:
+			increased, proceed := write(ctx, action, msr.inputs[priority], sequence)
+			if !proceed {
+				return
 			}
-		case actionKindWriteWithDelay:
-			for id := uint(0); id < action.quantity; id++ {
-				select {
-				case <-ctx.Done():
-					return
-				case msr.inputs[priority] <- written:
-				}
 
-				time.Sleep(action.delay)
-
-				written++
-			}
+			sequence = increased
 		case actionKindWaitDevastation:
-			func() {
-				ticker := time.NewTicker(defaultWaitDevastationDelay)
-				defer ticker.Stop()
-
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case <-ticker.C:
-						if len(msr.inputs[priority]) == 0 {
-							return
-						}
-					}
-				}
-			}()
+			if proceed := waitDevastation(ctx, msr.inputs[priority]); !proceed {
+				return
+			}
 		case actionKindDelay:
 			time.Sleep(action.delay)
+		}
+	}
+}
+
+func write(
+	ctx context.Context,
+	action action,
+	channel chan uint,
+	sequence uint,
+) (uint, bool) {
+	for id := uint(0); id < action.quantity; id++ {
+		select {
+		case <-ctx.Done():
+			return sequence, false
+		case channel <- sequence:
+		}
+
+		if action.kind == actionKindWriteWithDelay {
+			time.Sleep(action.delay)
+		}
+
+		sequence++
+	}
+
+	return sequence, true
+}
+
+func waitDevastation(ctx context.Context, channel chan uint) bool {
+	ticker := time.NewTicker(defaultWaitDevastationDelay)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ticker.C:
+			if len(channel) == 0 {
+				return true
+			}
 		}
 	}
 }
