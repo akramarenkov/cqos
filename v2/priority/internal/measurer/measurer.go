@@ -15,6 +15,10 @@ const (
 	defaultWaitDevastationDelay = 1 * time.Nanosecond
 )
 
+const (
+	measuresFactor = 3
+)
+
 type actionKind int
 
 const (
@@ -56,8 +60,6 @@ type Measurer struct {
 
 	actions map[uint][]action
 	delays  map[uint]time.Duration
-
-	measures chan []Measure
 }
 
 func New(opts Opts) *Measurer {
@@ -127,21 +129,23 @@ func (msr *Measurer) SetProcessDelay(priority uint, delay time.Duration) {
 	msr.delays[priority] = delay
 }
 
-func (msr *Measurer) GetExpectedMeasuresQuantity() uint {
+func (msr *Measurer) GetExpectedItemsQuantity() uint {
 	quantity := uint(0)
 
 	for _, actions := range msr.actions {
 		for _, action := range actions {
 			switch action.kind {
-			case actionKindWrite:
-				quantity += action.quantity
-			case actionKindWriteWithDelay:
+			case actionKindWrite, actionKindWriteWithDelay:
 				quantity += action.quantity
 			}
 		}
 	}
 
 	return quantity
+}
+
+func (msr *Measurer) GetExpectedMeasuresQuantity() uint {
+	return measuresFactor * msr.GetExpectedItemsQuantity()
 }
 
 func (msr *Measurer) GetInputs() map[uint]<-chan uint {
@@ -230,6 +234,7 @@ func (msr *Measurer) runHandlers(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	discipline Discipline[uint],
+	channel chan Measure,
 ) {
 	starter := starter.New()
 	defer starter.Go()
@@ -238,7 +243,7 @@ func (msr *Measurer) runHandlers(
 		wg.Add(1)
 		starter.Ready(1)
 
-		go msr.handler(ctx, wg, starter, discipline)
+		go msr.handler(ctx, wg, starter, discipline, channel)
 	}
 }
 
@@ -247,6 +252,7 @@ func (msr *Measurer) handler(
 	wg *sync.WaitGroup,
 	starter *starter.Starter,
 	discipline Discipline[uint],
+	channel chan Measure,
 ) {
 	defer wg.Done()
 
@@ -261,7 +267,7 @@ func (msr *Measurer) handler(
 				return
 			}
 
-			msr.handle(item, starter, discipline)
+			msr.handle(item, starter, discipline, channel)
 		}
 	}
 }
@@ -270,17 +276,12 @@ func (msr *Measurer) handle(
 	item types.Prioritized[uint],
 	starter *starter.Starter,
 	discipline Discipline[uint],
+	channel chan Measure,
 ) {
-	const batchSize = 3
-
 	if msr.opts.DisableMeasures {
 		discipline.Release(item.Priority)
-		msr.measures <- nil
-
 		return
 	}
-
-	batch := make([]Measure, 0, batchSize)
 
 	received := Measure{
 		RelativeTime: time.Since(starter.StartedAt),
@@ -289,7 +290,7 @@ func (msr *Measurer) handle(
 		Data:         item.Item,
 	}
 
-	batch = append(batch, received)
+	channel <- received
 
 	time.Sleep(msr.delays[item.Priority])
 
@@ -300,7 +301,7 @@ func (msr *Measurer) handle(
 		Data:         item.Item,
 	}
 
-	batch = append(batch, processed)
+	channel <- processed
 
 	discipline.Release(item.Priority)
 
@@ -311,28 +312,22 @@ func (msr *Measurer) handle(
 		Data:         item.Item,
 	}
 
-	batch = append(batch, completed)
+	channel <- completed
+}
 
-	msr.measures <- batch
+func (msr *Measurer) prepare() (chan Measure, []Measure) {
+	quantity := msr.GetExpectedMeasuresQuantity()
+
+	if msr.opts.DisableMeasures {
+		quantity = 0
+	}
+
+	return make(chan Measure, quantity), make([]Measure, 0, quantity)
 }
 
 func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
-	expectedMeasuresQuantity := msr.GetExpectedMeasuresQuantity()
-
-	if expectedMeasuresQuantity == 0 {
-		return nil
-	}
-
-	measuresCapacity := expectedMeasuresQuantity
-
-	if msr.opts.DisableMeasures {
-		measuresCapacity = 0
-	}
-
-	msr.measures = make(chan []Measure, expectedMeasuresQuantity)
-
-	received := uint(0)
-	measures := make([]Measure, 0, measuresCapacity)
+	channel, measures := msr.prepare()
+	defer close(channel)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -344,25 +339,23 @@ func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
 	}()
 
 	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	msr.runWriters(ctx, wg)
-	msr.runHandlers(ctx, wg, discipline)
+	msr.runHandlers(ctx, wg, discipline, channel)
 
-	defer close(msr.measures)
-	defer wg.Wait()
+	if msr.opts.DisableMeasures {
+		return nil
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return measures
-		case batch := <-msr.measures:
-			if !msr.opts.DisableMeasures {
-				measures = append(measures, batch...)
-			}
+		case measure := <-channel:
+			measures = append(measures, measure)
 
-			received++
-
-			if received == expectedMeasuresQuantity {
+			if len(measures) == cap(channel) {
 				return measures
 			}
 		}

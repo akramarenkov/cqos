@@ -1001,7 +1001,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1032,7 +1032,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1064,7 +1064,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1096,7 +1096,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1143,7 +1143,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	require.NotEqual(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1190,7 +1190,7 @@ func TestDisciplineBadDividerInRecalc(t *testing.T) {
 
 	require.NotEqual(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1318,7 +1318,7 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
@@ -1349,7 +1349,7 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 
 	require.Equal(
 		t,
-		int(msr.GetExpectedMeasuresQuantity()),
+		int(msr.GetExpectedItemsQuantity()),
 		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
 	)
 }
