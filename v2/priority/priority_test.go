@@ -999,11 +999,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineFair(t *testing.T) {
@@ -1030,11 +1026,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineRateUnbuffered(t *testing.T) {
@@ -1062,11 +1054,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineFairUnbuffered(t *testing.T) {
@@ -1094,11 +1082,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineBadDivider(t *testing.T) {
@@ -1141,11 +1125,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.NotEqual(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.NotEqual(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineBadDividerInRecalc(t *testing.T) {
@@ -1188,11 +1168,7 @@ func TestDisciplineBadDividerInRecalc(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.NotEqual(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.NotEqual(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineBadDividerInNew(t *testing.T) {
@@ -1316,11 +1292,7 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func TestDisciplineFairFatalDividingError(t *testing.T) {
@@ -1347,11 +1319,7 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(
-		t,
-		int(msr.GetExpectedItemsQuantity()),
-		len(research.FilterByKind(measures, measurer.MeasureKindReceived)),
-	)
+	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
 
 func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
