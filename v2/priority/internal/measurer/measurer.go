@@ -7,27 +7,13 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
+	"github.com/akramarenkov/cqos/v2/priority/internal/starter"
 )
 
 const (
 	defaultChannelCapacity      = 100
 	defaultWaitDevastationDelay = 1 * time.Nanosecond
 )
-
-type MeasureKind int
-
-const (
-	MeasureKindCompleted MeasureKind = iota + 1
-	MeasureKindProcessed
-	MeasureKindReceived
-)
-
-type Measure struct {
-	Data         uint
-	Kind         MeasureKind
-	Priority     uint
-	RelativeTime time.Duration
-}
 
 type actionKind int
 
@@ -67,31 +53,22 @@ func (opts Opts) normalize() Opts {
 type Measurer struct {
 	opts Opts
 
-	ready     *sync.WaitGroup
-	start     chan bool
-	startedAt time.Time
-
-	actions  map[uint][]action
-	delays   map[uint]time.Duration
-	measures chan []Measure
-
 	inputs map[uint]chan uint
 
-	waiter *sync.WaitGroup
+	actions map[uint][]action
+	delays  map[uint]time.Duration
+
+	measures chan []Measure
 }
 
 func New(opts Opts) *Measurer {
 	msr := &Measurer{
 		opts: opts.normalize(),
 
-		ready: &sync.WaitGroup{},
+		inputs: make(map[uint]chan uint),
 
 		actions: make(map[uint][]action),
 		delays:  make(map[uint]time.Duration),
-
-		inputs: make(map[uint]chan uint),
-
-		waiter: &sync.WaitGroup{},
 	}
 
 	return msr
@@ -174,16 +151,16 @@ func (msr *Measurer) GetInputs() map[uint]<-chan uint {
 	return out
 }
 
-func (msr *Measurer) runWriters(ctx context.Context) {
+func (msr *Measurer) runWriters(ctx context.Context, wg *sync.WaitGroup) {
 	for priority := range msr.inputs {
-		msr.waiter.Add(1)
+		wg.Add(1)
 
-		go msr.writer(ctx, priority)
+		go msr.writer(ctx, wg, priority)
 	}
 }
 
-func (msr *Measurer) writer(ctx context.Context, priority uint) {
-	defer msr.waiter.Done()
+func (msr *Measurer) writer(ctx context.Context, wg *sync.WaitGroup, priority uint) {
+	defer wg.Done()
 	defer close(msr.inputs[priority])
 
 	written := uint(0)
@@ -234,28 +211,32 @@ func (msr *Measurer) writer(ctx context.Context, priority uint) {
 	}
 }
 
-func (msr *Measurer) runHandlers(ctx context.Context, discipline common.Discipline[uint]) {
-	msr.start = make(chan bool)
-	defer close(msr.start)
+func (msr *Measurer) runHandlers(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	discipline common.Discipline[uint],
+) {
+	starter := starter.New()
 
 	for counter := uint(0); counter < msr.opts.HandlersQuantity; counter++ {
-		msr.ready.Add(1)
-		msr.waiter.Add(1)
+		wg.Add(1)
+		starter.Ready(1)
 
-		go msr.handler(ctx, discipline)
+		go msr.handler(ctx, wg, starter, discipline)
 	}
 
-	msr.ready.Wait()
-
-	msr.startedAt = time.Now()
+	starter.Go()
 }
 
-func (msr *Measurer) handler(ctx context.Context, discipline common.Discipline[uint]) {
-	defer msr.waiter.Done()
+func (msr *Measurer) handler(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	starter *starter.Starter,
+	discipline common.Discipline[uint],
+) {
+	defer wg.Done()
 
-	msr.ready.Done()
-
-	<-msr.start
+	starter.Set()
 
 	const batchSize = 3
 
@@ -278,7 +259,7 @@ func (msr *Measurer) handler(ctx context.Context, discipline common.Discipline[u
 			batch := make([]Measure, 0, batchSize)
 
 			received := Measure{
-				RelativeTime: time.Since(msr.startedAt),
+				RelativeTime: time.Since(starter.StartedAt),
 				Priority:     prioritized.Priority,
 				Kind:         MeasureKindReceived,
 				Data:         prioritized.Item,
@@ -289,7 +270,7 @@ func (msr *Measurer) handler(ctx context.Context, discipline common.Discipline[u
 			time.Sleep(msr.delays[prioritized.Priority])
 
 			processed := Measure{
-				RelativeTime: time.Since(msr.startedAt),
+				RelativeTime: time.Since(starter.StartedAt),
 				Priority:     prioritized.Priority,
 				Kind:         MeasureKindProcessed,
 				Data:         prioritized.Item,
@@ -302,7 +283,7 @@ func (msr *Measurer) handler(ctx context.Context, discipline common.Discipline[u
 			}
 
 			completed := Measure{
-				RelativeTime: time.Since(msr.startedAt),
+				RelativeTime: time.Since(starter.StartedAt),
 				Priority:     prioritized.Priority,
 				Kind:         MeasureKindCompleted,
 				Data:         prioritized.Item,
@@ -342,11 +323,13 @@ func (msr *Measurer) Play(discipline common.Discipline[uint]) []Measure {
 		}
 	}()
 
-	msr.runWriters(ctx)
-	msr.runHandlers(ctx, discipline)
+	wg := &sync.WaitGroup{}
+
+	msr.runWriters(ctx, wg)
+	msr.runHandlers(ctx, wg, discipline)
 
 	defer close(msr.measures)
-	defer msr.waiter.Wait()
+	defer wg.Wait()
 
 	for {
 		select {
