@@ -1,9 +1,15 @@
 package join
 
 import (
+	"errors"
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
+)
+
+var (
+	ErrInvalidTimeoutInaccuracy = errors.New("invalid timeout inaccuracy")
+	ErrTimeoutTooSmall          = errors.New("timeout value is too small")
 )
 
 // Maximum timeout error is calculated as timeout + timeout/divider.

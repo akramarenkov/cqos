@@ -8,10 +8,8 @@ import (
 )
 
 var (
-	ErrEmptyInput               = errors.New("input channel was not specified")
-	ErrInvalidJoinSize          = errors.New("invalid join size")
-	ErrInvalidTimeoutInaccuracy = errors.New("invalid timeout inaccuracy")
-	ErrTimeoutTooSmall          = errors.New("timeout value is too small")
+	ErrEmptyInput      = errors.New("input channel was not specified")
+	ErrInvalidJoinSize = errors.New("invalid join size")
 )
 
 const (
