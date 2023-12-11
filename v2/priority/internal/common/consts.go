@@ -1,4 +1,3 @@
-// Internal package with common constants
 package common
 
 const (

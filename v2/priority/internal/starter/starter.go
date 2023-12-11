@@ -1,3 +1,5 @@
+// Internal package with implementation of the starter which is used to run multiple
+// goroutines at the same time
 package starter
 
 import (
