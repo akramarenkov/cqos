@@ -8,6 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGenPriorityCombinations2(t *testing.T) {
+	priorities := []uint{4, 3, 2, 1}
+
+	combinations := genPriorityCombinations2(priorities)
+	expected := genPriorityCombinations(priorities)
+
+	t.Log(len(combinations), combinations)
+	t.Log(len(expected), expected)
+
+	require.ElementsMatch(t, expected, combinations)
+}
+
 func TestGenPriorityCombinations1(t *testing.T) {
 	expected := [][]uint{
 		{

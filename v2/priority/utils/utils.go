@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
@@ -13,6 +14,43 @@ import (
 const (
 	referenceFactor = 1000
 )
+
+func genPriorityCombinations2(priorities []uint) [][]uint {
+	combinations := make([][]uint, 0)
+
+	for window := len(priorities); window != 0; window-- {
+		for shift := 0; shift <= len(priorities)-window; shift++ {
+			base := priorities[shift : shift+window]
+			remainder := priorities[shift+window:]
+
+			combinations = append(combinations, createCopy(base))
+
+			for _, substituted := range remainder {
+				fmt.Println(base, base[1:], substituted)
+
+				for id := range base[1:] {
+					copied := createCopy(base)
+
+					copied[id+1] = substituted
+
+					common.SortPriorities(copied)
+
+					combinations = append(combinations, copied)
+				}
+			}
+		}
+	}
+
+	return combinations
+}
+
+func createCopy(src []uint) []uint {
+	newed := make([]uint, len(src))
+
+	copy(newed, src)
+
+	return newed
+}
 
 // inefficient implementation, but usually there are not so many priorities for
 // this to be a problem
