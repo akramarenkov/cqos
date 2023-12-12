@@ -15,8 +15,28 @@ const (
 	referenceFactor = 1000
 )
 
+// if the number of combinations for n priorities is m, then
+// for n+1 priorities the number of combinations is 2m+1
+// accordingly, the increment is m+1
+func calcCombinationsQuantitySlow(priorities []uint) int {
+	quantity := 0
+
+	for length := 0; length < len(priorities); length++ {
+		quantity += quantity + 1
+	}
+
+	return quantity
+}
+
+// it is easy to see that this corresponds to the function 2^n - 1
+func calcCombinationsQuantity(priorities []uint) int {
+	const base = 2
+
+	return int(math.Pow(base, float64(len(priorities)))) - 1
+}
+
 func genPriorityCombinations2(priorities []uint) [][]uint {
-	combinations := make([][]uint, 0)
+	combinations := make([][]uint, 0, calcCombinationsQuantity(priorities))
 
 	for window := len(priorities); window != 0; window-- {
 		for shift := 0; shift <= len(priorities)-window; shift++ {

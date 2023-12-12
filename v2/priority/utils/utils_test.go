@@ -8,8 +8,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCalcCombinationsQuantitySlow(t *testing.T) {
+	require.Equal(t, 0, calcCombinationsQuantitySlow([]uint{}))
+	require.Equal(t, 1, calcCombinationsQuantitySlow([]uint{1}))
+	require.Equal(t, 3, calcCombinationsQuantitySlow([]uint{2, 1}))
+	require.Equal(t, 7, calcCombinationsQuantitySlow([]uint{3, 2, 1}))
+	require.Equal(t, 15, calcCombinationsQuantitySlow([]uint{4, 3, 2, 1}))
+	require.Equal(t, 31, calcCombinationsQuantitySlow([]uint{5, 4, 3, 2, 1}))
+	require.Equal(t, 63, calcCombinationsQuantitySlow([]uint{6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 127, calcCombinationsQuantitySlow([]uint{7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 255, calcCombinationsQuantitySlow([]uint{8, 7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 511, calcCombinationsQuantitySlow([]uint{9, 8, 7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 1023, calcCombinationsQuantitySlow([]uint{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}))
+}
+
+func TestCalcCombinationsQuantity(t *testing.T) {
+	require.Equal(t, 0, calcCombinationsQuantity([]uint{}))
+	require.Equal(t, 1, calcCombinationsQuantity([]uint{1}))
+	require.Equal(t, 3, calcCombinationsQuantity([]uint{2, 1}))
+	require.Equal(t, 7, calcCombinationsQuantity([]uint{3, 2, 1}))
+	require.Equal(t, 15, calcCombinationsQuantity([]uint{4, 3, 2, 1}))
+	require.Equal(t, 31, calcCombinationsQuantity([]uint{5, 4, 3, 2, 1}))
+	require.Equal(t, 63, calcCombinationsQuantity([]uint{6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 127, calcCombinationsQuantity([]uint{7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 255, calcCombinationsQuantity([]uint{8, 7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 511, calcCombinationsQuantity([]uint{9, 8, 7, 6, 5, 4, 3, 2, 1}))
+	require.Equal(t, 1023, calcCombinationsQuantity([]uint{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}))
+}
+
 func TestGenPriorityCombinations2(t *testing.T) {
-	priorities := []uint{4, 3, 2, 1}
+	priorities := []uint{5, 4, 3, 2, 1}
 
 	combinations := genPriorityCombinations2(priorities)
 	expected := genPriorityCombinations(priorities)
