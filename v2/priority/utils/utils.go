@@ -145,7 +145,7 @@ func PickUpMaxNonFatalQuantity(
 ) uint {
 	combinations := genCombinations(priorities)
 
-	for quantity := maxQuantity; quantity > 0; quantity-- {
+	for quantity := maxQuantity; quantity != 0; quantity-- {
 		if isNonFatalConfig(combinations, divider, quantity) {
 			return quantity
 		}
@@ -171,7 +171,7 @@ func isDistributionSuitable(
 			return false
 		}
 
-		diff := 1.0 - ratio*float64(distribution[priority])/float64(referenceQuantity)
+		diff := 1.0 - (ratio*float64(distribution[priority]))/float64(referenceQuantity)
 
 		diff = consts.OneHundredPercent * math.Abs(diff)
 
@@ -266,7 +266,7 @@ func PickUpMaxSuitableQuantity(
 ) uint {
 	combinations := genCombinations(priorities)
 
-	for quantity := maxQuantity; quantity > 0; quantity-- {
+	for quantity := maxQuantity; quantity != 0; quantity-- {
 		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}
