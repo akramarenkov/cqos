@@ -196,8 +196,12 @@ func TestGenCombinations(t *testing.T) {
 	require.Equal(t, calcCombinationsQuantity(priorities), len(actual))
 }
 
-func BenchmarkGenCombinations(_ *testing.B) {
-	_ = genCombinations(createPriorities(20))
+func BenchmarkGenCombinations(b *testing.B) {
+	priorities := createPriorities(20)
+
+	b.ResetTimer()
+
+	_ = genCombinations(priorities)
 }
 
 func TestIsDistributionFilled(t *testing.T) {
