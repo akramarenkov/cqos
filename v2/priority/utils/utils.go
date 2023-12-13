@@ -170,6 +170,7 @@ func PickUpMaxNonFatalQuantity(
 	return 0
 }
 
+// diffLimit is specified as a percentage
 func isDistributionSuitable(
 	distribution map[uint]uint,
 	reference map[uint]uint,
@@ -241,34 +242,34 @@ func isSuitableConfig(
 // handlers by priority, especially for small quantity of handlers. This function allows
 // you to determine that with the specified combination of priorities, the dividing
 // function and the quantity of handlers, the distribution error does not exceed
-// the limit
+// the limit, specified as a percentage
 func IsSuitableConfig(
 	priorities []uint,
 	divider divider.Divider,
 	quantity uint,
-	diffLimit float64,
+	limit float64,
 ) bool {
 	priorities = copySort(priorities)
 
 	combinations := genCombinations(priorities)
 
-	return isSuitableConfig(combinations, priorities, divider, quantity, diffLimit)
+	return isSuitableConfig(combinations, priorities, divider, quantity, limit)
 }
 
 // Picks up the minimum quantity of handlers for which the division error does not
-// exceed the limit
+// exceed the limit, specified as a percentage
 func PickUpMinSuitableQuantity(
 	priorities []uint,
 	divider divider.Divider,
 	maxQuantity uint,
-	diffLimit float64,
+	limit float64,
 ) uint {
 	priorities = copySort(priorities)
 
 	combinations := genCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
-		if isSuitableConfig(combinations, priorities, divider, quantity, diffLimit) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}
 	}
@@ -277,19 +278,19 @@ func PickUpMinSuitableQuantity(
 }
 
 // Picks up the maximum quantity of handlers for which the division error does not
-// exceed the limit
+// exceed the limit, specified as a percentage
 func PickUpMaxSuitableQuantity(
 	priorities []uint,
 	divider divider.Divider,
 	maxQuantity uint,
-	diffLimit float64,
+	limit float64,
 ) uint {
 	priorities = copySort(priorities)
 
 	combinations := genCombinations(priorities)
 
 	for quantity := maxQuantity; quantity != 0; quantity-- {
-		if isSuitableConfig(combinations, priorities, divider, quantity, diffLimit) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}
 	}
