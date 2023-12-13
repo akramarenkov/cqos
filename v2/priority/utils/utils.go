@@ -73,6 +73,16 @@ func addToCombination(combination []uint, priority uint) []uint {
 	return created
 }
 
+func copySort(priorities []uint) []uint {
+	copied := make([]uint, len(priorities))
+
+	copy(copied, priorities)
+
+	common.SortPriorities(copied)
+
+	return copied
+}
+
 func isDistributionFilled(distribution map[uint]uint) bool {
 	for _, quantity := range distribution {
 		if quantity == 0 {
@@ -113,6 +123,8 @@ func IsNonFatalConfig(
 	divider divider.Divider,
 	quantity uint,
 ) bool {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
 	return isNonFatalConfig(combinations, divider, quantity)
@@ -125,6 +137,8 @@ func PickUpMinNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
@@ -143,6 +157,8 @@ func PickUpMaxNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
 	for quantity := maxQuantity; quantity != 0; quantity-- {
@@ -159,7 +175,7 @@ func isDistributionSuitable(
 	reference map[uint]uint,
 	totalQuantity uint,
 	referenceTotalQuantity uint,
-	limit float64,
+	diffLimit float64,
 ) bool {
 	ratio := float64(referenceTotalQuantity) / float64(totalQuantity)
 
@@ -175,7 +191,7 @@ func isDistributionSuitable(
 
 		diff = consts.OneHundredPercent * math.Abs(diff)
 
-		if diff > limit {
+		if diff > diffLimit {
 			return false
 		}
 	}
@@ -188,7 +204,7 @@ func isSuitableConfig(
 	priorities []uint,
 	divider divider.Divider,
 	quantity uint,
-	limit float64,
+	diffLimit float64,
 ) bool {
 	referenceTotalQuantity := referenceFactor * common.SumPriorities(priorities)
 
@@ -209,7 +225,7 @@ func isSuitableConfig(
 			reference,
 			quantity,
 			referenceTotalQuantity,
-			limit,
+			diffLimit,
 		)
 
 		if !suitable {
@@ -230,11 +246,13 @@ func IsSuitableConfig(
 	priorities []uint,
 	divider divider.Divider,
 	quantity uint,
-	limit float64,
+	diffLimit float64,
 ) bool {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
-	return isSuitableConfig(combinations, priorities, divider, quantity, limit)
+	return isSuitableConfig(combinations, priorities, divider, quantity, diffLimit)
 }
 
 // Picks up the minimum quantity of handlers for which the division error does not
@@ -243,12 +261,14 @@ func PickUpMinSuitableQuantity(
 	priorities []uint,
 	divider divider.Divider,
 	maxQuantity uint,
-	limit float64,
+	diffLimit float64,
 ) uint {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
-		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, diffLimit) {
 			return quantity
 		}
 	}
@@ -262,12 +282,14 @@ func PickUpMaxSuitableQuantity(
 	priorities []uint,
 	divider divider.Divider,
 	maxQuantity uint,
-	limit float64,
+	diffLimit float64,
 ) uint {
+	priorities = copySort(priorities)
+
 	combinations := genCombinations(priorities)
 
 	for quantity := maxQuantity; quantity != 0; quantity-- {
-		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
+		if isSuitableConfig(combinations, priorities, divider, quantity, diffLimit) {
 			return quantity
 		}
 	}
