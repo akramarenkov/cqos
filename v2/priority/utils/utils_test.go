@@ -8,6 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCreatePriorities(t *testing.T) {
+	require.Equal(t, []uint{}, createPriorities(0))
+	require.Equal(t, []uint{1}, createPriorities(1))
+	require.Equal(t, []uint{2, 1}, createPriorities(2))
+	require.Equal(t, []uint{3, 2, 1}, createPriorities(3))
+	require.Equal(t, []uint{4, 3, 2, 1}, createPriorities(4))
+	require.Equal(t, []uint{5, 4, 3, 2, 1}, createPriorities(5))
+	require.Equal(t, []uint{6, 5, 4, 3, 2, 1}, createPriorities(6))
+	require.Equal(t, []uint{7, 6, 5, 4, 3, 2, 1}, createPriorities(7))
+	require.Equal(t, []uint{8, 7, 6, 5, 4, 3, 2, 1}, createPriorities(8))
+	require.Equal(t, []uint{9, 8, 7, 6, 5, 4, 3, 2, 1}, createPriorities(9))
+	require.Equal(t, []uint{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, createPriorities(10))
+}
+
 func TestCalcCombinationsQuantitySlow(t *testing.T) {
 	require.Equal(t, 0, calcCombinationsQuantitySlow([]uint{}))
 	require.Equal(t, 1, calcCombinationsQuantitySlow([]uint{1}))
@@ -36,30 +50,18 @@ func TestCalcCombinationsQuantity(t *testing.T) {
 	require.Equal(t, 1023, calcCombinationsQuantity([]uint{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}))
 }
 
-func TestGenPriorityCombinations2(t *testing.T) {
-	priorities := []uint{5, 4, 3, 2, 1}
-
-	combinations := genPriorityCombinations2(priorities)
-	expected := genPriorityCombinations(priorities)
-
-	t.Log(len(combinations), combinations)
-	t.Log(len(expected), expected)
-
-	require.ElementsMatch(t, expected, combinations)
-}
-
-func TestGenPriorityCombinations1(t *testing.T) {
+func TestGenCombinations1(t *testing.T) {
 	expected := [][]uint{
 		{
 			1,
 		},
 	}
 
-	actual := genPriorityCombinations([]uint{1})
+	actual := genCombinations([]uint{1})
 	require.ElementsMatch(t, expected, actual)
 }
 
-func TestGenPriorityCombinations21(t *testing.T) {
+func TestGenCombinations21(t *testing.T) {
 	expected := [][]uint{
 		{
 			2,
@@ -72,11 +74,11 @@ func TestGenPriorityCombinations21(t *testing.T) {
 		},
 	}
 
-	actual := genPriorityCombinations([]uint{2, 1})
+	actual := genCombinations([]uint{2, 1})
 	require.ElementsMatch(t, expected, actual)
 }
 
-func TestGenPriorityCombinations321(t *testing.T) {
+func TestGenCombinations321(t *testing.T) {
 	expected := [][]uint{
 		{
 			3,
@@ -101,11 +103,11 @@ func TestGenPriorityCombinations321(t *testing.T) {
 		},
 	}
 
-	actual := genPriorityCombinations([]uint{3, 2, 1})
+	actual := genCombinations([]uint{3, 2, 1})
 	require.ElementsMatch(t, expected, actual)
 }
 
-func TestGenPriorityCombinations4321(t *testing.T) {
+func TestGenCombinations4321(t *testing.T) {
 	expected := [][]uint{
 		{
 			4,
@@ -154,11 +156,11 @@ func TestGenPriorityCombinations4321(t *testing.T) {
 		},
 	}
 
-	actual := genPriorityCombinations([]uint{4, 3, 2, 1})
+	actual := genCombinations([]uint{4, 3, 2, 1})
 	require.ElementsMatch(t, expected, actual)
 }
 
-func TestGenPriorityCombinations702010(t *testing.T) {
+func TestGenCombinations702010(t *testing.T) {
 	expected := [][]uint{
 		{
 			70,
@@ -183,47 +185,19 @@ func TestGenPriorityCombinations702010(t *testing.T) {
 		},
 	}
 
-	actual := genPriorityCombinations([]uint{70, 20, 10})
+	actual := genCombinations([]uint{70, 20, 10})
 	require.ElementsMatch(t, expected, actual)
 }
 
-func TestGenPriorityCombinations(t *testing.T) {
-	quantity := 17
-	prioritites := make([]uint, 0, quantity)
+func TestGenCombinations(t *testing.T) {
+	priorities := createPriorities(15)
 
-	for id := 1; id <= quantity; id++ {
-		prioritites = append(prioritites, uint(id))
-	}
-
-	actual := genPriorityCombinations(prioritites)
-	require.NotEqual(t, 0, len(actual))
+	actual := genCombinations(priorities)
+	require.Equal(t, calcCombinationsQuantity(priorities), len(actual))
 }
 
-func BenchmarkGenPriorityCombinations(b *testing.B) {
-	quantity := 17
-	prioritites := make([]uint, 0, quantity)
-
-	for id := 1; id <= quantity; id++ {
-		prioritites = append(prioritites, uint(id))
-	}
-
-	b.ResetTimer()
-
-	_ = genPriorityCombinations(prioritites)
-}
-
-func TestIsSortedPrioritiesEqual(t *testing.T) {
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2, 1}, []uint{3, 2}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2}, []uint{3, 2, 1}))
-	require.Equal(t, true, isSortedPrioritiesEqual([]uint{3, 2, 1}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 1, 2}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{2, 3, 1}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{1, 3, 2}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{2, 1, 3}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{1, 2, 3}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{4, 2, 1}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 4, 1}, []uint{3, 2, 1}))
-	require.Equal(t, false, isSortedPrioritiesEqual([]uint{3, 2, 4}, []uint{3, 2, 1}))
+func BenchmarkGenCombinations(_ *testing.B) {
+	_ = genCombinations(createPriorities(20))
 }
 
 func TestIsDistributionFilled(t *testing.T) {

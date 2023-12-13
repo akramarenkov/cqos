@@ -3,7 +3,6 @@
 package utils
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
@@ -15,7 +14,17 @@ const (
 	referenceFactor = 1000
 )
 
-// if the number of combinations for n priorities is m, then
+func createPriorities(quantity int) []uint {
+	priorities := make([]uint, 0, quantity)
+
+	for id := quantity; id != 0; id-- {
+		priorities = append(priorities, uint(id))
+	}
+
+	return priorities
+}
+
+// If the number of combinations for n priorities is m, then
 // for n+1 priorities the number of combinations is 2m+1
 // accordingly, the increment is m+1
 func calcCombinationsQuantitySlow(priorities []uint) int {
@@ -28,126 +37,40 @@ func calcCombinationsQuantitySlow(priorities []uint) int {
 	return quantity
 }
 
-// it is easy to see that this corresponds to the function 2^n - 1
+// It is easy to see that this corresponds to the function 2^n - 1
 func calcCombinationsQuantity(priorities []uint) int {
 	const base = 2
 
 	return int(math.Pow(base, float64(len(priorities)))) - 1
 }
 
-func genPriorityCombinations2(priorities []uint) [][]uint {
+// An inefficient implementation, but simple and usually there are not so many
+// priorities that this would be a problem.
+//
+// Slice of priorities must be sorted similar to how it does common.SortPriorities()
+// if it is necessary that the priorities also get into the divider being sorted
+func genCombinations(priorities []uint) [][]uint {
 	combinations := make([][]uint, 0, calcCombinationsQuantity(priorities))
-
-	for window := len(priorities); window != 0; window-- {
-		for shift := 0; shift <= len(priorities)-window; shift++ {
-			base := priorities[shift : shift+window]
-			remainder := priorities[shift+window:]
-
-			combinations = append(combinations, createCopy(base))
-
-			for _, substituted := range remainder {
-				fmt.Println(base, base[1:], substituted)
-
-				for id := range base[1:] {
-					copied := createCopy(base)
-
-					copied[id+1] = substituted
-
-					common.SortPriorities(copied)
-
-					combinations = append(combinations, copied)
-				}
-			}
-		}
-	}
-
-	return combinations
-}
-
-func createCopy(src []uint) []uint {
-	newed := make([]uint, len(src))
-
-	copy(newed, src)
-
-	return newed
-}
-
-// inefficient implementation, but usually there are not so many priorities for
-// this to be a problem
-func genPriorityCombinations(priorities []uint) [][]uint {
-	combinations := make([][]uint, 0)
-
-	for _, priority := range priorities {
-		combinations = append(combinations, []uint{priority})
-	}
-
-	traversed := make(map[int][][]uint)
 
 	for _, priority := range priorities {
 		for _, combination := range combinations {
-			if isPriorityExists(combination, priority) {
-				continue
-			}
-
-			newed := newCombination(combination, priority)
-
-			if isCombinationExists(traversed[len(newed)], newed) {
-				continue
-			}
-
-			traversed[len(newed)] = append(traversed[len(newed)], newed)
-
-			combinations = append(combinations, newed)
+			combinations = append(combinations, addToCombination(combination, priority))
 		}
+
+		combinations = append(combinations, addToCombination(nil, priority))
 	}
 
 	return combinations
 }
 
-func isPriorityExists(priorities []uint, verifiable uint) bool {
-	for _, priority := range priorities {
-		if priority == verifiable {
-			return true
-		}
-	}
+func addToCombination(combination []uint, priority uint) []uint {
+	created := make([]uint, len(combination)+1)
 
-	return false
-}
+	copy(created, combination)
 
-func newCombination(combination []uint, added uint) []uint {
-	newed := make([]uint, len(combination)+1)
+	created[len(created)-1] = priority
 
-	copy(newed, combination)
-
-	newed[len(newed)-1] = added
-
-	common.SortPriorities(newed)
-
-	return newed
-}
-
-func isCombinationExists(combinations [][]uint, verifiable []uint) bool {
-	for _, combination := range combinations {
-		if isSortedPrioritiesEqual(combination, verifiable) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isSortedPrioritiesEqual(left []uint, right []uint) bool {
-	if len(left) != len(right) {
-		return false
-	}
-
-	for id := range left {
-		if right[id] != left[id] {
-			return false
-		}
-	}
-
-	return true
+	return created
 }
 
 func isDistributionFilled(distribution map[uint]uint) bool {
@@ -190,7 +113,7 @@ func IsNonFatalConfig(
 	divider divider.Divider,
 	quantity uint,
 ) bool {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	return isNonFatalConfig(combinations, divider, quantity)
 }
@@ -202,7 +125,7 @@ func PickUpMinNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
 		if isNonFatalConfig(combinations, divider, quantity) {
@@ -220,7 +143,7 @@ func PickUpMaxNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	for quantity := maxQuantity; quantity > 0; quantity-- {
 		if isNonFatalConfig(combinations, divider, quantity) {
@@ -309,7 +232,7 @@ func IsSuitableConfig(
 	quantity uint,
 	limit float64,
 ) bool {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	return isSuitableConfig(combinations, priorities, divider, quantity, limit)
 }
@@ -322,7 +245,7 @@ func PickUpMinSuitableQuantity(
 	maxQuantity uint,
 	limit float64,
 ) uint {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
 		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
@@ -341,7 +264,7 @@ func PickUpMaxSuitableQuantity(
 	maxQuantity uint,
 	limit float64,
 ) uint {
-	combinations := genPriorityCombinations(priorities)
+	combinations := genCombinations(priorities)
 
 	for quantity := maxQuantity; quantity > 0; quantity-- {
 		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
