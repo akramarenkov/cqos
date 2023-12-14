@@ -73,7 +73,7 @@ func addToCombination(combination []uint, priority uint) []uint {
 	return created
 }
 
-func copySort(priorities []uint) []uint {
+func createSortedCopy(priorities []uint) []uint {
 	copied := make([]uint, len(priorities))
 
 	copy(copied, priorities)
@@ -113,7 +113,7 @@ func IsNonFatalConfig(
 	divider divider.Divider,
 	quantity uint,
 ) bool {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 
@@ -127,7 +127,7 @@ func PickUpMinNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 
@@ -147,7 +147,7 @@ func PickUpMaxNonFatalQuantity(
 	divider divider.Divider,
 	maxQuantity uint,
 ) uint {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 
@@ -239,7 +239,7 @@ func IsSuitableConfig(
 	quantity uint,
 	limit float64,
 ) bool {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 
@@ -254,7 +254,7 @@ func PickUpMinSuitableQuantity(
 	maxQuantity uint,
 	limit float64,
 ) uint {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 
@@ -275,7 +275,7 @@ func PickUpMaxSuitableQuantity(
 	maxQuantity uint,
 	limit float64,
 ) uint {
-	priorities = copySort(priorities)
+	priorities = createSortedCopy(priorities)
 
 	combinations := genCombinations(priorities)
 

@@ -305,6 +305,14 @@ func BenchmarkGenCombinations(b *testing.B) {
 	_ = genCombinations(priorities)
 }
 
+func TestCreateSortedCopy(t *testing.T) {
+	priorities := []uint{1, 2, 3, 4, 5}
+
+	copied := createSortedCopy(priorities)
+	require.NotSame(t, priorities, copied)
+	require.Equal(t, []uint{5, 4, 3, 2, 1}, copied)
+}
+
 func TestIsNonFatalConfig(t *testing.T) {
 	require.Equal(t, false, IsNonFatalConfig([]uint{1}, divider.Fair, 0))
 	require.Equal(t, true, IsNonFatalConfig([]uint{1}, divider.Fair, 1))
