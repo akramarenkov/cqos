@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 	"github.com/akramarenkov/cqos/v2/limit/internal/stress"
 
@@ -34,7 +35,7 @@ func createTimeQuantitiesGraph(
 			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
-		research.CalcTotalDuration(relativeTimes),
+		durations.CalcTotalDuration(relativeTimes),
 		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
@@ -132,7 +133,7 @@ func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
 		relativeTimes[id] = time.Since(startedAt)
 	}
 
-	require.Equal(t, true, research.IsSortedDurations(relativeTimes))
+	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
 	createTimeQuantitiesGraph(t, relativeTimes, 100, stressSystem)
 	createTimeDeviationsGraph(t, relativeTimes, 100, stressSystem)
@@ -169,7 +170,7 @@ func createTickerTickQuantitiesGraph(
 		len(relativeTimes),
 		duration,
 		time.Duration(len(relativeTimes))*duration,
-		research.CalcTotalDuration(relativeTimes),
+		durations.CalcTotalDuration(relativeTimes),
 		buffered,
 		stressSystem,
 		time.Now().Format(time.RFC3339),
@@ -322,7 +323,7 @@ func testGraphTicker(
 		}
 	}
 
-	require.Equal(t, true, research.IsSortedDurations(relativeTimes))
+	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
 	createTickerTickQuantitiesGraph(t, relativeTimes, duration, buffered, stressSystem)
 	createTickerTickDeviationsGraph(t, relativeTimes, duration, buffered, stressSystem)
@@ -398,7 +399,7 @@ func createQuantitiesGraph(
 		limit.Quantity,
 		limit.Interval,
 		time.Duration(len(relativeTimes))*limit.Interval/time.Duration(limit.Quantity),
-		research.CalcTotalDuration(relativeTimes),
+		durations.CalcTotalDuration(relativeTimes),
 		stressSystem,
 		kind,
 		time.Now().Format(time.RFC3339),
@@ -529,7 +530,7 @@ func testGraphDisciplineSynthetic(
 		relativeTimes = append(relativeTimes, time.Since(startedAt))
 	}
 
-	require.Equal(t, true, research.IsSortedDurations(relativeTimes))
+	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
 	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "synthetic")
 	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "synthetic")
@@ -649,7 +650,7 @@ func testGraphDisciplineRegular(
 	wg.Wait()
 
 	require.Equal(t, inSequence, outSequence)
-	require.Equal(t, true, research.IsSortedDurations(relativeTimes))
+	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
 	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "regular")
 	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "regular")

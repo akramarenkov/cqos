@@ -7,36 +7,11 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
-
-func sortDurations(durations []time.Duration) {
-	less := func(i int, j int) bool {
-		return durations[i] < durations[j]
-	}
-
-	sort.SliceStable(durations, less)
-}
-
-func IsSortedDurations(durations []time.Duration) bool {
-	less := func(i int, j int) bool {
-		return durations[i] < durations[j]
-	}
-
-	return sort.SliceIsSorted(durations, less)
-}
-
-func CalcTotalDuration(durations []time.Duration) time.Duration {
-	if len(durations) == 0 {
-		return 0
-	}
-
-	sortDurations(durations)
-
-	return durations[len(durations)-1]
-}
 
 func CalcIntervalQuantities(
 	relativeTimes []time.Duration,
@@ -47,7 +22,7 @@ func CalcIntervalQuantities(
 		return nil
 	}
 
-	sortDurations(relativeTimes)
+	durations.Sort(relativeTimes)
 
 	maxRelativeTimes := relativeTimes[len(relativeTimes)-1]
 
@@ -105,7 +80,7 @@ func CalcSelfDeviations(
 		return nil, 0, 0, 0
 	}
 
-	sortDurations(relativeTimes)
+	durations.Sort(relativeTimes)
 
 	deviations := make([]time.Duration, 0, len(relativeTimes))
 
@@ -167,18 +142,18 @@ func ConvertQuantityOverTimeToBarEcharts(
 }
 
 func CalcRelativeDeviations(
-	durations []time.Duration,
+	relativeTimes []time.Duration,
 	expected time.Duration,
 ) map[int]int {
 	const howManyTimesLessDeviations = 2
 
-	if len(durations) == 0 {
+	if len(relativeTimes) == 0 {
 		return nil
 	}
 
-	sortDurations(durations)
+	durations.Sort(relativeTimes)
 
-	deviations := make(map[int]int, len(durations)/howManyTimesLessDeviations)
+	deviations := make(map[int]int, len(relativeTimes)/howManyTimesLessDeviations)
 
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
@@ -192,14 +167,14 @@ func CalcRelativeDeviations(
 		deviations[int(deviation)]++
 	}
 
-	calc(durations[0], 0)
+	calc(relativeTimes[0], 0)
 
-	for id := range durations {
-		if id+1 > len(durations)-1 {
+	for id := range relativeTimes {
+		if id+1 > len(relativeTimes)-1 {
 			break
 		}
 
-		calc(durations[id+1], durations[id])
+		calc(relativeTimes[id+1], relativeTimes[id])
 	}
 
 	return deviations

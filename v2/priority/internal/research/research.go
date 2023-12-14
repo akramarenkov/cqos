@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
@@ -23,14 +24,6 @@ func FilterByKind(measures []measurer.Measure, kind measurer.MeasureKind) []meas
 	}
 
 	return out
-}
-
-func sortDurations(durations []time.Duration) {
-	less := func(i int, j int) bool {
-		return durations[i] < durations[j]
-	}
-
-	sort.SliceStable(durations, less)
 }
 
 func sortByData(measures []measurer.Measure) {
@@ -248,7 +241,7 @@ func ProcessLatencies(
 	interval time.Duration,
 ) map[uint][]qot.QuantityOverTime {
 	for priority := range latencies {
-		sortDurations(latencies[priority])
+		durations.Sort(latencies[priority])
 	}
 
 	minLatency := time.Duration(0)
