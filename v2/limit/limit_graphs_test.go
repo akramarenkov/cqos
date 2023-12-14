@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/limit/internal/stress"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func createTimeQuantitiesGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
-	load bool,
+	stressSystem bool,
 ) {
 	quantities := calcIntervalQuantities(relativeTimes, intervalsQuantity, 0)
 
@@ -28,11 +29,11 @@ func createTimeQuantitiesGraph(
 	subtitle := fmt.Sprintf(
 		"Total quantity: %d, "+
 			"total duration: %s, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
 		calcTotalDuration(relativeTimes),
-		load,
+		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -49,8 +50,8 @@ func createTimeQuantitiesGraph(
 
 	baseName := "graph_time_quantities_" +
 		strconv.Itoa(len(relativeTimes)) +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + ".html")
 	require.NoError(t, err)
@@ -63,7 +64,7 @@ func createTimeDeviationsGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
-	load bool,
+	stressSystem bool,
 ) {
 	deviations, min, max, avg := calcSelfDeviations(relativeTimes, intervalsQuantity, 0)
 
@@ -76,13 +77,13 @@ func createTimeDeviationsGraph(
 			"min: %s, "+
 			"max: %s, "+
 			"avg: %s, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
 		min,
 		max,
 		avg,
-		load,
+		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -99,8 +100,8 @@ func createTimeDeviationsGraph(
 
 	baseName := "graph_time_deviations_" +
 		strconv.Itoa(len(relativeTimes)) +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + ".html")
 	require.NoError(t, err)
@@ -109,16 +110,16 @@ func createTimeDeviationsGraph(
 	require.NoError(t, err)
 }
 
-func testGraphTime(t *testing.T, quantity int, load bool) {
+func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
 
-	if load {
-		loader, err := newLoadSystem(0)
+	if stressSystem {
+		stress, err := stress.New(0)
 		require.NoError(t, err)
 
-		defer loader.Stop()
+		defer stress.Stop()
 	}
 
 	relativeTimes := make([]time.Duration, quantity)
@@ -131,8 +132,8 @@ func testGraphTime(t *testing.T, quantity int, load bool) {
 
 	require.Equal(t, true, IsSortedDurations(relativeTimes))
 
-	createTimeQuantitiesGraph(t, relativeTimes, 100, load)
-	createTimeDeviationsGraph(t, relativeTimes, 100, load)
+	createTimeQuantitiesGraph(t, relativeTimes, 100, stressSystem)
+	createTimeDeviationsGraph(t, relativeTimes, 100, stressSystem)
 }
 
 func TestGraphTime(t *testing.T) {
@@ -148,7 +149,7 @@ func createTickerTickQuantitiesGraph(
 	relativeTimes []time.Duration,
 	duration time.Duration,
 	buffered bool,
-	load bool,
+	stressSystem bool,
 ) {
 	quantities := calcIntervalQuantities(relativeTimes, 0, duration)
 
@@ -161,14 +162,14 @@ func createTickerTickQuantitiesGraph(
 			"ticker duration: %s, "+
 			"total duration: {expected:  %s, actual: %s}, "+
 			"buffered: %t, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
 		duration,
 		time.Duration(len(relativeTimes))*duration,
 		calcTotalDuration(relativeTimes),
 		buffered,
-		load,
+		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -189,8 +190,8 @@ func createTickerTickQuantitiesGraph(
 		duration.String() +
 		"_buffered_" +
 		strconv.FormatBool(buffered) +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + ".html")
 	require.NoError(t, err)
@@ -204,7 +205,7 @@ func createTickerTickDeviationsGraph(
 	relativeTimes []time.Duration,
 	duration time.Duration,
 	buffered bool,
-	load bool,
+	stressSystem bool,
 ) {
 	deviations := calcRelativeDeviations(relativeTimes, duration)
 
@@ -216,12 +217,12 @@ func createTickerTickDeviationsGraph(
 		"Total quantity: %d, "+
 			"ticker duration: %s, "+
 			"buffered: %t, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
 		duration,
 		buffered,
-		load,
+		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
 
@@ -242,8 +243,8 @@ func createTickerTickDeviationsGraph(
 		duration.String() +
 		"_buffered_" +
 		strconv.FormatBool(buffered) +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + ".html")
 	require.NoError(t, err)
@@ -257,17 +258,17 @@ func testGraphTicker(
 	quantity uint,
 	duration time.Duration,
 	buffered bool,
-	load bool,
+	stressSystem bool,
 ) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
 
-	if load {
-		loader, err := newLoadSystem(0)
+	if stressSystem {
+		stress, err := stress.New(0)
 		require.NoError(t, err)
 
-		defer loader.Stop()
+		defer stress.Stop()
 	}
 
 	relativeTimes := make([]time.Duration, 0, quantity)
@@ -321,8 +322,8 @@ func testGraphTicker(
 
 	require.Equal(t, true, IsSortedDurations(relativeTimes))
 
-	createTickerTickQuantitiesGraph(t, relativeTimes, duration, buffered, load)
-	createTickerTickDeviationsGraph(t, relativeTimes, duration, buffered, load)
+	createTickerTickQuantitiesGraph(t, relativeTimes, duration, buffered, stressSystem)
+	createTickerTickDeviationsGraph(t, relativeTimes, duration, buffered, stressSystem)
 }
 
 func TestGraphTicker(t *testing.T) {
@@ -375,7 +376,7 @@ func createQuantitiesGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
 	limit Rate,
-	load bool,
+	stressSystem bool,
 	kind string,
 ) {
 	quantities := calcIntervalQuantities(relativeTimes, 0, limit.Interval)
@@ -388,7 +389,7 @@ func createQuantitiesGraph(
 		"Total quantity: %d, "+
 			"limit: {quantity: %d, interval: %s}, "+
 			"total duration: {expected:  %s, actual: %s}, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"kind: %s, "+
 			"time: %s",
 		len(relativeTimes),
@@ -396,7 +397,7 @@ func createQuantitiesGraph(
 		limit.Interval,
 		time.Duration(len(relativeTimes))*limit.Interval/time.Duration(limit.Quantity),
 		calcTotalDuration(relativeTimes),
-		load,
+		stressSystem,
 		kind,
 		time.Now().Format(time.RFC3339),
 	)
@@ -418,8 +419,8 @@ func createQuantitiesGraph(
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + "_" + kind + ".html")
 	require.NoError(t, err)
@@ -432,7 +433,7 @@ func createDeviationsGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
 	limit Rate,
-	load bool,
+	stressSystem bool,
 	kind string,
 ) {
 	flattenLimit, done := limit.Flatten()
@@ -447,13 +448,13 @@ func createDeviationsGraph(
 	subtitle := fmt.Sprintf(
 		"Total quantity: %d, "+
 			"limit {quantity: %d, interval: %s}, "+
-			"load system: %t, "+
+			"stress system: %t, "+
 			"kind: %s, "+
 			"time: %s",
 		len(relativeTimes),
 		limit.Quantity,
 		limit.Interval,
-		load,
+		stressSystem,
 		kind,
 		time.Now().Format(time.RFC3339),
 	)
@@ -475,8 +476,8 @@ func createDeviationsGraph(
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
-		"_load_" +
-		strconv.FormatBool(load)
+		"_stress_" +
+		strconv.FormatBool(stressSystem)
 
 	chartFile, err := os.Create(baseName + "_" + kind + ".html")
 	require.NoError(t, err)
@@ -489,17 +490,17 @@ func testGraphDisciplineSynthetic(
 	t *testing.T,
 	quantity uint,
 	limit Rate,
-	load bool,
+	stressSystem bool,
 ) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
 
-	if load {
-		loader, err := newLoadSystem(0)
+	if stressSystem {
+		stress, err := stress.New(0)
 		require.NoError(t, err)
 
-		defer loader.Stop()
+		defer stress.Stop()
 	}
 
 	input := make(chan uint, quantity)
@@ -528,8 +529,8 @@ func testGraphDisciplineSynthetic(
 
 	require.Equal(t, true, IsSortedDurations(relativeTimes))
 
-	createQuantitiesGraph(t, relativeTimes, limit, load, "synthetic")
-	createDeviationsGraph(t, relativeTimes, limit, load, "synthetic")
+	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "synthetic")
+	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "synthetic")
 }
 
 func TestGraphDisciplineSynthetic(t *testing.T) {
@@ -590,17 +591,17 @@ func testGraphDisciplineRegular(
 	t *testing.T,
 	quantity uint,
 	limit Rate,
-	load bool,
+	stressSystem bool,
 ) {
 	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
 		t.SkipNow()
 	}
 
-	if load {
-		loader, err := newLoadSystem(0)
+	if stressSystem {
+		stress, err := stress.New(0)
 		require.NoError(t, err)
 
-		defer loader.Stop()
+		defer stress.Stop()
 	}
 
 	input := make(chan uint)
@@ -648,8 +649,8 @@ func testGraphDisciplineRegular(
 	require.Equal(t, inSequence, outSequence)
 	require.Equal(t, true, IsSortedDurations(relativeTimes))
 
-	createQuantitiesGraph(t, relativeTimes, limit, load, "regular")
-	createDeviationsGraph(t, relativeTimes, limit, load, "regular")
+	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "regular")
+	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "regular")
 }
 
 func TestGraphDisciplineRegular1000(t *testing.T) {
