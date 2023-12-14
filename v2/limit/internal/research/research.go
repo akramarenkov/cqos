@@ -1,4 +1,4 @@
-package limit
+package research
 
 import (
 	"math"
@@ -6,17 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
+
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
-
-const (
-	maxPercentValue = 100
-)
-
-type quantityOverTime struct {
-	Quantity     uint
-	RelativeTime time.Duration
-}
 
 func sortDurations(durations []time.Duration) {
 	less := func(i int, j int) bool {
@@ -34,7 +28,7 @@ func IsSortedDurations(durations []time.Duration) bool {
 	return sort.SliceIsSorted(durations, less)
 }
 
-func calcTotalDuration(durations []time.Duration) time.Duration {
+func CalcTotalDuration(durations []time.Duration) time.Duration {
 	if len(durations) == 0 {
 		return 0
 	}
@@ -44,11 +38,11 @@ func calcTotalDuration(durations []time.Duration) time.Duration {
 	return durations[len(durations)-1]
 }
 
-func calcIntervalQuantities(
+func CalcIntervalQuantities(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) []quantityOverTime {
+) []qot.QuantityOverTime {
 	if len(relativeTimes) == 0 {
 		return nil
 	}
@@ -71,7 +65,7 @@ func calcIntervalQuantities(
 		interval = time.Nanosecond
 	}
 
-	quantities := make([]quantityOverTime, 0, intervalsQuantity+1)
+	quantities := make([]qot.QuantityOverTime, 0, intervalsQuantity+1)
 
 	edge := 0
 
@@ -91,7 +85,7 @@ func calcIntervalQuantities(
 			}
 		}
 
-		item := quantityOverTime{
+		item := qot.QuantityOverTime{
 			Quantity:     spanQuantities,
 			RelativeTime: span - interval,
 		}
@@ -102,11 +96,11 @@ func calcIntervalQuantities(
 	return quantities
 }
 
-func calcSelfDeviations(
+func CalcSelfDeviations(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) ([]quantityOverTime, time.Duration, time.Duration, time.Duration) {
+) ([]qot.QuantityOverTime, time.Duration, time.Duration, time.Duration) {
 	if len(relativeTimes) == 0 {
 		return nil, 0, 0, 0
 	}
@@ -147,11 +141,11 @@ func calcSelfDeviations(
 
 	avg /= time.Duration(len(deviations))
 
-	return calcIntervalQuantities(deviations, intervalsQuantity, interval), min, max, avg
+	return CalcIntervalQuantities(deviations, intervalsQuantity, interval), min, max, avg
 }
 
-func convertQuantityOverTimeToBarEcharts(
-	quantities []quantityOverTime,
+func ConvertQuantityOverTimeToBarEcharts(
+	quantities []qot.QuantityOverTime,
 ) ([]chartsopts.BarData, []uint) {
 	serieses := make([]chartsopts.BarData, 0, len(quantities))
 	xaxis := make([]uint, 0, len(quantities))
@@ -172,25 +166,27 @@ func convertQuantityOverTimeToBarEcharts(
 	return serieses, xaxis
 }
 
-func calcRelativeDeviations(
+func CalcRelativeDeviations(
 	durations []time.Duration,
 	expected time.Duration,
 ) map[int]int {
+	const howManyTimesLessDeviations = 2
+
 	if len(durations) == 0 {
 		return nil
 	}
 
 	sortDurations(durations)
 
-	deviations := make(map[int]int, len(durations)/2)
+	deviations := make(map[int]int, len(durations)/howManyTimesLessDeviations)
 
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
 
-		deviation := ((diff - expected) * maxPercentValue) / expected
+		deviation := ((diff - expected) * consts.OneHundredPercent) / expected
 
-		if deviation > maxPercentValue {
-			deviation = maxPercentValue
+		if deviation > consts.OneHundredPercent {
+			deviation = consts.OneHundredPercent
 		}
 
 		deviations[int(deviation)]++
@@ -209,7 +205,7 @@ func calcRelativeDeviations(
 	return deviations
 }
 
-func convertRelativeDeviationsToBarEcharts(
+func ConvertRelativeDeviationsToBarEcharts(
 	deviations map[int]int,
 ) ([]chartsopts.BarData, []int) {
 	serieses := make([]chartsopts.BarData, 0, len(deviations))
