@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/cqos/v2/internal/breaker"
 )
 
 const defaultDataAmount = 10000
