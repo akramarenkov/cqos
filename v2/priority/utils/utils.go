@@ -83,16 +83,6 @@ func copySort(priorities []uint) []uint {
 	return copied
 }
 
-func isDistributionFilled(distribution map[uint]uint) bool {
-	for _, quantity := range distribution {
-		if quantity == 0 {
-			return false
-		}
-	}
-
-	return true
-}
-
 func isNonFatalConfig(
 	combinations [][]uint,
 	divider divider.Divider,
@@ -103,7 +93,7 @@ func isNonFatalConfig(
 
 		divider(combination, quantity, distribution)
 
-		if !isDistributionFilled(distribution) {
+		if !common.IsDistributionFilled(distribution) {
 			return false
 		}
 	}
@@ -215,7 +205,7 @@ func isSuitableConfig(
 
 		divider(combination, quantity, distribution)
 
-		if !isDistributionFilled(distribution) {
+		if !common.IsDistributionFilled(distribution) {
 			return false
 		}
 

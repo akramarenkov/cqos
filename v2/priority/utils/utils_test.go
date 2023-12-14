@@ -305,17 +305,6 @@ func BenchmarkGenCombinations(b *testing.B) {
 	_ = genCombinations(priorities)
 }
 
-func TestIsDistributionFilled(t *testing.T) {
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 0, 2: 0, 1: 0}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 1, 2: 0, 1: 0}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 0, 2: 1, 1: 0}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 0, 2: 0, 1: 1}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 1, 2: 1, 1: 0}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 1, 2: 0, 1: 1}))
-	require.Equal(t, false, isDistributionFilled(map[uint]uint{3: 0, 2: 1, 1: 1}))
-	require.Equal(t, true, isDistributionFilled(map[uint]uint{3: 1, 2: 1, 1: 1}))
-}
-
 func TestIsNonFatalConfig(t *testing.T) {
 	require.Equal(t, false, IsNonFatalConfig([]uint{1}, divider.Fair, 0))
 	require.Equal(t, true, IsNonFatalConfig([]uint{1}, divider.Fair, 1))

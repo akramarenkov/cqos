@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	ErrEmptyDivider         = errors.New("priorities divider was not specified")
-	ErrEmptyInput           = errors.New("input channels was not specified")
-	ErrZeroHandlersQuantity = errors.New("handlers quantity is zero")
+	ErrEmptyDivider             = errors.New("priorities divider was not specified")
+	ErrEmptyInput               = errors.New("input channels was not specified")
+	ErrTooSmallHandlersQuantity = errors.New("handlers quantity is too small")
+	ErrZeroHandlersQuantity     = errors.New("handlers quantity is zero")
 )
 
 const (
@@ -161,6 +162,10 @@ func prepare[Type any](opts Opts[Type]) (
 	)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	if !common.IsDistributionFilled(strategic) {
+		return nil, nil, nil, ErrTooSmallHandlersQuantity
 	}
 
 	return inputs, priorities, strategic, nil

@@ -421,7 +421,7 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 	}
 }
 
-func TestDisciplineFairFatalDividingError(t *testing.T) {
+func TestDisciplineFairTooSmallHandlersQuantity(t *testing.T) {
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: 2,
 	}
@@ -438,15 +438,11 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 		Inputs:           msr.GetInputs(),
 	}
 
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	measures := msr.Play(discipline)
-
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	_, err := New(opts)
+	require.Error(t, err)
 }
 
-func TestDisciplineRateFatalDividingError(t *testing.T) {
+func TestDisciplineRateTooSmallHandlersQuantity(t *testing.T) {
 	measurerOpts := measurer.Opts{
 		HandlersQuantity: 5,
 	}
@@ -463,10 +459,6 @@ func TestDisciplineRateFatalDividingError(t *testing.T) {
 		Inputs:           msr.GetInputs(),
 	}
 
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	measures := msr.Play(discipline)
-
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	_, err := New(opts)
+	require.Error(t, err)
 }
