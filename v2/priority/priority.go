@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	ErrEmptyInput   = errors.New("input channels was not specified")
-	ErrEmptyDivider = errors.New("priorities divider was not specified")
+	ErrEmptyDivider         = errors.New("priorities divider was not specified")
+	ErrEmptyInput           = errors.New("input channels was not specified")
+	ErrZeroHandlersQuantity = errors.New("handlers quantity is zero")
 )
 
 const (
@@ -69,6 +70,10 @@ type Discipline[Type any] struct {
 func (opts Opts[Type]) isValid() error {
 	if opts.Divider == nil {
 		return ErrEmptyDivider
+	}
+
+	if opts.HandlersQuantity == 0 {
+		return ErrZeroHandlersQuantity
 	}
 
 	if len(opts.Inputs) == 0 {

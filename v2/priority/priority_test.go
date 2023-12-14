@@ -12,11 +12,16 @@ import (
 )
 
 func TestOptsValidation(t *testing.T) {
-	opts := Opts[uint]{
-		HandlersQuantity: 6,
-	}
+	opts := Opts[uint]{}
 
 	_, err := New(opts)
+	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Divider: divider.Fair,
+	}
+
+	_, err = New(opts)
 	require.Error(t, err)
 
 	opts = Opts[uint]{
