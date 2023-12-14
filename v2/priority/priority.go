@@ -427,7 +427,7 @@ func (dsc *Discipline[Type]) calcTacticByAddUpToStrategic(vacants uint) bool {
 		picked += dsc.tactic[priority]
 	}
 
-	return picked != 0 && picked <= vacants
+	return picked == vacants
 }
 
 func (dsc *Discipline[Type]) calcTacticBase(vacants uint) (bool, error) {
