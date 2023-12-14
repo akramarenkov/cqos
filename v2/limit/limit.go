@@ -15,11 +15,12 @@ const (
 
 // Options of the created discipline
 type Opts[Type any] struct {
-	// Input data channel. For graceful termination it is enough to
+	// Input data channel. For terminate discipline it is necessary and sufficient to
 	// close the input channel
 	Input <-chan Type
 	// Rate limit
-	Limit     Rate
+	Limit Rate
+	// Output channel capacity
 	OutputCap uint
 	// Do not waits for the first ticker tick and transfer first data batch immediately
 	ZeroTick bool
@@ -41,14 +42,14 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Main discipline
+// Limit discipline
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	output chan Type
 }
 
-// Creates and runs main discipline
+// Creates and runs discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -62,19 +63,25 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		output: make(chan Type, opts.OutputCap),
 	}
 
-	go dsc.loop()
+	go dsc.main()
 
 	return dsc, nil
 }
 
-// Returns output channel
+// Returns output channel.
+//
+// If this channel is closed, it means that the discipline is terminated
 func (dsc *Discipline[Type]) Output() <-chan Type {
 	return dsc.output
 }
 
-func (dsc *Discipline[Type]) loop() {
+func (dsc *Discipline[Type]) main() {
 	defer close(dsc.output)
 
+	dsc.loop()
+}
+
+func (dsc *Discipline[Type]) loop() {
 	ticker := time.NewTicker(dsc.opts.Limit.Interval)
 	defer ticker.Stop()
 

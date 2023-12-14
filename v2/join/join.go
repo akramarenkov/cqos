@@ -100,7 +100,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	dsc.resetSendAt()
 
-	go dsc.loop()
+	go dsc.main()
 
 	return dsc, nil
 }
@@ -119,11 +119,15 @@ func (dsc *Discipline[Type]) Release() {
 	dsc.release <- struct{}{}
 }
 
-func (dsc *Discipline[Type]) loop() {
+func (dsc *Discipline[Type]) main() {
 	defer close(dsc.release)
 	defer close(dsc.output)
 	defer dsc.ticker.Stop()
 
+	dsc.loop()
+}
+
+func (dsc *Discipline[Type]) loop() {
 	for {
 		select {
 		case <-dsc.ticker.C:
