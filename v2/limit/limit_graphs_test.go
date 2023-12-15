@@ -119,7 +119,7 @@ func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
 	}
 
 	if stressSystem {
-		stress, err := stress.New(0)
+		stress, err := stress.New(0, 0)
 		require.NoError(t, err)
 
 		defer stress.Stop()
@@ -268,7 +268,7 @@ func testGraphTicker(
 	}
 
 	if stressSystem {
-		stress, err := stress.New(0)
+		stress, err := stress.New(0, 0)
 		require.NoError(t, err)
 
 		defer stress.Stop()
@@ -500,7 +500,7 @@ func testGraphDisciplineSynthetic(
 	}
 
 	if stressSystem {
-		stress, err := stress.New(0)
+		stress, err := stress.New(0, 0)
 		require.NoError(t, err)
 
 		defer stress.Stop()
@@ -601,7 +601,7 @@ func testGraphDisciplineRegular(
 	}
 
 	if stressSystem {
-		stress, err := stress.New(0)
+		stress, err := stress.New(0, 0)
 		require.NoError(t, err)
 
 		defer stress.Stop()

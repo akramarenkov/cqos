@@ -8,16 +8,22 @@ import (
 )
 
 const (
-	defaultDataAmount = 10000
+	defaultCPUFactor  = 64
+	defaultDataAmount = 512
 )
 
 type Stress struct {
 	breaker *breaker.Breaker
 
-	data string
+	cpuFactor int
+	data      string
 }
 
-func New(dataAmount uint) (*Stress, error) {
+func New(cpuFactor int, dataAmount int) (*Stress, error) {
+	if cpuFactor == 0 {
+		cpuFactor = defaultCPUFactor
+	}
+
 	if dataAmount == 0 {
 		dataAmount = defaultDataAmount
 	}
@@ -30,7 +36,8 @@ func New(dataAmount uint) (*Stress, error) {
 	str := &Stress{
 		breaker: breaker.New(),
 
-		data: string(data),
+		cpuFactor: cpuFactor,
+		data:      string(data),
 	}
 
 	go str.main()
@@ -54,7 +61,7 @@ func (str *Stress) loop() {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	for actors := 0; actors < runtime.NumCPU(); actors++ {
+	for actors := 0; actors < str.cpuFactor*runtime.NumCPU(); actors++ {
 		strings := make(chan string, 1)
 		runes := make(chan []rune)
 

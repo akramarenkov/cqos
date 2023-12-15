@@ -2,7 +2,7 @@ package stress
 
 import "crypto/rand"
 
-func getRandom(amount uint) ([]byte, error) {
+func getRandom(amount int) ([]byte, error) {
 	random := make([]byte, amount)
 
 	if _, err := rand.Read(random); err != nil {

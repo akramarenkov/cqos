@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/akramarenkov/safe v0.2.2
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-echarts/go-echarts/v2 v2.3.2
 	github.com/stretchr/testify v1.8.4
 )
