@@ -233,10 +233,10 @@ func CalcWriteToFeedbackLatency(
 		}
 	}
 
-	return ProcessLatencies(latencies, interval)
+	return processLatencies(latencies, interval)
 }
 
-func ProcessLatencies(
+func processLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
 ) map[uint][]qot.QuantityOverTime {
