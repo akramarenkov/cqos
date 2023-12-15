@@ -5,15 +5,18 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/cqos/v2/internal/breaker"
+	"github.com/akramarenkov/cqos/v2/limit/internal/starter"
 )
 
 const (
-	defaultCPUFactor  = 64
-	defaultDataAmount = 512
+	defaultCPUFactor    = 64
+	defaultDataAmount   = 512
+	defaultStartedAfter = 10
 )
 
 type Stress struct {
 	breaker *breaker.Breaker
+	starter *starter.Starter
 
 	cpuFactor int
 	data      string
@@ -35,12 +38,15 @@ func New(cpuFactor int, dataAmount int) (*Stress, error) {
 
 	str := &Stress{
 		breaker: breaker.New(),
+		starter: starter.New(defaultStartedAfter),
 
 		cpuFactor: cpuFactor,
 		data:      string(data),
 	}
 
 	go str.main()
+
+	str.starter.Wait()
 
 	return str, nil
 }
@@ -56,8 +62,6 @@ func (str *Stress) main() {
 }
 
 func (str *Stress) loop() {
-	const pair = 2
-
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -67,14 +71,18 @@ func (str *Stress) loop() {
 
 		strings <- str.data
 
-		wg.Add(pair)
+		wg.Add(1)
+		wg.Add(1)
 
-		go str.runer(wg, strings, runes)
-		go str.stringer(wg, runes, strings)
+		go str.runer(str.starter.Add(), wg, strings, runes)
+		go str.stringer(str.starter.Add(), wg, runes, strings)
 	}
+
+	str.starter.Started()
 }
 
 func (str *Stress) runer(
+	id int,
 	wg *sync.WaitGroup,
 	input chan string,
 	output chan []rune,
@@ -90,12 +98,14 @@ func (str *Stress) runer(
 			case <-str.breaker.Breaked():
 				return
 			case output <- []rune(data):
+				str.starter.Done(id)
 			}
 		}
 	}
 }
 
 func (str *Stress) stringer(
+	id int,
 	wg *sync.WaitGroup,
 	input chan []rune,
 	output chan string,
@@ -111,6 +121,7 @@ func (str *Stress) stringer(
 			case <-str.breaker.Breaked():
 				return
 			case output <- string(data):
+				str.starter.Done(id)
 			}
 		}
 	}

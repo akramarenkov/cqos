@@ -12,7 +12,7 @@ func TestStress(t *testing.T) {
 	type config struct {
 		CPUFactor  int           `env:"CQOS_STRESS_DATA_CPU_FACTOR"`
 		DataAmount int           `env:"CQOS_STRESS_DATA_AMOUNT"`
-		Duration   time.Duration `env:"CQOS_STRESS_DURATION" envDefault:"0.1s"`
+		Duration   time.Duration `env:"CQOS_STRESS_DURATION"`
 	}
 
 	cfg := config{}
