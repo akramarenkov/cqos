@@ -14,7 +14,7 @@ type Starter struct {
 	added     []uint
 	closing   breaker.Closing
 	doneAfter uint
-	mutex     *sync.Mutex
+	mutex     *sync.RWMutex
 	wg        *sync.WaitGroup
 }
 
@@ -26,7 +26,7 @@ func New(doneAfter uint) *Starter {
 	str := &Starter{
 		closing:   *breaker.NewClosing(),
 		doneAfter: doneAfter,
-		mutex:     &sync.Mutex{},
+		mutex:     &sync.RWMutex{},
 		wg:        &sync.WaitGroup{},
 	}
 
@@ -48,8 +48,8 @@ func (str *Starter) Add() int {
 }
 
 func (str *Starter) done(id int) bool {
-	str.mutex.Lock()
-	defer str.mutex.Unlock()
+	str.mutex.RLock()
+	defer str.mutex.RUnlock()
 
 	if str.added[id] == 0 {
 		return false
