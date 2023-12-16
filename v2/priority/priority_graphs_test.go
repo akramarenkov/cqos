@@ -117,13 +117,27 @@ func createGraphs(
 	filePrefix string,
 	handlersQuantity uint,
 	unbufferedInput bool,
-	dqot map[uint][]chartsopts.LineData,
-	dqotX []uint,
-	ipot map[uint][]chartsopts.LineData,
-	ipotX []uint,
-	wtfl map[uint][]chartsopts.BarData,
-	wtflX []uint,
+	measures []measurer.Measure,
+	overTimeResolution time.Duration,
+	overTimeUnit time.Duration,
+	writeToFeedbackInterval time.Duration,
 ) {
+	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
+
+	dqot, dqotX := research.ConvertToLineEcharts(
+		research.CalcDataQuantity(received, overTimeResolution),
+		overTimeUnit,
+	)
+
+	ipot, ipotX := research.ConvertToLineEcharts(
+		research.CalcInProcessing(measures, overTimeResolution),
+		overTimeUnit,
+	)
+
+	wtfl, wtflX := research.ConvertToBarEcharts(
+		research.CalcWriteToFeedbackLatency(measures, writeToFeedbackInterval),
+	)
+
 	subtitle := fmt.Sprintf(
 		subtitleBase+
 			", "+
@@ -217,34 +231,16 @@ func testGraphFairEven(
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := research.ConvertToBarEcharts(
-		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
 	createGraphs(
 		t,
 		"Fair divider, even time processing",
 		"fair_even",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		wtfl,
-		wtflX,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -304,34 +300,16 @@ func testGraphFairUneven(
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := research.ConvertToBarEcharts(
-		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
 	createGraphs(
 		t,
 		"Fair divider, uneven time processing",
 		"fair_uneven",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		wtfl,
-		wtflX,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -391,34 +369,16 @@ func testGraphRateEven(
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := research.ConvertToBarEcharts(
-		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
 	createGraphs(
 		t,
 		"Rate divider, even time processing",
 		"rate_even",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		wtfl,
-		wtflX,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -478,34 +438,16 @@ func testGraphRateUneven(
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := research.ConvertToBarEcharts(
-		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
 	createGraphs(
 		t,
 		"Rate divider, uneven time processing",
 		"rate_uneven",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		wtfl,
-		wtflX,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -559,30 +501,16 @@ func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measures := msr.Play(unmanaged)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
 	createGraphs(
 		t,
 		"Unmanaged, even time processing",
 		"unmanaged_even",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		nil,
-		nil,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -636,30 +564,16 @@ func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measures := msr.Play(unmanaged)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := research.ConvertToLineEcharts(
-		research.CalcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
 	createGraphs(
 		t,
 		"Unmanaged, uneven time processing",
 		"unmanaged_uneven",
 		measurerOpts.HandlersQuantity,
 		unbufferedInput,
-		dqot,
-		dqotX,
-		ipot,
-		ipotX,
-		nil,
-		nil,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
@@ -720,25 +634,16 @@ func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
 
 	measures := msr.Play(discipline)
 
-	received := research.FilterByKind(measures, measurer.MeasureKindReceived)
-
-	dqot, dqotX := research.ConvertToLineEcharts(
-		research.CalcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
 	createGraphs(
 		t,
 		"Fair divider, even time processing, significant dividing error",
 		"fair_even_dividing_error",
 		measurerOpts.HandlersQuantity,
 		measurerOpts.UnbufferedInput,
-		dqot,
-		dqotX,
-		nil,
-		nil,
-		nil,
-		nil,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
 	)
 }
 
