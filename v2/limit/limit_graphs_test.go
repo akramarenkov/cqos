@@ -74,6 +74,7 @@ func createGraph(
 
 	fileName := "graph_" +
 		strconv.Itoa(len(relativeTimes)) +
+		"_" +
 		fileNameAddition +
 		"_" +
 		"_stress_" +
