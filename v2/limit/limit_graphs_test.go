@@ -18,6 +18,79 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func createBarGraph(
+	t *testing.T,
+	title string,
+	subtitle string,
+	fileName string,
+	seriesName string,
+	series []chartsopts.BarData,
+	abscissa interface{},
+) {
+	if len(series) == 0 {
+		return
+	}
+
+	chart := charts.NewBar()
+
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    title,
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	chart.SetXAxis(abscissa).AddSeries(seriesName, series)
+
+	file, err := os.Create(fileName)
+	require.NoError(t, err)
+
+	err = chart.Render(file)
+	require.NoError(t, err)
+}
+
+func createGraph(
+	t *testing.T,
+	title string,
+	subtitleAddition string,
+	fileNameAddition string,
+	seriesName string,
+	relativeTimes []time.Duration,
+	stressSystem bool,
+	series []chartsopts.BarData,
+	abscissa interface{},
+) {
+	subtitle := fmt.Sprintf(
+		"Total quantity: %d, "+
+			subtitleAddition+", "+
+			"stress system: %t, "+
+			"time: %s",
+		len(relativeTimes),
+		stressSystem,
+		time.Now().Format(time.RFC3339),
+	)
+
+	fileName := "graph_" +
+		strconv.Itoa(len(relativeTimes)) +
+		fileNameAddition +
+		"_" +
+		"_stress_" +
+		strconv.FormatBool(stressSystem) +
+		".html"
+
+	createBarGraph(
+		t,
+		title,
+		subtitle,
+		fileName,
+		seriesName,
+		series,
+		abscissa,
+	)
+}
+
 func createTimeQuantitiesGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
@@ -28,40 +101,22 @@ func createTimeQuantitiesGraph(
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"total duration: %s, "+
-			"stress system: %t, "+
-			"time: %s",
-		len(relativeTimes),
+	subtitleAddition := fmt.Sprintf(
+		"total duration: %s",
 		durations.CalcTotalDuration(relativeTimes),
+	)
+
+	createGraph(
+		t,
+		"Time quantities",
+		subtitleAddition,
+		"time_quantities",
+		"quantities",
+		relativeTimes,
 		stressSystem,
-		time.Now().Format(time.RFC3339),
+		axisY,
+		axisX,
 	)
-
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Time quantities",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("quantities", axisY)
-
-	baseName := "graph_time_quantities_" +
-		strconv.Itoa(len(relativeTimes)) +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
-
-	chartFile, err := os.Create(baseName + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
 }
 
 func createTimeDeviationsGraph(
@@ -74,44 +129,26 @@ func createTimeDeviationsGraph(
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(deviations)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"min: %s, "+
+	subtitleAddition := fmt.Sprintf(
+		"min: %s, "+
 			"max: %s, "+
-			"avg: %s, "+
-			"stress system: %t, "+
-			"time: %s",
-		len(relativeTimes),
+			"avg: %s",
 		min,
 		max,
 		avg,
+	)
+
+	createGraph(
+		t,
+		"Time deviations",
+		subtitleAddition,
+		"time_deviations",
+		"deviations",
+		relativeTimes,
 		stressSystem,
-		time.Now().Format(time.RFC3339),
+		axisY,
+		axisX,
 	)
-
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Time deviations",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("deviations", axisY)
-
-	baseName := "graph_time_deviations_" +
-		strconv.Itoa(len(relativeTimes)) +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
-
-	chartFile, err := os.Create(baseName + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
 }
 
 func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
@@ -159,49 +196,33 @@ func createTickerTickQuantitiesGraph(
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"ticker duration: %s, "+
+	subtitleAddition := fmt.Sprintf(
+		"ticker duration: %s, "+
 			"total duration: {expected:  %s, actual: %s}, "+
-			"buffered: %t, "+
-			"stress system: %t, "+
-			"time: %s",
-		len(relativeTimes),
+			"buffered: %t",
 		duration,
 		time.Duration(len(relativeTimes))*duration,
 		durations.CalcTotalDuration(relativeTimes),
 		buffered,
-		stressSystem,
-		time.Now().Format(time.RFC3339),
 	)
 
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Ticker tick quantities over time",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("quantities", axisY)
-
-	baseName := "graph_ticker_tick_quantities_" +
-		strconv.Itoa(len(relativeTimes)) +
+	fileNameAddition := "ticker_tick_quantities" +
 		"_ticker_duration_" +
 		duration.String() +
 		"_buffered_" +
-		strconv.FormatBool(buffered) +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
+		strconv.FormatBool(buffered)
 
-	chartFile, err := os.Create(baseName + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
+	createGraph(
+		t,
+		"Ticker tick quantities over time",
+		subtitleAddition,
+		fileNameAddition,
+		"quantities",
+		relativeTimes,
+		stressSystem,
+		axisY,
+		axisX,
+	)
 }
 
 func createTickerTickDeviationsGraph(
@@ -215,46 +236,30 @@ func createTickerTickDeviationsGraph(
 
 	axisY, axisX := research.ConvertRelativeDeviationsToBarEcharts(deviations)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"ticker duration: %s, "+
-			"buffered: %t, "+
-			"stress system: %t, "+
-			"time: %s",
-		len(relativeTimes),
+	subtitleAddition := fmt.Sprintf(
+		"ticker duration: %s, "+
+			"buffered: %t",
 		duration,
 		buffered,
-		stressSystem,
-		time.Now().Format(time.RFC3339),
 	)
 
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Ticker tick deviations",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("deviations", axisY)
-
-	baseName := "graph_ticker_tick_deviations_" +
-		strconv.Itoa(len(relativeTimes)) +
+	fileNameAddition := "ticker_tick_deviations_" +
 		"_ticker_duration_" +
 		duration.String() +
 		"_buffered_" +
-		strconv.FormatBool(buffered) +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
+		strconv.FormatBool(buffered)
 
-	chartFile, err := os.Create(baseName + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
+	createGraph(
+		t,
+		"Ticker tick deviations",
+		subtitleAddition,
+		fileNameAddition,
+		"deviations",
+		relativeTimes,
+		stressSystem,
+		axisY,
+		axisX,
+	)
 }
 
 func testGraphTicker(
@@ -387,50 +392,36 @@ func createQuantitiesGraph(
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"limit: {quantity: %d, interval: %s}, "+
+	subtitleAddition := fmt.Sprintf(
+		"limit: {quantity: %d, interval: %s}, "+
 			"total duration: {expected:  %s, actual: %s}, "+
-			"stress system: %t, "+
-			"kind: %s, "+
-			"time: %s",
-		len(relativeTimes),
+			"kind: %s",
 		limit.Quantity,
 		limit.Interval,
 		time.Duration(len(relativeTimes))*limit.Interval/time.Duration(limit.Quantity),
 		durations.CalcTotalDuration(relativeTimes),
-		stressSystem,
 		kind,
-		time.Now().Format(time.RFC3339),
 	)
 
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Quantities over time",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("quantities", axisY)
-
-	baseName := "graph_quantities_" +
-		strconv.Itoa(len(relativeTimes)) +
+	fileNameAddition := "quantities_" +
 		"_limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
+		"_" +
+		kind
 
-	chartFile, err := os.Create(baseName + "_" + kind + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
+	createGraph(
+		t,
+		"Quantities over time",
+		subtitleAddition,
+		fileNameAddition,
+		"quantities",
+		relativeTimes,
+		stressSystem,
+		axisY,
+		axisX,
+	)
 }
 
 func createDeviationsGraph(
@@ -447,47 +438,33 @@ func createDeviationsGraph(
 
 	axisY, axisX := research.ConvertRelativeDeviationsToBarEcharts(deviations)
 
-	chart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Total quantity: %d, "+
-			"limit {quantity: %d, interval: %s}, "+
-			"stress system: %t, "+
-			"kind: %s, "+
-			"time: %s",
-		len(relativeTimes),
+	subtitleAddition := fmt.Sprintf(
+		"limit {quantity: %d, interval: %s}, "+
+			"kind: %s",
 		limit.Quantity,
 		limit.Interval,
-		stressSystem,
 		kind,
-		time.Now().Format(time.RFC3339),
 	)
 
-	chart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Deviations",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	chart.SetXAxis(axisX).AddSeries("deviations", axisY)
-
-	baseName := "graph_deviations_" +
-		strconv.Itoa(len(relativeTimes)) +
+	fileNameAddition := "deviations_" +
 		"_limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
-		"_stress_" +
-		strconv.FormatBool(stressSystem)
+		"_" +
+		kind
 
-	chartFile, err := os.Create(baseName + "_" + kind + ".html")
-	require.NoError(t, err)
-
-	err = chart.Render(chartFile)
-	require.NoError(t, err)
+	createGraph(
+		t,
+		"Deviations",
+		subtitleAddition,
+		fileNameAddition,
+		"deviations",
+		relativeTimes,
+		stressSystem,
+		axisY,
+		axisX,
+	)
 }
 
 func testGraphDisciplineSynthetic(
