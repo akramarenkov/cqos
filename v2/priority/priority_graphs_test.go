@@ -9,6 +9,7 @@ import (
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 	"github.com/akramarenkov/cqos/v2/priority/internal/research"
 	"github.com/akramarenkov/cqos/v2/priority/internal/unmanaged"
@@ -17,6 +18,155 @@ import (
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
+
+func addLineSeries(line *charts.Line, serieses map[uint][]chartsopts.LineData) {
+	priorities := make([]uint, 0, len(serieses))
+
+	for priority := range serieses {
+		priorities = append(priorities, priority)
+	}
+
+	common.SortPriorities(priorities)
+
+	for _, priority := range priorities {
+		line.AddSeries(strconv.Itoa(int(priority)), serieses[priority])
+	}
+}
+
+func addBarSeries(bar *charts.Bar, serieses map[uint][]chartsopts.BarData) {
+	priorities := make([]uint, 0, len(serieses))
+
+	for priority := range serieses {
+		priorities = append(priorities, priority)
+	}
+
+	common.SortPriorities(priorities)
+
+	for _, priority := range priorities {
+		bar.AddSeries(strconv.Itoa(int(priority)), serieses[priority])
+	}
+}
+
+func createLineGraph(
+	t *testing.T,
+	title string,
+	subtitle string,
+	fileName string,
+	serieses map[uint][]chartsopts.LineData,
+	abscissa []uint,
+) {
+	if len(serieses) == 0 {
+		return
+	}
+
+	chart := charts.NewLine()
+
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    title,
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	addLineSeries(chart.SetXAxis(abscissa), serieses)
+
+	file, err := os.Create(fileName)
+	require.NoError(t, err)
+
+	err = chart.Render(file)
+	require.NoError(t, err)
+}
+
+func createBarGraph(
+	t *testing.T,
+	title string,
+	subtitle string,
+	fileName string,
+	serieses map[uint][]chartsopts.BarData,
+	abscissa []uint,
+) {
+	if len(serieses) == 0 {
+		return
+	}
+
+	chart := charts.NewBar()
+
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    title,
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	addBarSeries(chart.SetXAxis(abscissa), serieses)
+
+	file, err := os.Create(fileName)
+	require.NoError(t, err)
+
+	err = chart.Render(file)
+	require.NoError(t, err)
+}
+
+func createGraphs(
+	t *testing.T,
+	subtitleBase string,
+	filePrefix string,
+	handlersQuantity uint,
+	unbufferedInput bool,
+	dqot map[uint][]chartsopts.LineData,
+	dqotX []uint,
+	ipot map[uint][]chartsopts.LineData,
+	ipotX []uint,
+	wtfl map[uint][]chartsopts.BarData,
+	wtflX []uint,
+) {
+	subtitle := fmt.Sprintf(
+		subtitleBase+
+			", "+
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
+		handlersQuantity,
+		!unbufferedInput,
+		time.Now().Format(time.RFC3339),
+	)
+
+	baseName := "graph_" + filePrefix + "_" +
+		strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
+
+	createLineGraph(
+		t,
+		"Data retrieval graph",
+		subtitle,
+		baseName+"_data_retrieval.html",
+		dqot,
+		dqotX,
+	)
+
+	createLineGraph(
+		t,
+		"In processing graph",
+		subtitle,
+		baseName+"_in_processing.html",
+		ipot,
+		ipotX,
+	)
+
+	createBarGraph(
+		t,
+		"Write to feedback latency",
+		subtitle,
+		baseName+"_write_feedback_latency.html",
+		wtfl,
+		wtflX,
+	)
+}
 
 func testDisciplineFairEvenProcessingTime(
 	t *testing.T,
@@ -83,84 +233,19 @@ func testDisciplineFairEvenProcessingTime(
 		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Fair divider, even time processing",
+		"fair_even",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		wtfl,
+		wtflX,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_fair_even_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
 func TestDisciplineFairEvenProcessingTime(t *testing.T) {
@@ -235,84 +320,19 @@ func testDisciplineFairUnevenProcessingTime(
 		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, uneven time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Fair divider, uneven time processing",
+		"fair_uneven",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		wtfl,
+		wtflX,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_fair_uneven_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
 func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
@@ -387,84 +407,19 @@ func testDisciplineRateEvenProcessingTime(
 		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Rate divider, even time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Rate divider, even time processing",
+		"rate_even",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		wtfl,
+		wtflX,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_rate_even_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
 func TestDisciplineRateEvenProcessingTime(t *testing.T) {
@@ -539,84 +494,19 @@ func testDisciplineRateUnevenProcessingTime(
 		research.CalcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Rate divider, uneven time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Rate divider, uneven time processing",
+		"rate_uneven",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		wtfl,
+		wtflX,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_rate_uneven_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
 func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
@@ -681,63 +571,19 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 		1*time.Second,
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Unmanaged, even time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Unmanaged, even time processing",
+		"unmanaged_even",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		nil,
+		nil,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	baseName := "graph_unmanaged_even_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
 }
 
 func TestUnmanagedEven(t *testing.T) {
@@ -802,63 +648,19 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 		1*time.Second,
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Unmanaged, uneven time processing, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Unmanaged, uneven time processing",
+		"unmanaged_uneven",
 		measurerOpts.HandlersQuantity,
-		!unbufferedInput,
-		time.Now().Format(time.RFC3339),
+		unbufferedInput,
+		dqot,
+		dqotX,
+		ipot,
+		ipotX,
+		nil,
+		nil,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	baseName := "graph_unmanaged_uneven_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!unbufferedInput)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
 }
 
 func TestUnmanagedUneven(t *testing.T) {
@@ -925,44 +727,19 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		1*time.Second,
 	)
 
-	dqotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, "+
-			"significant dividing error, "+
-			"handlers quantity: %d, "+
-			"buffered: %t, "+
-			"time: %s",
+	createGraphs(
+		t,
+		"Fair divider, even time processing, significant dividing error",
+		"fair_even_dividing_error",
 		measurerOpts.HandlersQuantity,
-		!measurerOpts.UnbufferedInput,
-		time.Now().Format(time.RFC3339),
+		measurerOpts.UnbufferedInput,
+		dqot,
+		dqotX,
+		nil,
+		nil,
+		nil,
+		nil,
 	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("4", dqot[4]).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	baseName := "graph_fair_even_" +
-		strconv.Itoa(int(measurerOpts.HandlersQuantity)) +
-		"_buffered_" +
-		strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
 }
 
 func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
