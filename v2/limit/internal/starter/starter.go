@@ -14,6 +14,7 @@ type Starter struct {
 	added     []uint
 	closing   breaker.Closing
 	doneAfter uint
+	mutex     *sync.Mutex
 	wg        *sync.WaitGroup
 }
 
@@ -25,25 +26,31 @@ func New(doneAfter uint) *Starter {
 	str := &Starter{
 		closing:   *breaker.NewClosing(),
 		doneAfter: doneAfter,
+		mutex:     &sync.Mutex{},
 		wg:        &sync.WaitGroup{},
 	}
 
 	return str
 }
 
-// thread-unsafe
 func (str *Starter) add() int {
+	str.mutex.Lock()
+	defer str.mutex.Unlock()
+
 	str.added = append(str.added, str.doneAfter)
+
 	return len(str.added) - 1
 }
 
-// thread-unsafe
 func (str *Starter) Add() int {
 	str.wg.Add(1)
 	return str.add()
 }
 
 func (str *Starter) done(id int) bool {
+	str.mutex.Lock()
+	defer str.mutex.Unlock()
+
 	if str.added[id] == 0 {
 		return false
 	}
