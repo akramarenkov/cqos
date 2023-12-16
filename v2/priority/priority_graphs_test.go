@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 	"github.com/akramarenkov/cqos/v2/priority/internal/research"
@@ -22,7 +23,7 @@ func testDisciplineFairEvenProcessingTime(
 	factor uint,
 	unbufferedInput bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -174,7 +175,7 @@ func testDisciplineFairUnevenProcessingTime(
 	factor uint,
 	unbufferedInput bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -326,7 +327,7 @@ func testDisciplineRateEvenProcessingTime(
 	factor uint,
 	unbufferedInput bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -478,7 +479,7 @@ func testDisciplineRateUnevenProcessingTime(
 	factor uint,
 	unbufferedInput bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -626,7 +627,7 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 }
 
 func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -747,7 +748,7 @@ func TestUnmanagedEven(t *testing.T) {
 }
 
 func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -868,7 +869,7 @@ func TestUnmanagedUneven(t *testing.T) {
 }
 
 func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 

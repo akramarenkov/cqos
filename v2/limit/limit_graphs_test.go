@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 	"github.com/akramarenkov/cqos/v2/limit/internal/stress"
@@ -114,7 +115,7 @@ func createTimeDeviationsGraph(
 }
 
 func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -263,7 +264,7 @@ func testGraphTicker(
 	buffered bool,
 	stressSystem bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -495,7 +496,7 @@ func testGraphDisciplineSynthetic(
 	limit Rate,
 	stressSystem bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -596,7 +597,7 @@ func testGraphDisciplineRegular(
 	limit Rate,
 	stressSystem bool,
 ) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
