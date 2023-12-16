@@ -76,7 +76,6 @@ func createGraph(
 		strconv.Itoa(len(relativeTimes)) +
 		"_" +
 		fileNameAddition +
-		"_" +
 		"_stress_" +
 		strconv.FormatBool(stressSystem) +
 		".html"
