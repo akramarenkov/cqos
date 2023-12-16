@@ -168,7 +168,7 @@ func createGraphs(
 	)
 }
 
-func testDisciplineFairEvenProcessingTime(
+func testGraphFairEven(
 	t *testing.T,
 	factor uint,
 	unbufferedInput bool,
@@ -248,14 +248,14 @@ func testDisciplineFairEvenProcessingTime(
 	)
 }
 
-func TestDisciplineFairEvenProcessingTime(t *testing.T) {
-	testDisciplineFairEvenProcessingTime(t, 1, true)
-	testDisciplineFairEvenProcessingTime(t, 10, true)
-	testDisciplineFairEvenProcessingTime(t, 1, false)
-	testDisciplineFairEvenProcessingTime(t, 10, false)
+func TestGraphFairEven(t *testing.T) {
+	testGraphFairEven(t, 1, true)
+	testGraphFairEven(t, 10, true)
+	testGraphFairEven(t, 1, false)
+	testGraphFairEven(t, 10, false)
 }
 
-func testDisciplineFairUnevenProcessingTime(
+func testGraphFairUneven(
 	t *testing.T,
 	factor uint,
 	unbufferedInput bool,
@@ -335,14 +335,14 @@ func testDisciplineFairUnevenProcessingTime(
 	)
 }
 
-func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
-	testDisciplineFairUnevenProcessingTime(t, 1, true)
-	testDisciplineFairUnevenProcessingTime(t, 10, true)
-	testDisciplineFairUnevenProcessingTime(t, 1, false)
-	testDisciplineFairUnevenProcessingTime(t, 10, false)
+func TestGraphFairUneven(t *testing.T) {
+	testGraphFairUneven(t, 1, true)
+	testGraphFairUneven(t, 10, true)
+	testGraphFairUneven(t, 1, false)
+	testGraphFairUneven(t, 10, false)
 }
 
-func testDisciplineRateEvenProcessingTime(
+func testGraphRateEven(
 	t *testing.T,
 	factor uint,
 	unbufferedInput bool,
@@ -422,14 +422,14 @@ func testDisciplineRateEvenProcessingTime(
 	)
 }
 
-func TestDisciplineRateEvenProcessingTime(t *testing.T) {
-	testDisciplineRateEvenProcessingTime(t, 1, true)
-	testDisciplineRateEvenProcessingTime(t, 10, true)
-	testDisciplineRateEvenProcessingTime(t, 1, false)
-	testDisciplineRateEvenProcessingTime(t, 10, false)
+func TestGraphRateEven(t *testing.T) {
+	testGraphRateEven(t, 1, true)
+	testGraphRateEven(t, 10, true)
+	testGraphRateEven(t, 1, false)
+	testGraphRateEven(t, 10, false)
 }
 
-func testDisciplineRateUnevenProcessingTime(
+func testGraphRateUneven(
 	t *testing.T,
 	factor uint,
 	unbufferedInput bool,
@@ -509,14 +509,14 @@ func testDisciplineRateUnevenProcessingTime(
 	)
 }
 
-func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
-	testDisciplineRateUnevenProcessingTime(t, 1, true)
-	testDisciplineRateUnevenProcessingTime(t, 10, true)
-	testDisciplineRateUnevenProcessingTime(t, 1, false)
-	testDisciplineRateUnevenProcessingTime(t, 10, false)
+func TestGraphRateUneven(t *testing.T) {
+	testGraphRateUneven(t, 1, true)
+	testGraphRateUneven(t, 10, true)
+	testGraphRateUneven(t, 1, false)
+	testGraphRateUneven(t, 10, false)
 }
 
-func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
+func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
@@ -586,14 +586,14 @@ func testUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	)
 }
 
-func TestUnmanagedEven(t *testing.T) {
-	testUnmanagedEven(t, 1, true)
-	testUnmanagedEven(t, 10, true)
-	testUnmanagedEven(t, 1, false)
-	testUnmanagedEven(t, 10, false)
+func TestGraphUnmanagedEven(t *testing.T) {
+	testGraphUnmanagedEven(t, 1, true)
+	testGraphUnmanagedEven(t, 10, true)
+	testGraphUnmanagedEven(t, 1, false)
+	testGraphUnmanagedEven(t, 10, false)
 }
 
-func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
+func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
@@ -663,14 +663,14 @@ func testUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	)
 }
 
-func TestUnmanagedUneven(t *testing.T) {
-	testUnmanagedUneven(t, 1, true)
-	testUnmanagedUneven(t, 10, true)
-	testUnmanagedUneven(t, 1, false)
-	testUnmanagedUneven(t, 10, false)
+func TestGraphUnmanagedUneven(t *testing.T) {
+	testGraphUnmanagedUneven(t, 1, true)
+	testGraphUnmanagedUneven(t, 10, true)
+	testGraphUnmanagedUneven(t, 1, false)
+	testGraphUnmanagedUneven(t, 10, false)
 }
 
-func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
+func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
@@ -742,12 +742,12 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 	)
 }
 
-func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
-	testDisciplineFairEvenProcessingTimeDividingError(t, 6)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 7)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 8)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 9)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 10)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 11)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 12)
+func TestGraphFairEvenDividingError(t *testing.T) {
+	testGraphFairEvenDividingError(t, 6)
+	testGraphFairEvenDividingError(t, 7)
+	testGraphFairEvenDividingError(t, 8)
+	testGraphFairEvenDividingError(t, 9)
+	testGraphFairEvenDividingError(t, 10)
+	testGraphFairEvenDividingError(t, 11)
+	testGraphFairEvenDividingError(t, 12)
 }
