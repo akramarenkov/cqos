@@ -206,8 +206,8 @@ func createTickerTickQuantitiesGraph(
 		buffered,
 	)
 
-	fileNameAddition := "ticker_tick_quantities" +
-		"_ticker_duration_" +
+	fileNameAddition := "ticker_tick_quantities_" +
+		"ticker_duration_" +
 		duration.String() +
 		"_buffered_" +
 		strconv.FormatBool(buffered)
@@ -244,7 +244,7 @@ func createTickerTickDeviationsGraph(
 	)
 
 	fileNameAddition := "ticker_tick_deviations_" +
-		"_ticker_duration_" +
+		"ticker_duration_" +
 		duration.String() +
 		"_buffered_" +
 		strconv.FormatBool(buffered)
@@ -404,7 +404,7 @@ func createQuantitiesGraph(
 	)
 
 	fileNameAddition := "quantities_" +
-		"_limit_quantity_" +
+		"limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
@@ -447,7 +447,7 @@ func createDeviationsGraph(
 	)
 
 	fileNameAddition := "deviations_" +
-		"_limit_quantity_" +
+		"limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
 		limit.Interval.String() +
