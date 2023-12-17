@@ -65,7 +65,7 @@ func createGraph(
 ) {
 	subtitle := fmt.Sprintf(
 		"Total quantity: %d, "+
-			"calc interval: %s"+
+			"calc interval: %s, "+
 			subtitleAddition+", "+
 			"stress system: %t, "+
 			"time: %s",
