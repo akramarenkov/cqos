@@ -48,7 +48,7 @@ func CalcIntervalQuantities(
 		spanQuantities := uint(0)
 
 		for id, relativeTime := range relativeTimes[edge:] {
-			if relativeTime > span {
+			if relativeTime >= span {
 				edge += id
 				break
 			}
