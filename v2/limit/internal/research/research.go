@@ -172,7 +172,7 @@ func CalcRelativeDeviations(
 	calc(relativeTimes[0], 0)
 
 	for id := range relativeTimes {
-		if id+1 > len(relativeTimes)-1 {
+		if id == len(relativeTimes)-1 {
 			break
 		}
 
