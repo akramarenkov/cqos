@@ -58,16 +58,19 @@ func createGraph(
 	fileNameAddition string,
 	seriesName string,
 	relativeTimes []time.Duration,
+	calcInterval time.Duration,
 	stressSystem bool,
 	series []chartsopts.BarData,
 	abscissa interface{},
 ) {
 	subtitle := fmt.Sprintf(
 		"Total quantity: %d, "+
+			"calc interval: %s"+
 			subtitleAddition+", "+
 			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
+		calcInterval,
 		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
@@ -97,7 +100,7 @@ func createTimeQuantitiesGraph(
 	intervalsQuantity int,
 	stressSystem bool,
 ) {
-	quantities := research.CalcIntervalQuantities(relativeTimes, intervalsQuantity, 0)
+	quantities, interval := research.CalcIntervalQuantities(relativeTimes, intervalsQuantity, 0)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
@@ -113,6 +116,7 @@ func createTimeQuantitiesGraph(
 		"time_quantities",
 		"quantities",
 		relativeTimes,
+		interval,
 		stressSystem,
 		axisY,
 		axisX,
@@ -125,7 +129,7 @@ func createTimeDeviationsGraph(
 	intervalsQuantity int,
 	stressSystem bool,
 ) {
-	deviations, min, max, avg := research.CalcSelfDeviations(relativeTimes, intervalsQuantity, 0)
+	deviations, interval, min, max, avg := research.CalcSelfDeviations(relativeTimes, intervalsQuantity, 0)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(deviations)
 
@@ -145,6 +149,7 @@ func createTimeDeviationsGraph(
 		"time_deviations",
 		"deviations",
 		relativeTimes,
+		interval,
 		stressSystem,
 		axisY,
 		axisX,
@@ -192,7 +197,7 @@ func createTickerTickQuantitiesGraph(
 	buffered bool,
 	stressSystem bool,
 ) {
-	quantities := research.CalcIntervalQuantities(relativeTimes, 0, duration)
+	quantities, interval := research.CalcIntervalQuantities(relativeTimes, 0, duration)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
@@ -219,6 +224,7 @@ func createTickerTickQuantitiesGraph(
 		fileNameAddition,
 		"quantities",
 		relativeTimes,
+		interval,
 		stressSystem,
 		axisY,
 		axisX,
@@ -256,6 +262,7 @@ func createTickerTickDeviationsGraph(
 		fileNameAddition,
 		"deviations",
 		relativeTimes,
+		duration,
 		stressSystem,
 		axisY,
 		axisX,
@@ -388,7 +395,7 @@ func createQuantitiesGraph(
 	stressSystem bool,
 	kind string,
 ) {
-	quantities := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
+	quantities, interval := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
@@ -418,6 +425,7 @@ func createQuantitiesGraph(
 		fileNameAddition,
 		"quantities",
 		relativeTimes,
+		interval,
 		stressSystem,
 		axisY,
 		axisX,
@@ -461,6 +469,7 @@ func createDeviationsGraph(
 		fileNameAddition,
 		"deviations",
 		relativeTimes,
+		flattenLimit.Interval,
 		stressSystem,
 		axisY,
 		axisX,

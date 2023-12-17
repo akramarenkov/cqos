@@ -17,9 +17,9 @@ func CalcIntervalQuantities(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) []qot.QuantityOverTime {
+) ([]qot.QuantityOverTime, time.Duration) {
 	if len(relativeTimes) == 0 {
-		return nil
+		return nil, 0
 	}
 
 	durations.Sort(relativeTimes)
@@ -28,7 +28,7 @@ func CalcIntervalQuantities(
 
 	if interval == 0 {
 		if intervalsQuantity == 0 {
-			return nil
+			return nil, 0
 		}
 
 		interval = maxRelativeTimes / time.Duration(intervalsQuantity)
@@ -68,16 +68,16 @@ func CalcIntervalQuantities(
 		quantities = append(quantities, item)
 	}
 
-	return quantities
+	return quantities, interval
 }
 
 func CalcSelfDeviations(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) ([]qot.QuantityOverTime, time.Duration, time.Duration, time.Duration) {
+) ([]qot.QuantityOverTime, time.Duration, time.Duration, time.Duration, time.Duration) {
 	if len(relativeTimes) == 0 {
-		return nil, 0, 0, 0
+		return nil, 0, 0, 0, 0
 	}
 
 	durations.Sort(relativeTimes)
@@ -116,7 +116,9 @@ func CalcSelfDeviations(
 
 	avg /= time.Duration(len(deviations))
 
-	return CalcIntervalQuantities(deviations, intervalsQuantity, interval), min, max, avg
+	quantities, finalInterval := CalcIntervalQuantities(deviations, intervalsQuantity, interval)
+
+	return quantities, finalInterval, min, max, avg
 }
 
 func ConvertQuantityOverTimeToBarEcharts(
