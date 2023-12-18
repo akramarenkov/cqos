@@ -632,9 +632,12 @@ func createDeviationsGraph(
 	axisY, axisX := research.ConvertRelativeDeviationsToBarEcharts(deviations)
 
 	subtitleAddition := fmt.Sprintf(
-		"limit {quantity: %d, interval: %s}",
+		"limit: {quantity: %d, interval: %s}, "+
+			"flatten: {quantity: %d, interval: %s}",
 		limit.Quantity,
 		limit.Interval,
+		flatten.Quantity,
+		flatten.Interval,
 	)
 
 	fileNameAddition := "deviations_" +
