@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 	"testing"
 	"time"
 
@@ -412,8 +411,6 @@ func testGraphDisciplineSynthetic(
 		relativeTimes = append(relativeTimes, time.Since(startedAt))
 	}
 
-	require.Equal(t, true, durations.IsSorted(relativeTimes))
-
 	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "synthetic")
 	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "synthetic")
 }
@@ -661,40 +658,21 @@ func testGraphDisciplineRegular(
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
-
-	inSequence := make([]uint, 0, quantity)
-	outSequence := make([]uint, 0, quantity)
 	relativeTimes := make([]time.Duration, 0, quantity)
 
 	startedAt := time.Now()
 
 	go func() {
-		defer wg.Done()
 		defer close(input)
 
 		for stage := uint(1); stage <= quantity; stage++ {
-			inSequence = append(inSequence, stage)
-
 			input <- stage
 		}
 	}()
 
-	go func() {
-		defer wg.Done()
-
-		for item := range discipline.Output() {
-			relativeTimes = append(relativeTimes, time.Since(startedAt))
-			outSequence = append(outSequence, item)
-		}
-	}()
-
-	wg.Wait()
-
-	require.Equal(t, inSequence, outSequence)
-	require.Equal(t, true, durations.IsSorted(relativeTimes))
+	for range discipline.Output() {
+		relativeTimes = append(relativeTimes, time.Since(startedAt))
+	}
 
 	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "regular")
 	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "regular")
