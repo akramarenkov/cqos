@@ -58,7 +58,7 @@ func createGraph(
 	fileNameAddition string,
 	seriesName string,
 	relativeTimes []time.Duration,
-	calcInterval time.Duration,
+	graphInterval time.Duration,
 	stressSystem bool,
 	series []chartsopts.BarData,
 	abscissa interface{},
@@ -70,7 +70,7 @@ func createGraph(
 			"stress system: %t, "+
 			"time: %s",
 		len(relativeTimes),
-		calcInterval,
+		graphInterval,
 		stressSystem,
 		time.Now().Format(time.RFC3339),
 	)
@@ -97,10 +97,15 @@ func createGraph(
 func createTimeQuantitiesGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
-	intervalsQuantity int,
+	calcIntervalsQuantity int,
+	calcInterval time.Duration,
 	stressSystem bool,
-) {
-	quantities, interval := research.CalcIntervalQuantities(relativeTimes, intervalsQuantity, 0)
+) time.Duration {
+	quantities, calcInterval := research.CalcIntervalQuantities(
+		relativeTimes,
+		calcIntervalsQuantity,
+		calcInterval,
+	)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
@@ -116,20 +121,27 @@ func createTimeQuantitiesGraph(
 		"time_quantities",
 		"quantities",
 		relativeTimes,
-		interval,
+		calcInterval,
 		stressSystem,
 		axisY,
 		axisX,
 	)
+
+	return calcInterval
 }
 
 func createTimeDeviationsGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
-	intervalsQuantity int,
+	calcIntervalsQuantity int,
+	calcInterval time.Duration,
 	stressSystem bool,
-) {
-	deviations, interval, min, max, avg := research.CalcSelfDeviations(relativeTimes, intervalsQuantity, 0)
+) time.Duration {
+	deviations, calcInterval, min, max, avg := research.CalcSelfDeviations(
+		relativeTimes,
+		calcIntervalsQuantity,
+		calcInterval,
+	)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(deviations)
 
@@ -149,14 +161,24 @@ func createTimeDeviationsGraph(
 		"time_deviations",
 		"deviations",
 		relativeTimes,
-		interval,
+		calcInterval,
 		stressSystem,
 		axisY,
 		axisX,
 	)
+
+	return calcInterval
 }
 
-func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
+func testGraphTime(
+	t *testing.T,
+	quantity int,
+	quantitiesIntervalsQuantity int,
+	quantitiesInterval time.Duration,
+	deviationsIntervalsQuantity int,
+	deviationsInterval time.Duration,
+	stressSystem bool,
+) (time.Duration, time.Duration) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
@@ -178,16 +200,66 @@ func testGraphTime(t *testing.T, quantity int, stressSystem bool) {
 
 	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
-	createTimeQuantitiesGraph(t, relativeTimes, 100, stressSystem)
-	createTimeDeviationsGraph(t, relativeTimes, 100, stressSystem)
+	quantitiesInterval = createTimeQuantitiesGraph(
+		t,
+		relativeTimes,
+		quantitiesIntervalsQuantity,
+		quantitiesInterval,
+		stressSystem,
+	)
+
+	deviationsInterval = createTimeDeviationsGraph(
+		t,
+		relativeTimes,
+		deviationsIntervalsQuantity,
+		deviationsInterval,
+		stressSystem,
+	)
+
+	return quantitiesInterval, deviationsInterval
 }
 
 func TestGraphTime(t *testing.T) {
-	testGraphTime(t, 1000, false)
-	testGraphTime(t, 10000000, false)
+	// we use the same graph interval without stress system and under stress system
+	quantitiesInterval1e3, deviationsInterval1e3 := testGraphTime(
+		t,
+		1000,
+		100,
+		0,
+		100,
+		0,
+		false,
+	)
 
-	testGraphTime(t, 1000, true)
-	testGraphTime(t, 10000000, true)
+	quantitiesInterval1e7, deviationsInterval1e7 := testGraphTime(
+		t,
+		10000000,
+		100,
+		0,
+		100,
+		0,
+		false,
+	)
+
+	testGraphTime(
+		t,
+		1000,
+		0,
+		quantitiesInterval1e3,
+		0,
+		deviationsInterval1e3,
+		true,
+	)
+
+	testGraphTime(
+		t,
+		10000000,
+		0,
+		quantitiesInterval1e7,
+		0,
+		deviationsInterval1e7,
+		true,
+	)
 }
 
 func createTickerTickQuantitiesGraph(
