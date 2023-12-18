@@ -5,6 +5,7 @@ package unmanaged
 import (
 	"sync"
 
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
@@ -24,7 +25,7 @@ type Discipline[Type any] struct {
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
-	capacity := common.CalcByFactor(
+	capacity := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		common.DefaultCapacityFactor,
 		len(opts.Inputs),

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/types"
@@ -90,13 +91,13 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := common.CalcByFactor(
+	capacity := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		common.DefaultCapacityFactor,
 		len(opts.Inputs),
 	)
 
-	feedbackLimit := common.CalcByFactor(
+	feedbackLimit := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		defaultFeedbackLimitFactor,
 		len(opts.Inputs),
