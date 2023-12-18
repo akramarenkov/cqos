@@ -147,8 +147,12 @@ func CalcRelativeDeviations(
 	relativeTimes []time.Duration,
 	expected time.Duration,
 ) map[int]int {
-	// from -100% to 100% with 1% step
-	const deviationsRange = 2 * consts.OneHundredPercent
+	const (
+		deviationsMin = -100
+		deviationsMax = 100
+		// from -100% to 100% with 1% step and plus zero
+		deviationsLength = deviationsMax - deviationsMin + 1
+	)
 
 	if len(relativeTimes) == 0 {
 		return nil
@@ -156,7 +160,11 @@ func CalcRelativeDeviations(
 
 	durations.Sort(relativeTimes)
 
-	deviations := make(map[int]int, deviationsRange)
+	deviations := make(map[int]int, deviationsLength)
+
+	for percent := deviationsMin; percent <= deviationsMax; percent++ {
+		deviations[percent] = 0
+	}
 
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
