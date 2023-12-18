@@ -58,7 +58,7 @@ func createGraph(
 	fileNameAddition string,
 	seriesName string,
 	relativeTimes []time.Duration,
-	graphInterval time.Duration,
+	graphInterval string,
 	stressSystem bool,
 	series []chartsopts.BarData,
 	abscissa interface{},
@@ -121,7 +121,7 @@ func createTimeQuantitiesGraph(
 		"time_quantities",
 		"quantities",
 		relativeTimes,
-		calcInterval,
+		calcInterval.String(),
 		stressSystem,
 		axisY,
 		axisX,
@@ -161,7 +161,7 @@ func createTimeDeviationsGraph(
 		"time_deviations",
 		"deviations",
 		relativeTimes,
-		calcInterval,
+		calcInterval.String(),
 		stressSystem,
 		axisY,
 		axisX,
@@ -220,7 +220,7 @@ func testGraphTime(
 }
 
 func TestGraphTime(t *testing.T) {
-	// we use the same graph interval without stress system and under stress system
+	// we use the same calc (graph) interval without stress system and under stress system
 	quantitiesInterval1e3, deviationsInterval1e3 := testGraphTime(
 		t,
 		1000,
@@ -262,32 +262,27 @@ func TestGraphTime(t *testing.T) {
 	)
 }
 
-func createTickerTickQuantitiesGraph(
+func createTickerQuantitiesGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
-	duration time.Duration,
-	buffered bool,
+	tickerDuration time.Duration,
 	stressSystem bool,
 ) {
-	quantities, interval := research.CalcIntervalQuantities(relativeTimes, 0, duration)
+	quantities, calcInterval := research.CalcIntervalQuantities(relativeTimes, 0, tickerDuration)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
 	subtitleAddition := fmt.Sprintf(
 		"ticker duration: %s, "+
-			"total duration: {expected:  %s, actual: %s}, "+
-			"buffered: %t",
-		duration,
-		time.Duration(len(relativeTimes))*duration,
+			"total duration: {expected:  %s, actual: %s}",
+		tickerDuration,
+		time.Duration(len(relativeTimes))*tickerDuration,
 		durations.CalcTotalDuration(relativeTimes),
-		buffered,
 	)
 
 	fileNameAddition := "ticker_tick_quantities_" +
 		"ticker_duration_" +
-		duration.String() +
-		"_buffered_" +
-		strconv.FormatBool(buffered)
+		tickerDuration.String()
 
 	createGraph(
 		t,
@@ -296,36 +291,31 @@ func createTickerTickQuantitiesGraph(
 		fileNameAddition,
 		"quantities",
 		relativeTimes,
-		interval,
+		calcInterval.String(),
 		stressSystem,
 		axisY,
 		axisX,
 	)
 }
 
-func createTickerTickDeviationsGraph(
+func createTickerDeviationsGraph(
 	t *testing.T,
 	relativeTimes []time.Duration,
-	duration time.Duration,
-	buffered bool,
+	tickerDuration time.Duration,
 	stressSystem bool,
 ) {
-	deviations := research.CalcRelativeDeviations(relativeTimes, duration)
+	deviations := research.CalcRelativeDeviations(relativeTimes, tickerDuration)
 
 	axisY, axisX := research.ConvertRelativeDeviationsToBarEcharts(deviations)
 
 	subtitleAddition := fmt.Sprintf(
-		"ticker duration: %s, "+
-			"buffered: %t",
-		duration,
-		buffered,
+		"ticker duration: %s",
+		tickerDuration,
 	)
 
 	fileNameAddition := "ticker_tick_deviations_" +
 		"ticker_duration_" +
-		duration.String() +
-		"_buffered_" +
-		strconv.FormatBool(buffered)
+		tickerDuration.String()
 
 	createGraph(
 		t,
@@ -334,7 +324,7 @@ func createTickerTickDeviationsGraph(
 		fileNameAddition,
 		"deviations",
 		relativeTimes,
-		duration,
+		"1%",
 		stressSystem,
 		axisY,
 		axisX,
@@ -344,8 +334,7 @@ func createTickerTickDeviationsGraph(
 func testGraphTicker(
 	t *testing.T,
 	quantity uint,
-	duration time.Duration,
-	buffered bool,
+	tickerDuration time.Duration,
 	stressSystem bool,
 ) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
@@ -361,46 +350,12 @@ func testGraphTicker(
 
 	relativeTimes := make([]time.Duration, 0, quantity)
 
-	ticker := time.NewTicker(duration)
+	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
-
-	ticks := ticker.C
-
-	if buffered {
-		buffer := make(chan time.Time, quantity)
-		defer close(buffer)
-
-		ticks = buffer
-
-		wg := &sync.WaitGroup{}
-		defer wg.Wait()
-
-		breaker := make(chan bool)
-		defer close(breaker)
-
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
-			for {
-				select {
-				case <-breaker:
-					return
-				case time := <-ticker.C:
-					select {
-					case <-breaker:
-						return
-					case buffer <- time:
-					}
-				}
-			}
-		}()
-	}
 
 	startedAt := time.Now()
 
-	for range ticks {
+	for range ticker.C {
 		relativeTimes = append(relativeTimes, time.Since(startedAt))
 
 		if uint(len(relativeTimes)) == quantity {
@@ -410,54 +365,32 @@ func testGraphTicker(
 
 	require.Equal(t, true, durations.IsSorted(relativeTimes))
 
-	createTickerTickQuantitiesGraph(t, relativeTimes, duration, buffered, stressSystem)
-	createTickerTickDeviationsGraph(t, relativeTimes, duration, buffered, stressSystem)
+	createTickerQuantitiesGraph(t, relativeTimes, tickerDuration, stressSystem)
+	createTickerDeviationsGraph(t, relativeTimes, tickerDuration, stressSystem)
 }
 
 func TestGraphTicker(t *testing.T) {
-	testGraphTicker(t, 100, time.Second, false, false)
-	testGraphTicker(t, 100, 100*time.Millisecond, false, false)
-	testGraphTicker(t, 1000, 10*time.Millisecond, false, false)
-	testGraphTicker(t, 1000, time.Millisecond, false, false)
-	testGraphTicker(t, 1000, 100*time.Microsecond, false, false)
-	testGraphTicker(t, 1000, 10*time.Microsecond, false, false)
-	testGraphTicker(t, 1000, time.Microsecond, false, false)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, false, false)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, false, false)
-	testGraphTicker(t, 1000, time.Nanosecond, false, false)
+	testGraphTicker(t, 100, time.Second, false)
+	testGraphTicker(t, 100, 100*time.Millisecond, false)
+	testGraphTicker(t, 1000, 10*time.Millisecond, false)
+	testGraphTicker(t, 1000, time.Millisecond, false)
+	testGraphTicker(t, 1000, 100*time.Microsecond, false)
+	testGraphTicker(t, 1000, 10*time.Microsecond, false)
+	testGraphTicker(t, 1000, time.Microsecond, false)
+	testGraphTicker(t, 1000, 100*time.Nanosecond, false)
+	testGraphTicker(t, 1000, 10*time.Nanosecond, false)
+	testGraphTicker(t, 1000, time.Nanosecond, false)
 
-	testGraphTicker(t, 100, time.Second, true, false)
-	testGraphTicker(t, 100, 100*time.Millisecond, true, false)
-	testGraphTicker(t, 1000, 10*time.Millisecond, true, false)
-	testGraphTicker(t, 1000, time.Millisecond, true, false)
-	testGraphTicker(t, 1000, 100*time.Microsecond, true, false)
-	testGraphTicker(t, 1000, 10*time.Microsecond, true, false)
-	testGraphTicker(t, 1000, time.Microsecond, true, false)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, true, false)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, true, false)
-	testGraphTicker(t, 1000, time.Nanosecond, true, false)
-
-	testGraphTicker(t, 100, time.Second, false, true)
-	testGraphTicker(t, 100, 100*time.Millisecond, false, true)
-	testGraphTicker(t, 1000, 10*time.Millisecond, false, true)
-	testGraphTicker(t, 1000, time.Millisecond, false, true)
-	testGraphTicker(t, 1000, 100*time.Microsecond, false, true)
-	testGraphTicker(t, 1000, 10*time.Microsecond, false, true)
-	testGraphTicker(t, 1000, time.Microsecond, false, true)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, false, true)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, false, true)
-	testGraphTicker(t, 1000, time.Nanosecond, false, true)
-
-	testGraphTicker(t, 100, time.Second, true, true)
-	testGraphTicker(t, 100, 100*time.Millisecond, true, true)
-	testGraphTicker(t, 1000, 10*time.Millisecond, true, true)
-	testGraphTicker(t, 1000, time.Millisecond, true, true)
-	testGraphTicker(t, 1000, 100*time.Microsecond, true, true)
-	testGraphTicker(t, 1000, 10*time.Microsecond, true, true)
-	testGraphTicker(t, 1000, time.Microsecond, true, true)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, true, true)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, true, true)
-	testGraphTicker(t, 1000, time.Nanosecond, true, true)
+	testGraphTicker(t, 100, time.Second, true)
+	testGraphTicker(t, 100, 100*time.Millisecond, true)
+	testGraphTicker(t, 1000, 10*time.Millisecond, true)
+	testGraphTicker(t, 1000, time.Millisecond, true)
+	testGraphTicker(t, 1000, 100*time.Microsecond, true)
+	testGraphTicker(t, 1000, 10*time.Microsecond, true)
+	testGraphTicker(t, 1000, time.Microsecond, true)
+	testGraphTicker(t, 1000, 100*time.Nanosecond, true)
+	testGraphTicker(t, 1000, 10*time.Nanosecond, true)
+	testGraphTicker(t, 1000, time.Nanosecond, true)
 }
 
 func createQuantitiesGraph(
@@ -467,7 +400,7 @@ func createQuantitiesGraph(
 	stressSystem bool,
 	kind string,
 ) {
-	quantities, interval := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
+	quantities, calcInterval := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
@@ -497,7 +430,7 @@ func createQuantitiesGraph(
 		fileNameAddition,
 		"quantities",
 		relativeTimes,
-		interval,
+		calcInterval.String(),
 		stressSystem,
 		axisY,
 		axisX,
@@ -541,7 +474,7 @@ func createDeviationsGraph(
 		fileNameAddition,
 		"deviations",
 		relativeTimes,
-		flattenLimit.Interval,
+		"1%",
 		stressSystem,
 		axisY,
 		axisX,
