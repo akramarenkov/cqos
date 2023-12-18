@@ -3,6 +3,8 @@ package limit
 import (
 	"errors"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/internal/general"
 )
 
 var (
@@ -10,7 +12,7 @@ var (
 )
 
 const (
-	defaultOutputCap = 1
+	defaultCapacityFactor = 0.1
 )
 
 // Options of the created discipline
@@ -20,8 +22,6 @@ type Opts[Type any] struct {
 	Input <-chan Type
 	// Rate limit
 	Limit Rate
-	// Output channel capacity
-	OutputCap uint
 	// Do not waits for the first ticker tick and transfer first data batch immediately
 	ZeroTick bool
 }
@@ -32,14 +32,6 @@ func (opts Opts[Type]) isValid() error {
 	}
 
 	return opts.Limit.IsValid()
-}
-
-func (opts Opts[Type]) normalize() Opts[Type] {
-	if opts.OutputCap == 0 {
-		opts.OutputCap = defaultOutputCap
-	}
-
-	return opts
 }
 
 // Limit discipline
@@ -55,12 +47,16 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	opts = opts.normalize()
+	capacity := general.CalcByFactor(
+		int(opts.Limit.Quantity),
+		defaultCapacityFactor,
+		1,
+	)
 
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		output: make(chan Type, opts.OutputCap),
+		output: make(chan Type, capacity),
 	}
 
 	go dsc.main()

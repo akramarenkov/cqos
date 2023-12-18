@@ -316,152 +316,53 @@ func createTickerDeviationsGraph(
 	)
 }
 
-func TestGraphDisciplineSynthetic(t *testing.T) {
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: time.Millisecond, Quantity: 1},
-		false,
-	)
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: time.Millisecond, Quantity: 1},
-		true,
-	)
-
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
-		false,
-	)
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
-		true,
-	)
-
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
-		false,
-	)
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
-		true,
-	)
-
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
-		false,
-	)
-	testGraphDisciplineSynthetic(
-		t,
-		10000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
-		true,
-	)
-}
-
-func testGraphDisciplineSynthetic(
-	t *testing.T,
-	quantity uint,
-	limit Rate,
-	stressSystem bool,
-) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
-		t.SkipNow()
-	}
-
-	if stressSystem {
-		stress, err := stress.New(0, 0)
-		require.NoError(t, err)
-
-		defer stress.Stop()
-	}
-
-	input := make(chan uint, quantity)
-	relativeTimes := make([]time.Duration, 0, quantity)
-
-	for stage := uint(1); stage <= quantity; stage++ {
-		input <- stage
-	}
-
-	close(input)
-
-	opts := Opts[uint]{
-		Input:     input,
-		Limit:     limit,
-		OutputCap: quantity,
-	}
-
-	startedAt := time.Now()
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	for range discipline.Output() {
-		relativeTimes = append(relativeTimes, time.Since(startedAt))
-	}
-
-	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "synthetic")
-	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "synthetic")
-}
-
-func TestGraphDisciplineRegular1000(t *testing.T) {
-	testGraphDisciplineRegular(
+func TestGraphDiscipline1000(t *testing.T) {
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 1},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 1},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
@@ -469,53 +370,53 @@ func TestGraphDisciplineRegular1000(t *testing.T) {
 	)
 }
 
-func TestGraphDisciplineRegular10000(t *testing.T) {
-	testGraphDisciplineRegular(
+func TestGraphDiscipline10000(t *testing.T) {
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 10},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 10},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 100},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 100},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 1000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 1000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 10000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		100000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 10000},
@@ -523,53 +424,53 @@ func TestGraphDisciplineRegular10000(t *testing.T) {
 	)
 }
 
-func TestGraphDisciplineRegular100000(t *testing.T) {
-	testGraphDisciplineRegular(
+func TestGraphDiscipline100000(t *testing.T) {
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 100},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 100},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 1000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 1000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 10000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 10000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 100000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		1000000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 100000},
@@ -577,53 +478,53 @@ func TestGraphDisciplineRegular100000(t *testing.T) {
 	)
 }
 
-func TestGraphDisciplineRegular1000000(t *testing.T) {
-	testGraphDisciplineRegular(
+func TestGraphDiscipline1000000(t *testing.T) {
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 1000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 1 * time.Millisecond, Quantity: 1000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 10000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 10 * time.Millisecond, Quantity: 10000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 100000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 100 * time.Millisecond, Quantity: 100000},
 		true,
 	)
 
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000000},
 		false,
 	)
-	testGraphDisciplineRegular(
+	testGraphDiscipline(
 		t,
 		10000000,
 		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000000},
@@ -631,7 +532,7 @@ func TestGraphDisciplineRegular1000000(t *testing.T) {
 	)
 }
 
-func testGraphDisciplineRegular(
+func testGraphDiscipline(
 	t *testing.T,
 	quantity uint,
 	limit Rate,
@@ -665,7 +566,7 @@ func testGraphDisciplineRegular(
 	go func() {
 		defer close(input)
 
-		for stage := uint(1); stage <= quantity; stage++ {
+		for stage := uint(0); stage < quantity; stage++ {
 			input <- stage
 		}
 	}()
@@ -674,8 +575,8 @@ func testGraphDisciplineRegular(
 		relativeTimes = append(relativeTimes, time.Since(startedAt))
 	}
 
-	createQuantitiesGraph(t, relativeTimes, limit, stressSystem, "regular")
-	createDeviationsGraph(t, relativeTimes, limit, stressSystem, "regular")
+	createQuantitiesGraph(t, relativeTimes, limit, stressSystem)
+	createDeviationsGraph(t, relativeTimes, limit, stressSystem)
 }
 
 func createQuantitiesGraph(
@@ -683,7 +584,6 @@ func createQuantitiesGraph(
 	relativeTimes []time.Duration,
 	limit Rate,
 	stressSystem bool,
-	kind string,
 ) {
 	quantities, calcInterval := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
 
@@ -691,22 +591,18 @@ func createQuantitiesGraph(
 
 	subtitleAddition := fmt.Sprintf(
 		"limit: {quantity: %d, interval: %s}, "+
-			"total duration: {expected:  %s, actual: %s}, "+
-			"kind: %s",
+			"total duration: {expected:  %s, actual: %s}",
 		limit.Quantity,
 		limit.Interval,
 		time.Duration(len(relativeTimes))*limit.Interval/time.Duration(limit.Quantity),
 		durations.CalcTotalDuration(relativeTimes),
-		kind,
 	)
 
 	fileNameAddition := "quantities_" +
 		"limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
-		limit.Interval.String() +
-		"_" +
-		kind
+		limit.Interval.String()
 
 	createGraph(
 		t,
@@ -727,30 +623,25 @@ func createDeviationsGraph(
 	relativeTimes []time.Duration,
 	limit Rate,
 	stressSystem bool,
-	kind string,
 ) {
-	flattenLimit, done := limit.Flatten()
-	require.Equal(t, true, done)
+	flatten, err := limit.Flatten()
+	require.NoError(t, err)
 
-	deviations := research.CalcRelativeDeviations(relativeTimes, flattenLimit.Interval)
+	deviations := research.CalcRelativeDeviations(relativeTimes, flatten.Interval)
 
 	axisY, axisX := research.ConvertRelativeDeviationsToBarEcharts(deviations)
 
 	subtitleAddition := fmt.Sprintf(
-		"limit {quantity: %d, interval: %s}, "+
-			"kind: %s",
+		"limit {quantity: %d, interval: %s}",
 		limit.Quantity,
 		limit.Interval,
-		kind,
 	)
 
 	fileNameAddition := "deviations_" +
 		"limit_quantity_" +
 		strconv.Itoa(int(limit.Quantity)) +
 		"_limit_interval_" +
-		limit.Interval.String() +
-		"_" +
-		kind
+		limit.Interval.String()
 
 	createGraph(
 		t,
