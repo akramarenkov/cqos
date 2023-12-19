@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/general"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -86,8 +88,11 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
 		outSequence = append(outSequence, item)
 	}
 
+	duration := time.Since(startedAt)
+
 	require.Equal(t, inSequence, outSequence)
-	require.InDelta(t, expectedDuration, time.Since(startedAt), expectedDeviation)
+	require.InDelta(t, expectedDuration, duration, expectedDeviation)
+	require.Less(t, testUndisciplined(t, quantity), duration)
 }
 
 func calcExpectedDuration(
@@ -107,8 +112,48 @@ func calcExpectedDuration(
 	return duration, deviation
 }
 
-func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool) {
+func testUndisciplined(t *testing.T, quantity uint) time.Duration {
 	input := make(chan uint)
+
+	inSequence := make([]uint, 0, quantity)
+	outSequence := make([]uint, 0, quantity)
+
+	startedAt := time.Now()
+
+	go func() {
+		defer close(input)
+
+		for stage := uint(0); stage < quantity; stage++ {
+			inSequence = append(inSequence, stage)
+
+			input <- stage
+		}
+	}()
+
+	for item := range input {
+		outSequence = append(outSequence, item)
+	}
+
+	require.Equal(t, inSequence, outSequence)
+
+	return time.Since(startedAt)
+}
+
+func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool) {
+	if optimize {
+		optimized, err := limit.Optimize()
+		require.NoError(b, err)
+
+		limit = optimized
+	}
+
+	capacity := general.CalcByFactor(
+		int(quantity),
+		defaultCapacityFactor,
+		1,
+	)
+
+	input := make(chan uint, capacity)
 
 	opts := Opts[uint]{
 		Input: input,
@@ -126,27 +171,27 @@ func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool)
 		}
 	}()
 
-	for range discipline.Output() {
+	for range discipline.Output() { // nolint:revive
 	}
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	quantity := uint(10000)
+	quantity := uint(100000)
 
 	limit := Rate{
 		Interval: time.Second,
-		Quantity: 1000,
+		Quantity: uint64(quantity),
 	}
 
 	benchmarkDiscipline(b, quantity, limit, false)
 }
 
 func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := uint(10000)
+	quantity := uint(1000000)
 
 	limit := Rate{
 		Interval: time.Second,
-		Quantity: 1000,
+		Quantity: uint64(quantity),
 	}
 
 	benchmarkDiscipline(b, quantity, limit, true)
