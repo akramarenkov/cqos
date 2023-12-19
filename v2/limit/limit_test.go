@@ -24,7 +24,10 @@ func TestDiscipline(t *testing.T) {
 		Quantity: 1000,
 	}
 
-	testDiscipline(t, quantity, limit, true)
+	disciplined := testDiscipline(t, quantity, limit, true)
+	undisciplined := testUndisciplined(t, quantity)
+
+	require.Less(t, undisciplined, disciplined)
 }
 
 func TestDisciplineAlignedQuantity(t *testing.T) {
@@ -35,7 +38,10 @@ func TestDisciplineAlignedQuantity(t *testing.T) {
 		Quantity: uint64(quantity),
 	}
 
-	testDiscipline(t, quantity, limit, false)
+	disciplined := testDiscipline(t, quantity, limit, false)
+	undisciplined := testUndisciplined(t, quantity)
+
+	require.Less(t, undisciplined, disciplined)
 }
 
 func TestDisciplineUnalignedQuantity(t *testing.T) {
@@ -46,10 +52,13 @@ func TestDisciplineUnalignedQuantity(t *testing.T) {
 		Quantity: 1000,
 	}
 
-	testDiscipline(t, quantity, limit, false)
+	disciplined := testDiscipline(t, quantity, limit, false)
+	undisciplined := testUndisciplined(t, quantity)
+
+	require.Less(t, undisciplined, disciplined)
 }
 
-func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
+func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time.Duration {
 	if optimize {
 		optimized, err := limit.Optimize()
 		require.NoError(t, err)
@@ -92,7 +101,8 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
 
 	require.Equal(t, inSequence, outSequence)
 	require.InDelta(t, expectedDuration, duration, expectedDeviation)
-	require.Less(t, testUndisciplined(t, quantity), duration)
+
+	return duration
 }
 
 func calcExpectedDuration(
