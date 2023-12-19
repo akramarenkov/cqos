@@ -15,7 +15,7 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	quantity := uint(10000)
+	quantity := uint(5003)
 
 	limit := Rate{
 		Interval: time.Second,
@@ -36,16 +36,26 @@ func TestDisciplineAlignedQuantity(t *testing.T) {
 	testDiscipline(t, quantity, limit, false)
 }
 
-func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
-	expectedDuration := (time.Duration(quantity) * limit.Interval) / time.Duration(limit.Quantity)
-	expectedDeviation := float64(expectedDuration) * 0.1
+func TestDisciplineUnalignedQuantity(t *testing.T) {
+	quantity := uint(1001)
 
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: 1000,
+	}
+
+	testDiscipline(t, quantity, limit, false)
+}
+
+func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
 	if optimize {
 		optimized, err := limit.Optimize()
 		require.NoError(t, err)
 
 		limit = optimized
 	}
+
+	expectedDuration, expectedDeviation := calcExpectedDuration(quantity, limit, 0.1)
 
 	input := make(chan uint)
 
@@ -78,4 +88,21 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) {
 
 	require.Equal(t, inSequence, outSequence)
 	require.InDelta(t, expectedDuration, time.Since(startedAt), expectedDeviation)
+}
+
+func calcExpectedDuration(
+	quantity uint,
+	limit Rate,
+	relativeDeviation float64,
+) (time.Duration, float64) {
+	ticksAmount := uint64(quantity) / limit.Quantity
+
+	if ticksAmount*limit.Quantity < uint64(quantity) {
+		ticksAmount++
+	}
+
+	duration := time.Duration(ticksAmount) * limit.Interval
+	deviation := relativeDeviation * float64(duration)
+
+	return duration, deviation
 }
