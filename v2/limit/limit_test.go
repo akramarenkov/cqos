@@ -106,3 +106,48 @@ func calcExpectedDuration(
 
 	return duration, deviation
 }
+
+func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool) {
+	input := make(chan uint)
+
+	opts := Opts[uint]{
+		Input: input,
+		Limit: limit,
+	}
+
+	discipline, err := New(opts)
+	require.NoError(b, err)
+
+	go func() {
+		defer close(input)
+
+		for stage := uint(0); stage < quantity; stage++ {
+			input <- stage
+		}
+	}()
+
+	for range discipline.Output() {
+	}
+}
+
+func BenchmarkDiscipline(b *testing.B) {
+	quantity := uint(10000)
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: 1000,
+	}
+
+	benchmarkDiscipline(b, quantity, limit, false)
+}
+
+func BenchmarkDisciplineOptimize(b *testing.B) {
+	quantity := uint(10000)
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: 1000,
+	}
+
+	benchmarkDiscipline(b, quantity, limit, true)
+}

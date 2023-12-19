@@ -60,7 +60,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		breaker: make(chan struct{}),
 
 		output: make(chan Type, capacity),
-		passer: make(chan struct{}, capacity),
+		passer: make(chan struct{}, opts.Limit.Quantity),
 	}
 
 	go dsc.main()
