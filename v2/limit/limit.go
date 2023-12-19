@@ -22,8 +22,6 @@ type Opts[Type any] struct {
 	Input <-chan Type
 	// Rate limit
 	Limit Rate
-	// Do not waits for the first ticker tick and transfer first data batch immediately
-	ZeroTick bool
 }
 
 func (opts Opts[Type]) isValid() error {
@@ -38,7 +36,10 @@ func (opts Opts[Type]) isValid() error {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
+	breaker chan struct{}
+
 	output chan Type
+	passer chan struct{}
 }
 
 // Creates and runs discipline
@@ -56,7 +57,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
+		breaker: make(chan struct{}),
+
 		output: make(chan Type, capacity),
+		passer: make(chan struct{}, opts.Limit.Quantity),
 	}
 
 	go dsc.main()
@@ -73,6 +77,7 @@ func (dsc *Discipline[Type]) Output() <-chan Type {
 
 func (dsc *Discipline[Type]) main() {
 	defer close(dsc.output)
+	defer close(dsc.passer)
 
 	dsc.loop()
 }
@@ -81,30 +86,41 @@ func (dsc *Discipline[Type]) loop() {
 	ticker := time.NewTicker(dsc.opts.Limit.Interval)
 	defer ticker.Stop()
 
-	if dsc.opts.ZeroTick {
-		if stop := dsc.process(); stop {
-			return
-		}
-	}
+	go dsc.process()
 
-	for range ticker.C {
-		if stop := dsc.process(); stop {
+	for {
+		select {
+		case <-dsc.breaker:
 			return
+		case <-ticker.C:
+			if stop := dsc.pass(); stop {
+				return
+			}
 		}
 	}
 }
 
-func (dsc *Discipline[Type]) process() bool {
+func (dsc *Discipline[Type]) pass() bool {
 	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
-		item, opened := <-dsc.opts.Input
-		if !opened {
+		select {
+		case <-dsc.breaker:
 			return true
+		case dsc.passer <- struct{}{}:
 		}
-
-		dsc.send(item)
 	}
 
 	return false
+}
+
+func (dsc *Discipline[Type]) process() {
+	defer close(dsc.breaker)
+
+	for item := range dsc.opts.Input {
+		for range dsc.passer {
+			dsc.send(item)
+			break
+		}
+	}
 }
 
 func (dsc *Discipline[Type]) send(item Type) {

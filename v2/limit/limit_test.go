@@ -54,20 +54,29 @@ func TestDiscipline(t *testing.T) {
 	require.InDelta(t, expectedDuration, time.Since(startedAt), expectedDeviation)
 }
 
-func TestDisciplineZeroTick(t *testing.T) {
-	quantity := uint(999)
+func TestDisciplineError(t *testing.T) {
+	opts := Opts[uint]{}
+
+	_, err := New(opts)
+	require.Error(t, err)
+}
+
+func TestDisciplineAligned(t *testing.T) {
+	quantity := uint(1000)
 
 	limit := Rate{
 		Interval: time.Second,
 		Quantity: 1000,
 	}
 
+	expectedDuration := (time.Duration(quantity) * limit.Interval) / time.Duration(limit.Quantity)
+	expectedDeviation := float64(expectedDuration) * 0.1
+
 	input := make(chan uint)
 
 	opts := Opts[uint]{
-		Input:    input,
-		Limit:    limit,
-		ZeroTick: true,
+		Input: input,
+		Limit: limit,
 	}
 
 	discipline, err := New(opts)
@@ -93,12 +102,5 @@ func TestDisciplineZeroTick(t *testing.T) {
 	}
 
 	require.Equal(t, inSequence, outSequence)
-	require.InDelta(t, 0, time.Since(startedAt), float64(100*time.Millisecond))
-}
-
-func TestDisciplineError(t *testing.T) {
-	opts := Opts[uint]{}
-
-	_, err := New(opts)
-	require.Error(t, err)
+	require.InDelta(t, expectedDuration, time.Since(startedAt), expectedDeviation)
 }
