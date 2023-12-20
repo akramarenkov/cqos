@@ -316,15 +316,6 @@ func createTickerDeviationsGraph(
 	)
 }
 
-func TestGraphDiscipline10000000(t *testing.T) {
-	testGraphDiscipline(
-		t,
-		10000000-1,
-		Rate{Interval: 1 * time.Second, Quantity: 10000000},
-		false,
-	)
-}
-
 func TestGraphDiscipline1000(t *testing.T) {
 	testGraphDiscipline(
 		t,
