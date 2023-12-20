@@ -93,23 +93,18 @@ func (dsc *Discipline[Type]) loop() {
 		case <-dsc.breaker:
 			return
 		case <-ticker.C:
-			if stop := dsc.pass(); stop {
-				return
-			}
+			dsc.pass()
 		}
 	}
 }
 
-func (dsc *Discipline[Type]) pass() bool {
+func (dsc *Discipline[Type]) pass() {
 	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
 		select {
-		case <-dsc.breaker:
-			return true
 		case dsc.passer <- struct{}{}:
+		default:
 		}
 	}
-
-	return false
 }
 
 func (dsc *Discipline[Type]) process() {

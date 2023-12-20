@@ -68,7 +68,7 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time
 
 	expectedDuration, expectedDeviation := calcExpectedDuration(quantity, limit, 0.1)
 
-	input := make(chan uint)
+	input := make(chan uint, int(float64(quantity)*0.1))
 
 	opts := Opts[uint]{
 		Input: input,
@@ -144,9 +144,11 @@ func testUndisciplined(t *testing.T, quantity uint) time.Duration {
 		outSequence = append(outSequence, item)
 	}
 
+	duration := time.Since(startedAt)
+
 	require.Equal(t, inSequence, outSequence)
 
-	return time.Since(startedAt)
+	return duration
 }
 
 func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool) {
