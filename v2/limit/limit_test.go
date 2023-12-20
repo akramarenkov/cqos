@@ -68,7 +68,7 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time
 
 	expectedDuration, expectedDeviation := calcExpectedDuration(quantity, limit, 0.1)
 
-	input := make(chan uint, int(float64(quantity)*0.1))
+	input := make(chan uint, int(float64(quantity)*defaultCapacityFactor))
 
 	opts := Opts[uint]{
 		Input: input,
