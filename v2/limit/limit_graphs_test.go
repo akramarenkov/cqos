@@ -21,7 +21,7 @@ func TestGraphTime(t *testing.T) {
 	// we use the same calc (graph) interval without stress system and under stress system
 	quantitiesInterval1e3, deviationsInterval1e3 := testGraphTime(
 		t,
-		1000,
+		1e3,
 		100,
 		0,
 		100,
@@ -31,7 +31,7 @@ func TestGraphTime(t *testing.T) {
 
 	quantitiesInterval1e7, deviationsInterval1e7 := testGraphTime(
 		t,
-		10000000,
+		1e7,
 		100,
 		0,
 		100,
@@ -41,7 +41,7 @@ func TestGraphTime(t *testing.T) {
 
 	testGraphTime(
 		t,
-		1000,
+		1e3,
 		0,
 		quantitiesInterval1e3,
 		0,
@@ -51,7 +51,7 @@ func TestGraphTime(t *testing.T) {
 
 	testGraphTime(
 		t,
-		10000000,
+		1e7,
 		0,
 		quantitiesInterval1e7,
 		0,
@@ -186,27 +186,27 @@ func createTimeDeviationsGraph(
 }
 
 func TestGraphTicker(t *testing.T) {
-	testGraphTicker(t, 100, time.Second, false)
-	testGraphTicker(t, 100, 100*time.Millisecond, false)
-	testGraphTicker(t, 1000, 10*time.Millisecond, false)
-	testGraphTicker(t, 1000, time.Millisecond, false)
-	testGraphTicker(t, 1000, 100*time.Microsecond, false)
-	testGraphTicker(t, 1000, 10*time.Microsecond, false)
-	testGraphTicker(t, 1000, time.Microsecond, false)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, false)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, false)
-	testGraphTicker(t, 1000, time.Nanosecond, false)
+	testGraphTicker(t, 1e2, time.Second, false)
+	testGraphTicker(t, 1e2, 100*time.Millisecond, false)
+	testGraphTicker(t, 1e3, 10*time.Millisecond, false)
+	testGraphTicker(t, 1e3, time.Millisecond, false)
+	testGraphTicker(t, 1e3, 100*time.Microsecond, false)
+	testGraphTicker(t, 1e3, 10*time.Microsecond, false)
+	testGraphTicker(t, 1e3, time.Microsecond, false)
+	testGraphTicker(t, 1e3, 100*time.Nanosecond, false)
+	testGraphTicker(t, 1e3, 10*time.Nanosecond, false)
+	testGraphTicker(t, 1e3, time.Nanosecond, false)
 
-	testGraphTicker(t, 100, time.Second, true)
-	testGraphTicker(t, 100, 100*time.Millisecond, true)
-	testGraphTicker(t, 1000, 10*time.Millisecond, true)
-	testGraphTicker(t, 1000, time.Millisecond, true)
-	testGraphTicker(t, 1000, 100*time.Microsecond, true)
-	testGraphTicker(t, 1000, 10*time.Microsecond, true)
-	testGraphTicker(t, 1000, time.Microsecond, true)
-	testGraphTicker(t, 1000, 100*time.Nanosecond, true)
-	testGraphTicker(t, 1000, 10*time.Nanosecond, true)
-	testGraphTicker(t, 1000, time.Nanosecond, true)
+	testGraphTicker(t, 1e2, time.Second, true)
+	testGraphTicker(t, 1e2, 100*time.Millisecond, true)
+	testGraphTicker(t, 1e3, 10*time.Millisecond, true)
+	testGraphTicker(t, 1e3, time.Millisecond, true)
+	testGraphTicker(t, 1e3, 100*time.Microsecond, true)
+	testGraphTicker(t, 1e3, 10*time.Microsecond, true)
+	testGraphTicker(t, 1e3, time.Microsecond, true)
+	testGraphTicker(t, 1e3, 100*time.Nanosecond, true)
+	testGraphTicker(t, 1e3, 10*time.Nanosecond, true)
+	testGraphTicker(t, 1e3, time.Nanosecond, true)
 }
 
 func testGraphTicker(
@@ -316,219 +316,12 @@ func createTickerDeviationsGraph(
 	)
 }
 
-func TestGraphDiscipline1000(t *testing.T) {
+func TestGraphDiscipline(t *testing.T) {
 	testGraphDiscipline(
 		t,
-		10000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 1},
+		1e7,
+		Rate{Interval: time.Second, Quantity: 1e7},
 		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 1},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000},
-		true,
-	)
-}
-
-func TestGraphDiscipline10000(t *testing.T) {
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 10},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 10},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 100},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 100},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 1000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 1000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 10000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		100000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 10000},
-		true,
-	)
-}
-
-func TestGraphDiscipline100000(t *testing.T) {
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 100},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 100},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 1000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 1000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 10000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 10000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 100000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1000000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 100000},
-		true,
-	)
-}
-
-func TestGraphDiscipline1000000(t *testing.T) {
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 1000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 1 * time.Millisecond, Quantity: 1000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 10000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 100000},
-		true,
-	)
-
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000000},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		10000000,
-		Rate{Interval: 1000 * time.Millisecond, Quantity: 1000000},
-		true,
 	)
 }
 
@@ -589,12 +382,14 @@ func createQuantitiesGraph(
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 
+	expectedDuration := (time.Duration(len(relativeTimes)) * limit.Interval) / time.Duration(limit.Quantity)
+
 	subtitleAddition := fmt.Sprintf(
 		"limit: {quantity: %d, interval: %s}, "+
 			"total duration: {expected:  %s, actual: %s}",
 		limit.Quantity,
 		limit.Interval,
-		time.Duration(len(relativeTimes))*limit.Interval/time.Duration(limit.Quantity),
+		expectedDuration,
 		durations.CalcTotalDuration(relativeTimes),
 	)
 
