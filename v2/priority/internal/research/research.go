@@ -52,10 +52,10 @@ func CalcDataQuantity(
 
 	sortByRelativeTime(measures)
 
-	minRelativeTime := time.Duration(0)
-	maxRelativeTime := measures[len(measures)-1].RelativeTime
+	min := time.Duration(-resolution)
+	max := measures[len(measures)-1].RelativeTime
 
-	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
+	capacity := (max - min) / resolution
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
 
@@ -64,27 +64,31 @@ func CalcDataQuantity(
 			continue
 		}
 
-		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, capacity)
 	}
 
 	measuresEdge := 0
 
-	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
+	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
 		intervalQuantities := make(map[uint]uint)
 
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime > relativeTime {
+			if measure.RelativeTime >= relativeTime {
 				measuresEdge += id
 				break
 			}
 
 			intervalQuantities[measure.Priority]++
+
+			if id == len(measures[measuresEdge:])-1 {
+				measuresEdge += id + 1
+			}
 		}
 
 		for priority, quantity := range intervalQuantities {
 			item := qot.QuantityOverTime{
-				RelativeTime: relativeTime,
 				Quantity:     quantity,
+				RelativeTime: relativeTime - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -96,8 +100,8 @@ func CalcDataQuantity(
 			}
 
 			item := qot.QuantityOverTime{
-				RelativeTime: relativeTime,
 				Quantity:     0,
+				RelativeTime: relativeTime - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -117,10 +121,10 @@ func CalcInProcessing(
 
 	sortByRelativeTime(measures)
 
-	minRelativeTime := time.Duration(0)
-	maxRelativeTime := measures[len(measures)-1].RelativeTime
+	min := time.Duration(-resolution)
+	max := measures[len(measures)-1].RelativeTime
 
-	quantitiesCapacity := (maxRelativeTime - minRelativeTime) / resolution
+	capacity := (max - min) / resolution
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
 
@@ -129,12 +133,12 @@ func CalcInProcessing(
 			continue
 		}
 
-		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, capacity)
 	}
 
 	measuresEdge := 0
 
-	for relativeTime := minRelativeTime; relativeTime <= maxRelativeTime; relativeTime += resolution {
+	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
 		receivedQuantities := make(map[uint]map[uint]uint)
 		completedQuantities := make(map[uint]map[uint]uint)
 
@@ -144,7 +148,7 @@ func CalcInProcessing(
 		}
 
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime > relativeTime {
+			if measure.RelativeTime >= relativeTime {
 				measuresEdge += id
 				break
 			}
@@ -154,6 +158,10 @@ func CalcInProcessing(
 				receivedQuantities[measure.Priority][measure.Data]++
 			case measurer.MeasureKindCompleted:
 				completedQuantities[measure.Priority][measure.Data]++
+			}
+
+			if id == len(measures[measuresEdge:])-1 {
+				measuresEdge += id + 1
 			}
 		}
 
@@ -169,8 +177,8 @@ func CalcInProcessing(
 			}
 
 			item := qot.QuantityOverTime{
-				RelativeTime: relativeTime,
 				Quantity:     quantity,
+				RelativeTime: relativeTime - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -182,8 +190,8 @@ func CalcInProcessing(
 			}
 
 			item := qot.QuantityOverTime{
-				RelativeTime: relativeTime,
 				Quantity:     0,
+				RelativeTime: relativeTime - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -244,8 +252,8 @@ func processLatencies(
 		durations.Sort(latencies[priority])
 	}
 
-	minLatency := time.Duration(0)
-	maxLatency := time.Duration(0)
+	min := time.Duration(-interval)
+	max := time.Duration(0)
 
 	for priority := range latencies {
 		if len(latencies[priority]) == 0 {
@@ -254,12 +262,12 @@ func processLatencies(
 
 		latency := latencies[priority][len(latencies[priority])-1]
 
-		if latency > maxLatency {
-			maxLatency = latency
+		if latency > max {
+			max = latency
 		}
 	}
 
-	quantitiesCapacity := (maxLatency - minLatency) / interval
+	capacity := (max - min) / interval
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
 
@@ -268,29 +276,33 @@ func processLatencies(
 			continue
 		}
 
-		quantities[priority] = make([]qot.QuantityOverTime, 0, quantitiesCapacity)
+		quantities[priority] = make([]qot.QuantityOverTime, 0, capacity)
 	}
 
 	latenciesEdge := make(map[uint]int)
 
-	for intervalLatency := minLatency; intervalLatency <= maxLatency; intervalLatency += interval {
+	for intervalLatency := min + interval; intervalLatency <= max+interval; intervalLatency += interval {
 		intervalQuantities := make(map[uint]uint)
 
 		for priority := range latencies {
 			for id, latency := range latencies[priority][latenciesEdge[priority]:] {
-				if latency > intervalLatency {
+				if latency >= intervalLatency {
 					latenciesEdge[priority] += id
 					break
 				}
 
 				intervalQuantities[priority]++
+
+				if id == len(latencies[priority][latenciesEdge[priority]:])-1 {
+					latenciesEdge[priority] += id + 1
+				}
 			}
 		}
 
 		for priority, quantity := range intervalQuantities {
 			item := qot.QuantityOverTime{
-				RelativeTime: intervalLatency,
 				Quantity:     quantity,
+				RelativeTime: intervalLatency - interval,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -302,8 +314,8 @@ func processLatencies(
 			}
 
 			item := qot.QuantityOverTime{
-				RelativeTime: intervalLatency,
 				Quantity:     0,
+				RelativeTime: intervalLatency - interval,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
