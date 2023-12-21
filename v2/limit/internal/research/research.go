@@ -123,9 +123,9 @@ func CalcSelfDeviations(
 
 func ConvertQuantityOverTimeToBarEcharts(
 	quantities []qot.QuantityOverTime,
-) ([]chartsopts.BarData, []uint) {
+) ([]chartsopts.BarData, []int) {
 	serieses := make([]chartsopts.BarData, 0, len(quantities))
-	xaxis := make([]uint, 0, len(quantities))
+	xaxis := make([]int, 0, len(quantities))
 
 	for id, quantity := range quantities {
 		item := chartsopts.BarData{
@@ -137,7 +137,7 @@ func ConvertQuantityOverTimeToBarEcharts(
 		}
 
 		serieses = append(serieses, item)
-		xaxis = append(xaxis, uint(id))
+		xaxis = append(xaxis, id)
 	}
 
 	return serieses, xaxis

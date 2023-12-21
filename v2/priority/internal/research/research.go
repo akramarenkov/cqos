@@ -316,16 +316,16 @@ func processLatencies(
 func ConvertToLineEcharts(
 	quantities map[uint][]qot.QuantityOverTime,
 	relativeTimeUnit time.Duration,
-) (map[uint][]chartsopts.LineData, []uint) {
+) (map[uint][]chartsopts.LineData, []int) {
 	serieses := make(map[uint][]chartsopts.LineData)
-	xaxis := []uint(nil)
+	xaxis := []int(nil)
 
 	for priority := range quantities {
 		if _, exists := serieses[priority]; !exists {
 			serieses[priority] = make([]chartsopts.LineData, 0, len(quantities[priority]))
 
 			if xaxis == nil {
-				xaxis = make([]uint, 0, len(quantities[priority]))
+				xaxis = make([]int, 0, len(quantities[priority]))
 			}
 		}
 
@@ -338,7 +338,7 @@ func ConvertToLineEcharts(
 			serieses[priority] = append(serieses[priority], item)
 
 			if len(xaxis) < len(quantities[priority]) {
-				xaxis = append(xaxis, uint(quantity.RelativeTime/relativeTimeUnit))
+				xaxis = append(xaxis, int(quantity.RelativeTime/relativeTimeUnit))
 			}
 		}
 	}
@@ -348,16 +348,16 @@ func ConvertToLineEcharts(
 
 func ConvertToBarEcharts(
 	quantities map[uint][]qot.QuantityOverTime,
-) (map[uint][]chartsopts.BarData, []uint) {
+) (map[uint][]chartsopts.BarData, []int) {
 	serieses := make(map[uint][]chartsopts.BarData)
-	xaxis := []uint(nil)
+	xaxis := []int(nil)
 
 	for priority := range quantities {
 		if _, exists := serieses[priority]; !exists {
 			serieses[priority] = make([]chartsopts.BarData, 0, len(quantities[priority]))
 
 			if xaxis == nil {
-				xaxis = make([]uint, 0, len(quantities[priority]))
+				xaxis = make([]int, 0, len(quantities[priority]))
 			}
 		}
 
@@ -373,7 +373,7 @@ func ConvertToBarEcharts(
 			serieses[priority] = append(serieses[priority], item)
 
 			if len(xaxis) < len(quantities[priority]) {
-				xaxis = append(xaxis, uint(id))
+				xaxis = append(xaxis, id)
 			}
 		}
 	}

@@ -53,7 +53,7 @@ func createLineGraph(
 	subtitle string,
 	fileName string,
 	serieses map[uint][]chartsopts.LineData,
-	abscissa []uint,
+	abscissa []int,
 ) {
 	if len(serieses) == 0 {
 		return
@@ -85,7 +85,7 @@ func createBarGraph(
 	subtitle string,
 	fileName string,
 	serieses map[uint][]chartsopts.BarData,
-	abscissa []uint,
+	abscissa []int,
 ) {
 	if len(serieses) == 0 {
 		return

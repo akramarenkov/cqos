@@ -9,22 +9,22 @@ import (
 )
 
 func TestOptsValidation(t *testing.T) {
-	opts := Opts[uint]{
+	opts := Opts[int]{
 		JoinSize: 10,
 	}
 
 	_, err := New(opts)
 	require.Error(t, err)
 
-	opts = Opts[uint]{
-		Input: make(chan uint),
+	opts = Opts[int]{
+		Input: make(chan int),
 	}
 
 	_, err = New(opts)
 	require.Error(t, err)
 
-	opts = Opts[uint]{
-		Input:    make(chan uint),
+	opts = Opts[int]{
+		Input:    make(chan int),
 		JoinSize: 10,
 		Timeout:  2 * time.Nanosecond,
 	}
@@ -32,8 +32,8 @@ func TestOptsValidation(t *testing.T) {
 	_, err = New(opts)
 	require.Error(t, err)
 
-	opts = Opts[uint]{
-		Input:    make(chan uint),
+	opts = Opts[int]{
+		Input:    make(chan int),
 		JoinSize: 10,
 	}
 
@@ -68,6 +68,7 @@ func testDiscipline(t *testing.T, noCopy bool) {
 	}()
 
 	joins := 0
+
 	outSequence := make([]int, 0, quantity)
 
 	for slice := range discipline.Output() {
@@ -128,6 +129,7 @@ func TestDisciplineTimeout(t *testing.T) {
 	}()
 
 	joins := 0
+
 	outSequence := make([]int, 0, quantity)
 
 	for slice := range discipline.Output() {

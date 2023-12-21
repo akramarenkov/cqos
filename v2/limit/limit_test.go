@@ -10,20 +10,20 @@ import (
 )
 
 func TestOptsValidation(t *testing.T) {
-	opts := Opts[uint]{}
+	opts := Opts[int]{}
 
 	_, err := New(opts)
 	require.Error(t, err)
 
-	opts = Opts[uint]{
-		Input: make(chan uint),
+	opts = Opts[int]{
+		Input: make(chan int),
 	}
 
 	_, err = New(opts)
 	require.Error(t, err)
 
-	opts = Opts[uint]{
-		Input: make(chan uint),
+	opts = Opts[int]{
+		Input: make(chan int),
 		Limit: Rate{Interval: time.Second, Quantity: 1},
 	}
 
@@ -32,7 +32,7 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	quantity := uint(1000)
+	quantity := 1000
 
 	limit := Rate{
 		Interval: time.Second,
@@ -46,7 +46,7 @@ func TestDiscipline(t *testing.T) {
 }
 
 func TestDisciplineAlignedQuantity(t *testing.T) {
-	quantity := uint(1000)
+	quantity := 1000
 
 	limit := Rate{
 		Interval: time.Second,
@@ -60,7 +60,7 @@ func TestDisciplineAlignedQuantity(t *testing.T) {
 }
 
 func TestDisciplineUnalignedQuantity(t *testing.T) {
-	quantity := uint(1500)
+	quantity := 1500
 
 	limit := Rate{
 		Interval: time.Second,
@@ -75,7 +75,7 @@ func TestDisciplineUnalignedQuantity(t *testing.T) {
 
 func testDiscipline(
 	t *testing.T,
-	quantity uint,
+	quantity int,
 	limit Rate,
 	optimize bool,
 	maxRelativeDurationDeviation float64,
@@ -93,9 +93,9 @@ func testDiscipline(
 		1,
 	)
 
-	input := make(chan uint, capacity)
+	input := make(chan int, capacity)
 
-	opts := Opts[uint]{
+	opts := Opts[int]{
 		Input: input,
 		Limit: limit,
 	}
@@ -103,15 +103,15 @@ func testDiscipline(
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	inSequence := make([]uint, 0, quantity)
-	outSequence := make([]uint, 0, quantity)
+	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
 
 	startedAt := time.Now()
 
 	go func() {
 		defer close(input)
 
-		for stage := uint(0); stage < quantity; stage++ {
+		for stage := 0; stage < quantity; stage++ {
 			inSequence = append(inSequence, stage)
 
 			input <- stage
@@ -137,7 +137,7 @@ func testDiscipline(
 }
 
 func calcExpectedDuration(
-	quantity uint,
+	quantity int,
 	limit Rate,
 	relativeDeviation float64,
 ) (time.Duration, float64) {
@@ -147,24 +147,24 @@ func calcExpectedDuration(
 	return duration, deviation
 }
 
-func testUndisciplined(t *testing.T, quantity uint) time.Duration {
+func testUndisciplined(t *testing.T, quantity int) time.Duration {
 	capacity := general.CalcByFactor(
 		int(quantity),
 		defaultCapacityFactor,
 		1,
 	)
 
-	input := make(chan uint, capacity)
+	input := make(chan int, capacity)
 
-	inSequence := make([]uint, 0, quantity)
-	outSequence := make([]uint, 0, quantity)
+	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
 
 	startedAt := time.Now()
 
 	go func() {
 		defer close(input)
 
-		for stage := uint(0); stage < quantity; stage++ {
+		for stage := 0; stage < quantity; stage++ {
 			inSequence = append(inSequence, stage)
 
 			input <- stage
@@ -182,7 +182,7 @@ func testUndisciplined(t *testing.T, quantity uint) time.Duration {
 	return duration
 }
 
-func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool) {
+func benchmarkDiscipline(b *testing.B, quantity int, limit Rate, optimize bool) {
 	if optimize {
 		optimized, err := limit.Optimize()
 		require.NoError(b, err)
@@ -196,9 +196,9 @@ func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool)
 		1,
 	)
 
-	input := make(chan uint, capacity)
+	input := make(chan int, capacity)
 
-	opts := Opts[uint]{
+	opts := Opts[int]{
 		Input: input,
 		Limit: limit,
 	}
@@ -209,7 +209,7 @@ func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool)
 	go func() {
 		defer close(input)
 
-		for stage := uint(0); stage < quantity; stage++ {
+		for stage := 0; stage < quantity; stage++ {
 			input <- stage
 		}
 	}()
@@ -219,7 +219,7 @@ func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	quantity := uint(1e5)
+	quantity := int(1e5)
 
 	limit := Rate{
 		Interval: time.Second,
@@ -230,7 +230,7 @@ func BenchmarkDiscipline(b *testing.B) {
 }
 
 func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := uint(1e6)
+	quantity := int(1e6)
 
 	limit := Rate{
 		Interval: time.Second,
