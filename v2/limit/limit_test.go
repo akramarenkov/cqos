@@ -14,6 +14,13 @@ func TestOptsValidation(t *testing.T) {
 
 	_, err := New(opts)
 	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Input: make(chan uint),
+	}
+
+	_, err = New(opts)
+	require.NoError(t, err)
 }
 
 func TestDiscipline(t *testing.T) {
