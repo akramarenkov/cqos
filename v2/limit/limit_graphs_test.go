@@ -441,8 +441,8 @@ func createSleepDeviationsGraph(
 func TestGraphDiscipline(t *testing.T) {
 	testGraphDiscipline(
 		t,
-		1e7,
-		Rate{Interval: time.Second, Quantity: 1e7},
+		2e6+1,
+		Rate{Interval: time.Second, Quantity: 2e6},
 		false,
 	)
 }

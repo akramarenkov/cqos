@@ -182,7 +182,13 @@ func testUndisciplined(t *testing.T, quantity int) time.Duration {
 	return duration
 }
 
-func benchmarkDiscipline(b *testing.B, quantity int, limit Rate, optimize bool) {
+func benchmarkDiscipline(
+	b *testing.B,
+	quantity int,
+	limit Rate,
+	optimize bool,
+	maxRelativeDurationDeviation float64,
+) {
 	if optimize {
 		optimized, err := limit.Optimize()
 		require.NoError(b, err)
@@ -206,6 +212,8 @@ func benchmarkDiscipline(b *testing.B, quantity int, limit Rate, optimize bool) 
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
+	startedAt := time.Now()
+
 	go func() {
 		defer close(input)
 
@@ -216,26 +224,36 @@ func benchmarkDiscipline(b *testing.B, quantity int, limit Rate, optimize bool) 
 
 	for range discipline.Output() { // nolint:revive
 	}
+
+	duration := time.Since(startedAt)
+
+	expectedDuration, acceptableDeviation := calcExpectedDuration(
+		quantity,
+		limit,
+		maxRelativeDurationDeviation,
+	)
+
+	require.InDelta(b, expectedDuration, duration, acceptableDeviation)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	quantity := int(1e5)
+	quantity := int(1e7)
 
 	limit := Rate{
 		Interval: time.Second,
 		Quantity: uint64(quantity),
 	}
 
-	benchmarkDiscipline(b, quantity, limit, false)
+	benchmarkDiscipline(b, quantity, limit, false, 0.1)
 }
 
 func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := int(1e6)
+	quantity := int(9e6)
 
 	limit := Rate{
 		Interval: time.Second,
 		Quantity: uint64(quantity),
 	}
 
-	benchmarkDiscipline(b, quantity, limit, true)
+	benchmarkDiscipline(b, quantity, limit, true, 0.1)
 }
