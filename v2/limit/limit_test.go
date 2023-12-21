@@ -20,18 +20,26 @@ func TestOptsValidation(t *testing.T) {
 	}
 
 	_, err = New(opts)
+	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Input: make(chan uint),
+		Limit: Rate{Interval: time.Second, Quantity: 1},
+	}
+
+	_, err = New(opts)
 	require.NoError(t, err)
 }
 
 func TestDiscipline(t *testing.T) {
-	quantity := uint(5003)
+	quantity := uint(1000)
 
 	limit := Rate{
 		Interval: time.Second,
 		Quantity: 1000,
 	}
 
-	disciplined := testDiscipline(t, quantity, limit, true)
+	disciplined := testDiscipline(t, quantity, limit, true, 0.1)
 	undisciplined := testUndisciplined(t, quantity)
 
 	require.Less(t, undisciplined, disciplined)
@@ -45,27 +53,33 @@ func TestDisciplineAlignedQuantity(t *testing.T) {
 		Quantity: uint64(quantity),
 	}
 
-	disciplined := testDiscipline(t, quantity, limit, false)
+	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
 	undisciplined := testUndisciplined(t, quantity)
 
 	require.Less(t, undisciplined, disciplined)
 }
 
 func TestDisciplineUnalignedQuantity(t *testing.T) {
-	quantity := uint(1001)
+	quantity := uint(1500)
 
 	limit := Rate{
 		Interval: time.Second,
 		Quantity: 1000,
 	}
 
-	disciplined := testDiscipline(t, quantity, limit, false)
+	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
 	undisciplined := testUndisciplined(t, quantity)
 
 	require.Less(t, undisciplined, disciplined)
 }
 
-func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time.Duration {
+func testDiscipline(
+	t *testing.T,
+	quantity uint,
+	limit Rate,
+	optimize bool,
+	maxRelativeDurationDeviation float64,
+) time.Duration {
 	if optimize {
 		optimized, err := limit.Optimize()
 		require.NoError(t, err)
@@ -73,9 +87,13 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time
 		limit = optimized
 	}
 
-	expectedDuration, expectedDeviation := calcExpectedDuration(quantity, limit, 0.1)
+	capacity := general.CalcByFactor(
+		int(quantity),
+		defaultCapacityFactor,
+		1,
+	)
 
-	input := make(chan uint, int(float64(quantity)*defaultCapacityFactor))
+	input := make(chan uint, capacity)
 
 	opts := Opts[uint]{
 		Input: input,
@@ -106,8 +124,14 @@ func testDiscipline(t *testing.T, quantity uint, limit Rate, optimize bool) time
 
 	duration := time.Since(startedAt)
 
+	expectedDuration, acceptableDeviation := calcExpectedDuration(
+		quantity,
+		limit,
+		maxRelativeDurationDeviation,
+	)
+
 	require.Equal(t, inSequence, outSequence)
-	require.InDelta(t, expectedDuration, duration, expectedDeviation)
+	require.InDelta(t, expectedDuration, duration, acceptableDeviation)
 
 	return duration
 }
@@ -117,20 +141,20 @@ func calcExpectedDuration(
 	limit Rate,
 	relativeDeviation float64,
 ) (time.Duration, float64) {
-	ticksAmount := uint64(quantity) / limit.Quantity
-
-	if ticksAmount*limit.Quantity < uint64(quantity) {
-		ticksAmount++
-	}
-
-	duration := time.Duration(ticksAmount) * limit.Interval
+	duration := (time.Duration(quantity) * limit.Interval) / time.Duration(limit.Quantity)
 	deviation := relativeDeviation * float64(duration)
 
 	return duration, deviation
 }
 
 func testUndisciplined(t *testing.T, quantity uint) time.Duration {
-	input := make(chan uint)
+	capacity := general.CalcByFactor(
+		int(quantity),
+		defaultCapacityFactor,
+		1,
+	)
+
+	input := make(chan uint, capacity)
 
 	inSequence := make([]uint, 0, quantity)
 	outSequence := make([]uint, 0, quantity)
@@ -195,7 +219,7 @@ func benchmarkDiscipline(b *testing.B, quantity uint, limit Rate, optimize bool)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	quantity := uint(100000)
+	quantity := uint(1e5)
 
 	limit := Rate{
 		Interval: time.Second,
@@ -206,7 +230,7 @@ func BenchmarkDiscipline(b *testing.B) {
 }
 
 func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := uint(1000000)
+	quantity := uint(1e6)
 
 	limit := Rate{
 		Interval: time.Second,
