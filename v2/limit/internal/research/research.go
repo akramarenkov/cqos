@@ -116,7 +116,11 @@ func CalcSelfDeviations(
 
 	avg /= time.Duration(len(deviations))
 
-	quantities, finalInterval := CalcIntervalQuantities(deviations, intervalsQuantity, interval)
+	quantities, finalInterval := CalcIntervalQuantities(
+		deviations,
+		intervalsQuantity,
+		interval,
+	)
 
 	return quantities, finalInterval, min, max, avg
 }
@@ -217,6 +221,68 @@ func ConvertRelativeDeviationsToBarEcharts(
 		}
 
 		serieses = append(serieses, item)
+	}
+
+	return serieses, xaxis
+}
+
+func ConvertDurationsToBarEcharts(
+	durations []time.Duration,
+) ([]chartsopts.BarData, []int) {
+	serieses := make([]chartsopts.BarData, 0, len(durations))
+	xaxis := make([]int, 0, len(durations))
+
+	for id, duration := range durations {
+		item := chartsopts.BarData{
+			Name: duration.String(),
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+			Value: duration,
+		}
+
+		serieses = append(serieses, item)
+		xaxis = append(xaxis, id+1)
+	}
+
+	return serieses, xaxis
+}
+
+func CalcExtrapolatedDurationDeviations(durations []time.Duration) ([]int, time.Duration) {
+	if len(durations) == 0 {
+		return nil, 0
+	}
+
+	expected := durations[len(durations)-1]
+
+	deviations := make([]int, 0, len(durations))
+
+	for _, duration := range durations {
+		deviation := ((duration - expected) * consts.OneHundredPercent) / expected
+
+		deviations = append(deviations, int(deviation))
+	}
+
+	return deviations, expected
+}
+
+func ConvertExtrapolatedDurationDeviationsToBarEcharts(
+	deviations []int,
+) ([]chartsopts.BarData, []int) {
+	serieses := make([]chartsopts.BarData, 0, len(deviations))
+	xaxis := make([]int, 0, len(deviations))
+
+	for id, deviation := range deviations {
+		item := chartsopts.BarData{
+			Name: strconv.Itoa(deviation) + "%",
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+			Value: deviation,
+		}
+
+		serieses = append(serieses, item)
+		xaxis = append(xaxis, id+1)
 	}
 
 	return serieses, xaxis
