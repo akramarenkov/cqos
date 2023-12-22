@@ -13,6 +13,10 @@ var (
 
 const (
 	defaultCapacityFactor = 0.1
+
+	// the value was chosen based on studies of the results of graphical tests
+	// an attempt to perform a lower delay leads to an increase in it
+	defaultMinimumDelay = 1 * time.Millisecond
 )
 
 // Options of the created discipline
@@ -36,10 +40,7 @@ func (opts Opts[Type]) isValid() error {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	breaker chan struct{}
-
 	output chan Type
-	passer chan struct{}
 }
 
 // Creates and runs discipline
@@ -57,10 +58,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		breaker: make(chan struct{}),
-
 		output: make(chan Type, capacity),
-		passer: make(chan struct{}, opts.Limit.Quantity),
 	}
 
 	go dsc.main()
@@ -77,54 +75,46 @@ func (dsc *Discipline[Type]) Output() <-chan Type {
 
 func (dsc *Discipline[Type]) main() {
 	defer close(dsc.output)
-	defer close(dsc.passer)
 
 	dsc.loop()
 }
 
 func (dsc *Discipline[Type]) loop() {
-	ticker := time.NewTicker(dsc.opts.Limit.Interval)
-	defer ticker.Stop()
-
-	go dsc.process()
-
-	if stop := dsc.pass(); stop {
-		return
-	}
+	delay := time.Duration(0)
 
 	for {
-		select {
-		case <-dsc.breaker:
+		duration, stop := dsc.process()
+		if stop {
 			return
-		case <-ticker.C:
-			if stop := dsc.pass(); stop {
-				return
-			}
 		}
+
+		remainder := dsc.opts.Limit.Interval - duration
+
+		delay += remainder
+
+		if delay < defaultMinimumDelay {
+			continue
+		}
+
+		time.Sleep(delay)
+
+		delay = 0
 	}
 }
 
-func (dsc *Discipline[Type]) pass() bool {
+func (dsc *Discipline[Type]) process() (time.Duration, bool) {
+	startedAt := time.Now()
+
 	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
-		select {
-		case <-dsc.breaker:
-			return true
-		case dsc.passer <- struct{}{}:
+		item, opened := <-dsc.opts.Input
+		if !opened {
+			return 0, true
 		}
+
+		dsc.send(item)
 	}
 
-	return false
-}
-
-func (dsc *Discipline[Type]) process() {
-	defer close(dsc.breaker)
-
-	for item := range dsc.opts.Input {
-		for range dsc.passer {
-			dsc.send(item)
-			break
-		}
-	}
+	return time.Since(startedAt), false
 }
 
 func (dsc *Discipline[Type]) send(item Type) {

@@ -237,7 +237,7 @@ func benchmarkDiscipline(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	quantity := int(1e7)
+	quantity := int(11e6)
 
 	limit := Rate{
 		Interval: time.Second,
