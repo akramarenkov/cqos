@@ -16,8 +16,8 @@ var (
 )
 
 const (
-	// the value was chosen based on studies of the results of graphical tests
-	defaultMinimumInterval = 1 * time.Millisecond
+	// the value was chosen based on studies of the graphical tests results and benchmarks
+	defaultOptimizeMinimumInterval = 10 * time.Millisecond
 )
 
 // Quantity per Interval
@@ -43,7 +43,7 @@ func (rate Rate) Flatten() (Rate, error) {
 }
 
 func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(defaultMinimumInterval)
+	return rate.recalc(defaultOptimizeMinimumInterval)
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {

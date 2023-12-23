@@ -14,8 +14,7 @@ var (
 const (
 	defaultCapacityFactor = 0.1
 
-	// the value was chosen based on studies of the results of graphical tests
-	// an attempt to perform a lower delay leads to an increase in it
+	// the values was chosen based on studies of the graphical tests results and benchmarks
 	defaultMinimumDelay    = 1 * time.Millisecond
 	defaultMinimumDuration = 50 * time.Microsecond
 )
