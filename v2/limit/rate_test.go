@@ -128,7 +128,14 @@ func TestOptimize(t *testing.T) {
 
 	optimized, err = regularLessMinimum.Optimize()
 	require.NoError(t, err)
-	require.Equal(t, Rate{Interval: 1 * time.Millisecond, Quantity: 10}, optimized)
+	require.Equal(
+		t,
+		Rate{
+			Interval: defaultOptimizeMinimumInterval,
+			Quantity: 100,
+		},
+		optimized,
+	)
 
 	_, err = zeroInterval.Optimize()
 	require.Error(t, err)
