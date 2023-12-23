@@ -77,14 +77,14 @@ func testDiscipline(
 	t *testing.T,
 	quantity int,
 	limit Rate,
-	optimize bool,
+	flatten bool,
 	maxRelativeDurationDeviation float64,
 ) time.Duration {
-	if optimize {
-		optimized, err := limit.Optimize()
+	if flatten {
+		flattened, err := limit.Flatten()
 		require.NoError(t, err)
 
-		limit = optimized
+		limit = flattened
 	}
 
 	capacity := general.CalcByFactor(
@@ -186,14 +186,14 @@ func benchmarkDiscipline(
 	b *testing.B,
 	quantity int,
 	limit Rate,
-	optimize bool,
+	flatten bool,
 	maxRelativeDurationDeviation float64,
 ) {
-	if optimize {
-		optimized, err := limit.Optimize()
+	if flatten {
+		flattened, err := limit.Flatten()
 		require.NoError(b, err)
 
-		limit = optimized
+		limit = flattened
 	}
 
 	capacity := general.CalcByFactor(
@@ -247,7 +247,7 @@ func BenchmarkDiscipline(b *testing.B) {
 	benchmarkDiscipline(b, quantity, limit, false, 0.1)
 }
 
-func BenchmarkDisciplineOptimize(b *testing.B) {
+func BenchmarkDisciplineFlatten(b *testing.B) {
 	quantity := int(9e6)
 
 	limit := Rate{
