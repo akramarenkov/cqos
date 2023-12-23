@@ -32,7 +32,21 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	quantity := 1000
+	quantity := 10000
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: 1000,
+	}
+
+	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
+	undisciplined := testUndisciplined(t, quantity)
+
+	require.Less(t, undisciplined, disciplined)
+}
+
+func TestDisciplineOptimize(t *testing.T) {
+	quantity := 10000
 
 	limit := Rate{
 		Interval: time.Second,
@@ -40,34 +54,6 @@ func TestDiscipline(t *testing.T) {
 	}
 
 	disciplined := testDiscipline(t, quantity, limit, true, 0.1)
-	undisciplined := testUndisciplined(t, quantity)
-
-	require.Less(t, undisciplined, disciplined)
-}
-
-func TestDisciplineAlignedQuantity(t *testing.T) {
-	quantity := 1000
-
-	limit := Rate{
-		Interval: time.Second,
-		Quantity: uint64(quantity),
-	}
-
-	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
-	undisciplined := testUndisciplined(t, quantity)
-
-	require.Less(t, undisciplined, disciplined)
-}
-
-func TestDisciplineUnalignedQuantity(t *testing.T) {
-	quantity := 1500
-
-	limit := Rate{
-		Interval: time.Second,
-		Quantity: 1000,
-	}
-
-	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
 	undisciplined := testUndisciplined(t, quantity)
 
 	require.Less(t, undisciplined, disciplined)
