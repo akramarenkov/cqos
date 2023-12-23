@@ -16,7 +16,8 @@ const (
 
 	// the value was chosen based on studies of the results of graphical tests
 	// an attempt to perform a lower delay leads to an increase in it
-	defaultMinimumDelay = 1 * time.Millisecond
+	defaultMinimumDelay    = 1 * time.Millisecond
+	defaultMinimumDuration = 100 * time.Microsecond
 )
 
 // Options of the created discipline
@@ -83,12 +84,12 @@ func (dsc *Discipline[Type]) loop() {
 	delay := time.Duration(0)
 
 	for {
-		duration, stop := dsc.process()
+		duration, factor, stop := dsc.process()
 		if stop {
 			return
 		}
 
-		remainder := dsc.opts.Limit.Interval - duration
+		remainder := factor*dsc.opts.Limit.Interval - duration
 
 		delay += remainder
 
@@ -102,19 +103,38 @@ func (dsc *Discipline[Type]) loop() {
 	}
 }
 
-func (dsc *Discipline[Type]) process() (time.Duration, bool) {
+func (dsc *Discipline[Type]) process() (time.Duration, time.Duration, bool) {
 	startedAt := time.Now()
 
+	//time.Duration is used to shorten the type conversion
+	factor := time.Duration(0)
+
+	for {
+		if stop := dsc.one(); stop {
+			return 0, 0, true
+		}
+
+		duration := time.Since(startedAt)
+
+		factor++
+
+		if duration >= defaultMinimumDuration {
+			return time.Since(startedAt), factor, false
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) one() bool {
 	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
 		item, opened := <-dsc.opts.Input
 		if !opened {
-			return 0, true
+			return true
 		}
 
 		dsc.send(item)
 	}
 
-	return time.Since(startedAt), false
+	return false
 }
 
 func (dsc *Discipline[Type]) send(item Type) {
