@@ -17,7 +17,7 @@ const (
 	// the value was chosen based on studies of the results of graphical tests
 	// an attempt to perform a lower delay leads to an increase in it
 	defaultMinimumDelay    = 1 * time.Millisecond
-	defaultMinimumDuration = 100 * time.Microsecond
+	defaultMinimumDuration = 50 * time.Microsecond
 )
 
 // Options of the created discipline
