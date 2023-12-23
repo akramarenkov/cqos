@@ -89,42 +89,50 @@ func (dsc *Discipline[Type]) loop() {
 			return
 		}
 
-		remainder := factor*dsc.opts.Limit.Interval - duration
-
-		delay += remainder
-
-		if delay < defaultMinimumDelay {
-			continue
-		}
-
-		time.Sleep(delay)
-
-		delay = 0
+		delay = dsc.delay(delay, duration, factor)
 	}
+}
+
+func (dsc *Discipline[Type]) delay(
+	delay time.Duration,
+	duration time.Duration,
+	factor time.Duration,
+) time.Duration {
+	remainder := factor*dsc.opts.Limit.Interval - duration
+
+	delay += remainder
+
+	if delay < defaultMinimumDelay {
+		return delay
+	}
+
+	time.Sleep(delay)
+
+	return 0
 }
 
 func (dsc *Discipline[Type]) process() (time.Duration, time.Duration, bool) {
-	startedAt := time.Now()
-
-	//time.Duration is used to shorten the type conversion
+	// time.Duration is used to shorten the type conversion
 	factor := time.Duration(0)
 
+	startedAt := time.Now()
+
 	for {
-		if stop := dsc.one(); stop {
+		if stop := dsc.pass(); stop {
 			return 0, 0, true
 		}
 
-		duration := time.Since(startedAt)
-
 		factor++
 
+		duration := time.Since(startedAt)
+
 		if duration >= defaultMinimumDuration {
-			return time.Since(startedAt), factor, false
+			return duration, factor, false
 		}
 	}
 }
 
-func (dsc *Discipline[Type]) one() bool {
+func (dsc *Discipline[Type]) pass() bool {
 	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
 		item, opened := <-dsc.opts.Input
 		if !opened {
