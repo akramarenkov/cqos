@@ -1,6 +1,8 @@
 package measurer
 
-import "github.com/akramarenkov/cqos/v2/priority/types"
+import (
+	"github.com/akramarenkov/cqos/v2/priority/types"
+)
 
 type Discipline[Type any] interface {
 	Output() <-chan types.Prioritized[Type]

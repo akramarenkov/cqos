@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+
 	"github.com/stretchr/testify/require"
 )
 
