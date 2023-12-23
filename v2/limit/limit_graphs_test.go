@@ -18,7 +18,8 @@ import (
 )
 
 func TestGraphTime(t *testing.T) {
-	// we use the same calc (graph) interval without stress system and under stress system
+	// we use the same calc (graph) interval without stress system and
+	// under stress system
 	quantitiesInterval1e3, deviationsInterval1e3 := testGraphTime(
 		t,
 		1e3,
@@ -262,15 +263,11 @@ func createExtrapolatedDurationGraph(
 	durations []time.Duration,
 	stressSystem bool,
 ) {
-	if len(durations) == 0 {
-		return
-	}
-
 	axisY, axisX := research.ConvertDurationsToBarEcharts(durations)
 
 	subtitleAddition := fmt.Sprintf(
 		"expected (last) duration: %s",
-		durations[len(durations)-1],
+		research.GetExpectedExtrapolatedDuration(durations),
 	)
 
 	createGraph(
@@ -294,7 +291,7 @@ func createExtrapolatedDurationDeviationsGraph(
 ) {
 	deviations, expected := research.CalcExtrapolatedDurationDeviations(durations)
 
-	axisY, axisX := research.ConvertExtrapolatedDurationDeviationsToBarEcharts(deviations)
+	axisY, axisX := research.ConvertDurationDeviationsToBarEcharts(deviations)
 
 	subtitleAddition := fmt.Sprintf(
 		"expected (last) duration: %s",
@@ -571,9 +568,72 @@ func createSleepDeviationsGraph(
 func TestGraphDiscipline(t *testing.T) {
 	testGraphDiscipline(
 		t,
-		2e6+1,
-		Rate{Interval: time.Second, Quantity: 2e6},
+		1e4+1,
+		Rate{Interval: time.Second, Quantity: 1e3},
 		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: time.Millisecond, Quantity: 1},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{Interval: time.Second, Quantity: 1e4},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{Interval: 100 * time.Microsecond, Quantity: 1},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e6+1,
+		Rate{Interval: time.Second, Quantity: 1e5},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e6+1,
+		Rate{Interval: 10 * time.Microsecond, Quantity: 1},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e7+1,
+		Rate{Interval: time.Second, Quantity: 1e6},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		2.6e7+1,
+		Rate{Interval: time.Second, Quantity: 2.6e6},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		3e7+1,
+		Rate{Interval: time.Second, Quantity: 3e6},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		2.6e7+1,
+		Rate{Interval: time.Second, Quantity: 2.6e6},
+		true,
 	)
 }
 
@@ -630,7 +690,7 @@ func createQuantitiesGraph(
 	limit Rate,
 	stressSystem bool,
 ) {
-	quantities, calcInterval := research.CalcIntervalQuantities(relativeTimes, 0, limit.Interval)
+	quantities, calcInterval := research.CalcIntervalQuantities(relativeTimes, 100, 0)
 
 	axisY, axisX := research.ConvertQuantityOverTimeToBarEcharts(quantities)
 

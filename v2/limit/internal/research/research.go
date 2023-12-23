@@ -248,12 +248,10 @@ func ConvertDurationsToBarEcharts(
 	return serieses, xaxis
 }
 
-func CalcExtrapolatedDurationDeviations(durations []time.Duration) ([]int, time.Duration) {
-	if len(durations) == 0 {
-		return nil, 0
-	}
-
-	expected := durations[len(durations)-1]
+func CalcExtrapolatedDurationDeviations(
+	durations []time.Duration,
+) ([]int, time.Duration) {
+	expected := GetExpectedExtrapolatedDuration(durations)
 
 	deviations := make([]int, 0, len(durations))
 
@@ -266,7 +264,15 @@ func CalcExtrapolatedDurationDeviations(durations []time.Duration) ([]int, time.
 	return deviations, expected
 }
 
-func ConvertExtrapolatedDurationDeviationsToBarEcharts(
+func GetExpectedExtrapolatedDuration(durations []time.Duration) time.Duration {
+	if len(durations) == 0 {
+		return 0
+	}
+
+	return durations[len(durations)-1]
+}
+
+func ConvertDurationDeviationsToBarEcharts(
 	deviations []int,
 ) ([]chartsopts.BarData, []int) {
 	serieses := make([]chartsopts.BarData, 0, len(deviations))
