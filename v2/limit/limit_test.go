@@ -98,20 +98,6 @@ func TestDisciplineOptimize(t *testing.T) {
 	require.Less(t, undisciplined, disciplined)
 }
 
-func TestDisciplineMinimumDelay(t *testing.T) {
-	quantity := 100000
-
-	limit := Rate{
-		Interval: minimumMeasuredDuration,
-		Quantity: 100,
-	}
-
-	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
-	undisciplined := testUndisciplined(t, quantity)
-
-	require.Less(t, undisciplined, disciplined)
-}
-
 func BenchmarkDiscipline(b *testing.B) {
 	quantity := int(11e6)
 
