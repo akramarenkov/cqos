@@ -95,9 +95,7 @@ func (dsc *Discipline[Type]) delay(
 	delay time.Duration,
 	duration time.Duration,
 ) time.Duration {
-	remainder := dsc.opts.Limit.Interval - duration
-
-	delay += remainder
+	delay = increaseDelay(delay, dsc.opts.Limit.Interval-duration)
 
 	if delay < defaultMinimumDelay {
 		return delay
@@ -106,6 +104,23 @@ func (dsc *Discipline[Type]) delay(
 	time.Sleep(delay)
 
 	return 0
+}
+
+func increaseDelay(delay time.Duration, delta time.Duration) time.Duration {
+	increased := delay + delta
+
+	switch {
+	case delay > 0 && delta > 0:
+		if increased < delay {
+			return 0
+		}
+	case delay < 0 && delta < 0:
+		if increased > delay {
+			return 0
+		}
+	}
+
+	return increased
 }
 
 func (dsc *Discipline[Type]) process() (time.Duration, bool) {

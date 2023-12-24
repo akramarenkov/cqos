@@ -1,6 +1,7 @@
 package limit
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -31,6 +32,44 @@ func TestOptsValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestIncreaseDelay(t *testing.T) {
+	require.Equal(
+		t,
+		time.Duration(math.MinInt64+1),
+		increaseDelay(time.Duration(math.MinInt64), 1),
+	)
+
+	require.Equal(
+		t,
+		time.Duration(math.MinInt64),
+		increaseDelay(time.Duration(math.MinInt64+1), -1),
+	)
+
+	require.Equal(
+		t,
+		time.Duration(0),
+		increaseDelay(time.Duration(math.MinInt64), -1),
+	)
+
+	require.Equal(
+		t,
+		time.Duration(math.MaxInt64-1),
+		increaseDelay(time.Duration(math.MaxInt64), -1),
+	)
+
+	require.Equal(
+		t,
+		time.Duration(math.MaxInt64),
+		increaseDelay(time.Duration(math.MaxInt64-1), 1),
+	)
+
+	require.Equal(
+		t,
+		time.Duration(0),
+		increaseDelay(time.Duration(math.MaxInt64), 1),
+	)
+}
+
 func TestDiscipline(t *testing.T) {
 	quantity := 10000
 
@@ -54,6 +93,20 @@ func TestDisciplineOptimize(t *testing.T) {
 	}
 
 	disciplined := testDiscipline(t, quantity, limit, true, 0.1)
+	undisciplined := testUndisciplined(t, quantity)
+
+	require.Less(t, undisciplined, disciplined)
+}
+
+func TestDisciplineMinimumDelay(t *testing.T) {
+	quantity := 10000
+
+	limit := Rate{
+		Interval: defaultMinimumDelay,
+		Quantity: 100,
+	}
+
+	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
 	undisciplined := testUndisciplined(t, quantity)
 
 	require.Less(t, undisciplined, disciplined)
