@@ -94,7 +94,7 @@ func (dsc *Discipline[Type]) delay(
 ) time.Duration {
 	delay = increaseDelay(delay, dsc.opts.Limit.Interval-duration)
 
-	if delay < minimumMeasuredDuration {
+	if delay < minimumReliablyMeasurableDuration {
 		return delay
 	}
 

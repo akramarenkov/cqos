@@ -38,7 +38,7 @@ func (rate Rate) Flatten() (Rate, error) {
 }
 
 func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(minimumMeasuredDuration)
+	return rate.recalc(minimumReliablyMeasurableDuration)
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {
