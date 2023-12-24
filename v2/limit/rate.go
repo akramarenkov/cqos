@@ -15,11 +15,6 @@ var (
 	ErrZeroQuantity            = errors.New("quantity is zero")
 )
 
-const (
-	// the value was chosen based on studies of the graphical tests results and benchmarks
-	defaultOptimizeMinimumInterval = 10 * time.Millisecond
-)
-
 // Quantity per Interval
 type Rate struct {
 	Interval time.Duration
@@ -43,7 +38,7 @@ func (rate Rate) Flatten() (Rate, error) {
 }
 
 func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(defaultOptimizeMinimumInterval)
+	return rate.recalc(minimumMeasuredDuration)
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {

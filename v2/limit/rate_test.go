@@ -131,7 +131,7 @@ func TestOptimize(t *testing.T) {
 	require.Equal(
 		t,
 		Rate{
-			Interval: defaultOptimizeMinimumInterval,
+			Interval: minimumMeasuredDuration,
 			Quantity: 100,
 		},
 		optimized,

@@ -13,9 +13,6 @@ var (
 
 const (
 	defaultCapacityFactor = 0.1
-
-	// the values was chosen based on studies of the graphical tests results and benchmarks
-	defaultMinimumDelay = 1 * time.Millisecond
 )
 
 // Options of the created discipline
@@ -97,7 +94,7 @@ func (dsc *Discipline[Type]) delay(
 ) time.Duration {
 	delay = increaseDelay(delay, dsc.opts.Limit.Interval-duration)
 
-	if delay < defaultMinimumDelay {
+	if delay < minimumMeasuredDuration {
 		return delay
 	}
 

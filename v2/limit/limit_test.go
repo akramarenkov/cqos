@@ -99,10 +99,10 @@ func TestDisciplineOptimize(t *testing.T) {
 }
 
 func TestDisciplineMinimumDelay(t *testing.T) {
-	quantity := 10000
+	quantity := 100000
 
 	limit := Rate{
-		Interval: defaultMinimumDelay,
+		Interval: minimumMeasuredDuration,
 		Quantity: 100,
 	}
 
