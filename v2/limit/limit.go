@@ -15,8 +15,7 @@ const (
 	defaultCapacityFactor = 0.1
 
 	// the values was chosen based on studies of the graphical tests results and benchmarks
-	defaultMinimumDelay    = 1 * time.Millisecond
-	defaultMinimumDuration = 50 * time.Microsecond
+	defaultMinimumDelay = 1 * time.Millisecond
 )
 
 // Options of the created discipline
@@ -83,21 +82,20 @@ func (dsc *Discipline[Type]) loop() {
 	delay := time.Duration(0)
 
 	for {
-		duration, factor, stop := dsc.process()
+		duration, stop := dsc.process()
 		if stop {
 			return
 		}
 
-		delay = dsc.delay(delay, duration, factor)
+		delay = dsc.delay(delay, duration)
 	}
 }
 
 func (dsc *Discipline[Type]) delay(
 	delay time.Duration,
 	duration time.Duration,
-	factor time.Duration,
 ) time.Duration {
-	remainder := factor*dsc.opts.Limit.Interval - duration
+	remainder := dsc.opts.Limit.Interval - duration
 
 	delay += remainder
 
@@ -110,25 +108,14 @@ func (dsc *Discipline[Type]) delay(
 	return 0
 }
 
-func (dsc *Discipline[Type]) process() (time.Duration, time.Duration, bool) {
-	// time.Duration is used to shorten the type conversion
-	factor := time.Duration(0)
-
+func (dsc *Discipline[Type]) process() (time.Duration, bool) {
 	startedAt := time.Now()
 
-	for {
-		if stop := dsc.pass(); stop {
-			return 0, 0, true
-		}
-
-		factor++
-
-		duration := time.Since(startedAt)
-
-		if duration >= defaultMinimumDuration {
-			return duration, factor, false
-		}
+	if stop := dsc.pass(); stop {
+		return 0, true
 	}
+
+	return time.Since(startedAt), false
 }
 
 func (dsc *Discipline[Type]) pass() bool {

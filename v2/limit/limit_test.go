@@ -86,7 +86,7 @@ func testDiscipline(
 	quantity int,
 	limit Rate,
 	optimize bool,
-	maxRelativeDurationDeviation float64,
+	maxRelativeDeviation float64,
 ) time.Duration {
 	if optimize {
 		optimized, err := limit.Optimize()
@@ -135,7 +135,7 @@ func testDiscipline(
 	expectedDuration, acceptableDeviation := calcExpectedDuration(
 		quantity,
 		limit,
-		maxRelativeDurationDeviation,
+		maxRelativeDeviation,
 	)
 
 	require.Equal(t, inSequence, outSequence)
