@@ -1,7 +1,6 @@
 package research
 
 import (
-	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -69,60 +68,6 @@ func CalcIntervalQuantities(
 	}
 
 	return quantities, interval
-}
-
-func CalcSelfDeviations(
-	relativeTimes []time.Duration,
-	intervalsQuantity int,
-	interval time.Duration,
-) ([]qot.QuantityOverTime, time.Duration, time.Duration, time.Duration, time.Duration) {
-	if len(relativeTimes) == 0 {
-		return nil, 0, 0, 0, 0
-	}
-
-	durations.Sort(relativeTimes)
-
-	deviations := make([]time.Duration, 0, len(relativeTimes))
-
-	min := time.Duration(math.MaxInt)
-	max := time.Duration(math.MinInt)
-	avg := time.Duration(0)
-
-	calc := func(next time.Duration, current time.Duration) {
-		deviation := next - current
-
-		if deviation < min {
-			min = deviation
-		}
-
-		if deviation > max {
-			max = deviation
-		}
-
-		avg += deviation
-
-		deviations = append(deviations, deviation)
-	}
-
-	calc(relativeTimes[0], 0)
-
-	for id := range relativeTimes {
-		if id == len(relativeTimes)-1 {
-			break
-		}
-
-		calc(relativeTimes[id+1], relativeTimes[id])
-	}
-
-	avg /= time.Duration(len(deviations))
-
-	quantities, finalInterval := CalcIntervalQuantities(
-		deviations,
-		intervalsQuantity,
-		interval,
-	)
-
-	return quantities, finalInterval, min, max, avg
 }
 
 func ConvertQuantityOverTimeToBarEcharts(
@@ -221,74 +166,6 @@ func ConvertRelativeDeviationsToBarEcharts(
 		}
 
 		serieses = append(serieses, item)
-	}
-
-	return serieses, xaxis
-}
-
-func ConvertDurationsToBarEcharts(
-	durations []time.Duration,
-) ([]chartsopts.BarData, []int) {
-	serieses := make([]chartsopts.BarData, 0, len(durations))
-	xaxis := make([]int, 0, len(durations))
-
-	for id, duration := range durations {
-		item := chartsopts.BarData{
-			Name: duration.String(),
-			Tooltip: &chartsopts.Tooltip{
-				Show: true,
-			},
-			Value: duration,
-		}
-
-		serieses = append(serieses, item)
-		xaxis = append(xaxis, id+1)
-	}
-
-	return serieses, xaxis
-}
-
-func CalcExtrapolatedDurationDeviations(
-	durations []time.Duration,
-) ([]int, time.Duration) {
-	expected := GetExpectedExtrapolatedDuration(durations)
-
-	deviations := make([]int, 0, len(durations))
-
-	for _, duration := range durations {
-		deviation := ((duration - expected) * consts.OneHundredPercent) / expected
-
-		deviations = append(deviations, int(deviation))
-	}
-
-	return deviations, expected
-}
-
-func GetExpectedExtrapolatedDuration(durations []time.Duration) time.Duration {
-	if len(durations) == 0 {
-		return 0
-	}
-
-	return durations[len(durations)-1]
-}
-
-func ConvertDurationDeviationsToBarEcharts(
-	deviations []int,
-) ([]chartsopts.BarData, []int) {
-	serieses := make([]chartsopts.BarData, 0, len(deviations))
-	xaxis := make([]int, 0, len(deviations))
-
-	for id, deviation := range deviations {
-		item := chartsopts.BarData{
-			Name: strconv.Itoa(deviation) + "%",
-			Tooltip: &chartsopts.Tooltip{
-				Show: true,
-			},
-			Value: deviation,
-		}
-
-		serieses = append(serieses, item)
-		xaxis = append(xaxis, id+1)
 	}
 
 	return serieses, xaxis
