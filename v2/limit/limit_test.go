@@ -59,6 +59,28 @@ func TestDisciplineOptimize(t *testing.T) {
 	require.Less(t, undisciplined, disciplined)
 }
 
+func BenchmarkDiscipline(b *testing.B) {
+	quantity := int(11e6)
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: uint64(quantity),
+	}
+
+	benchmarkDiscipline(b, quantity, limit, false, 0.1)
+}
+
+func BenchmarkDisciplineOptimize(b *testing.B) {
+	quantity := int(11e6)
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: uint64(quantity),
+	}
+
+	benchmarkDiscipline(b, quantity, limit, true, 0.1)
+}
+
 func testDiscipline(
 	t *testing.T,
 	quantity int,
@@ -220,26 +242,4 @@ func benchmarkDiscipline(
 	)
 
 	require.InDelta(b, expectedDuration, duration, acceptableDeviation)
-}
-
-func BenchmarkDiscipline(b *testing.B) {
-	quantity := int(11e6)
-
-	limit := Rate{
-		Interval: time.Second,
-		Quantity: uint64(quantity),
-	}
-
-	benchmarkDiscipline(b, quantity, limit, false, 0.1)
-}
-
-func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := int(11e6)
-
-	limit := Rate{
-		Interval: time.Second,
-		Quantity: uint64(quantity),
-	}
-
-	benchmarkDiscipline(b, quantity, limit, true, 0.1)
 }
