@@ -203,7 +203,18 @@ func TestGraphDiscipline(t *testing.T) {
 		Rate{Interval: time.Second, Quantity: 1e3},
 		false,
 	)
-
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: 100 * time.Millisecond, Quantity: 1e2},
+		false,
+	)
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: 10 * time.Millisecond, Quantity: 1e1},
+		false,
+	)
 	testGraphDiscipline(
 		t,
 		1e4+1,
@@ -217,42 +228,30 @@ func TestGraphDiscipline(t *testing.T) {
 		Rate{Interval: time.Second, Quantity: 1e4},
 		false,
 	)
-
 	testGraphDiscipline(
 		t,
 		1e5+1,
 		Rate{Interval: 100 * time.Microsecond, Quantity: 1},
 		false,
 	)
-
 	testGraphDiscipline(
 		t,
 		1e6+1,
 		Rate{Interval: time.Second, Quantity: 1e5},
 		false,
 	)
-
-	testGraphDiscipline(
-		t,
-		1e6+1,
-		Rate{Interval: 10 * time.Microsecond, Quantity: 1},
-		false,
-	)
-
 	testGraphDiscipline(
 		t,
 		1e7+1,
 		Rate{Interval: time.Second, Quantity: 1e6},
 		false,
 	)
-
 	testGraphDiscipline(
 		t,
 		2.6e7+1,
 		Rate{Interval: time.Second, Quantity: 2.6e6},
 		false,
 	)
-
 	testGraphDiscipline(
 		t,
 		3e7+1,
@@ -262,8 +261,63 @@ func TestGraphDiscipline(t *testing.T) {
 
 	testGraphDiscipline(
 		t,
+		1e4+1,
+		Rate{Interval: time.Second, Quantity: 1e3},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: 100 * time.Millisecond, Quantity: 1e2},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: 10 * time.Millisecond, Quantity: 1e1},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{Interval: time.Millisecond, Quantity: 1},
+		true,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{Interval: time.Second, Quantity: 1e4},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{Interval: 100 * time.Microsecond, Quantity: 1},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e6+1,
+		Rate{Interval: time.Second, Quantity: 1e5},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		1e7+1,
+		Rate{Interval: time.Second, Quantity: 1e6},
+		true,
+	)
+	testGraphDiscipline(
+		t,
 		2.6e7+1,
 		Rate{Interval: time.Second, Quantity: 2.6e6},
+		true,
+	)
+	testGraphDiscipline(
+		t,
+		3e7+1,
+		Rate{Interval: time.Second, Quantity: 3e6},
 		true,
 	)
 }
