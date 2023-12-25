@@ -5,7 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
+
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	defaultTestTimeout = (consts.OneHundredPercent *
+		consts.ReliablyMeasurableDuration) / defaultTimeoutInaccuracy
 )
 
 func TestOptsValidation(t *testing.T) {
@@ -39,9 +46,18 @@ func TestOptsValidation(t *testing.T) {
 
 	_, err = New(opts)
 	require.NoError(t, err)
+
+	opts = Opts[int]{
+		Input:    make(chan int),
+		JoinSize: 10,
+		Timeout:  100 * time.Millisecond,
+	}
+
+	_, err = New(opts)
+	require.NoError(t, err)
 }
 
-func testDiscipline(t *testing.T, noCopy bool) {
+func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 	quantity := 105
 
 	input := make(chan int)
@@ -50,6 +66,7 @@ func testDiscipline(t *testing.T, noCopy bool) {
 		Input:    input,
 		JoinSize: 10,
 		NoCopy:   noCopy,
+		Timeout:  timeout,
 	}
 
 	discipline, err := New(opts)
@@ -90,11 +107,15 @@ func testDiscipline(t *testing.T, noCopy bool) {
 }
 
 func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false)
+	testDiscipline(t, false, defaultTestTimeout)
 }
 
 func TestDisciplineNoCopy(t *testing.T) {
-	testDiscipline(t, true)
+	testDiscipline(t, true, defaultTestTimeout)
+}
+
+func TestDisciplineUntimeouted(t *testing.T) {
+	testDiscipline(t, false, 0)
 }
 
 func TestDisciplineTimeout(t *testing.T) {

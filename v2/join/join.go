@@ -5,8 +5,6 @@ package join
 import (
 	"errors"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -15,9 +13,6 @@ var (
 )
 
 const (
-	defaultTimeout = (consts.OneHundredPercent *
-		consts.ReliablyMeasurableDuration) / defaultTimeoutInaccuracy
-
 	defaultTimeoutInaccuracy = 25
 )
 
@@ -58,10 +53,6 @@ func (opts Opts[Type]) isValid() error {
 }
 
 func (opts Opts[Type]) normalize() Opts[Type] {
-	if opts.Timeout == 0 {
-		opts.Timeout = defaultTimeout
-	}
-
 	if opts.TimeoutInaccuracy == 0 {
 		opts.TimeoutInaccuracy = defaultTimeoutInaccuracy
 	}
@@ -73,11 +64,11 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	join    []Type
-	output  chan []Type
-	release chan struct{}
-	sendAt  time.Time
-	ticker  *time.Ticker
+	interruptInterval time.Duration
+	join              []Type
+	output            chan []Type
+	release           chan struct{}
+	sendAt            time.Time
 }
 
 // Creates and runs discipline
@@ -88,7 +79,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	duration, err := calcTickerDuration(opts.Timeout, opts.TimeoutInaccuracy)
+	interval, err := calcInterruptIntervalZeroAllowed(
+		opts.Timeout,
+		opts.TimeoutInaccuracy,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +90,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		join:    make([]Type, 0, opts.JoinSize),
-		output:  make(chan []Type, 1),
-		release: make(chan struct{}),
-		ticker:  time.NewTicker(duration),
+		interruptInterval: interval,
+		join:              make([]Type, 0, opts.JoinSize),
+		output:            make(chan []Type, 1),
+		release:           make(chan struct{}),
 	}
 
 	dsc.resetSendAt()
@@ -126,26 +120,42 @@ func (dsc *Discipline[Type]) Release() {
 func (dsc *Discipline[Type]) main() {
 	defer close(dsc.release)
 	defer close(dsc.output)
-	defer dsc.ticker.Stop()
+
+	if dsc.interruptInterval == 0 {
+		dsc.loopUntimeouted()
+		return
+	}
 
 	dsc.loop()
 }
 
 func (dsc *Discipline[Type]) loop() {
+	defer dsc.send()
+
+	ticker := time.NewTicker(dsc.interruptInterval)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-dsc.ticker.C:
+		case <-ticker.C:
 			if dsc.isTimeouted() {
 				dsc.send()
 			}
 		case item, opened := <-dsc.opts.Input:
 			if !opened {
-				dsc.send()
 				return
 			}
 
 			dsc.process(item)
 		}
+	}
+}
+
+func (dsc *Discipline[Type]) loopUntimeouted() {
+	defer dsc.send()
+
+	for item := range dsc.opts.Input {
+		dsc.process(item)
 	}
 }
 
