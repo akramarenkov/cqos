@@ -28,7 +28,7 @@ func calcTickerDuration(timeout time.Duration, inaccuracy uint) (time.Duration, 
 
 	timeout /= time.Duration(divider)
 
-	if timeout == 0 {
+	if timeout < consts.ReliablyMeasurableDuration {
 		return 0, ErrTimeoutTooSmall
 	}
 

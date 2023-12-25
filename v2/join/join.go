@@ -5,6 +5,8 @@ package join
 import (
 	"errors"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -13,7 +15,9 @@ var (
 )
 
 const (
-	defaultTimeout           = 1 * time.Millisecond
+	defaultTimeout = (consts.OneHundredPercent *
+		consts.ReliablyMeasurableDuration) / defaultTimeoutInaccuracy
+
 	defaultTimeoutInaccuracy = 25
 )
 

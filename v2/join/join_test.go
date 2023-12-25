@@ -26,7 +26,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  2 * time.Nanosecond,
+		Timeout:  10 * time.Millisecond,
 	}
 
 	_, err = New(opts)

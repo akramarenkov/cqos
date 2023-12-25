@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/safe"
 )
 
@@ -38,7 +39,7 @@ func (rate Rate) Flatten() (Rate, error) {
 }
 
 func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(minimumReliablyMeasurableDuration)
+	return rate.recalc(consts.ReliablyMeasurableDuration)
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {
