@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrBadDivider = errors.New("divider produces an incorrect distribution")
+	ErrDividerBad = errors.New("divider produces an incorrect distribution")
 )
 
 func calcDistributionQuantity(distribution map[uint]uint) uint {
@@ -59,7 +59,7 @@ func safeDivide(
 	}
 
 	if after-before != dividend {
-		return ErrBadDivider
+		return ErrDividerBad
 	}
 
 	return nil

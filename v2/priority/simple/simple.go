@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrEmptyHandle = errors.New("handle function was not specified")
+	ErrHandleEmpty = errors.New("handle function was not specified")
 )
 
 // Callback function called in handlers when an item is received
@@ -31,7 +31,7 @@ type Opts[Type any] struct {
 
 func (opts Opts[Type]) isValid() error {
 	if opts.Handle == nil {
-		return ErrEmptyHandle
+		return ErrHandleEmpty
 	}
 
 	return nil

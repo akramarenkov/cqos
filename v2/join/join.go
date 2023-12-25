@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrEmptyInput      = errors.New("input channel was not specified")
-	ErrInvalidJoinSize = errors.New("invalid join size")
+	ErrInputEmpty   = errors.New("input channel was not specified")
+	ErrJoinSizeZero = errors.New("join size is zero")
 )
 
 const (
@@ -42,11 +42,11 @@ type Opts[Type any] struct {
 
 func (opts Opts[Type]) isValid() error {
 	if opts.Input == nil {
-		return ErrEmptyInput
+		return ErrInputEmpty
 	}
 
 	if opts.JoinSize == 0 {
-		return ErrInvalidJoinSize
+		return ErrJoinSizeZero
 	}
 
 	return nil

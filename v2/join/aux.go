@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrInvalidTimeoutInaccuracy = errors.New("invalid timeout inaccuracy")
-	ErrTimeoutTooSmall          = errors.New("timeout value is too small")
+	ErrTimeoutInaccuracyTooBig = errors.New("timeout inaccuracy is too big")
+	ErrTimeoutInaccuracyZero   = errors.New("timeout inaccuracy is zero")
+	ErrTimeoutTooSmall         = errors.New("timeout value is too small")
 )
 
 // Maximum timeout error is calculated as timeout + timeout/divider.
@@ -20,13 +21,13 @@ func calcInterruptInterval(
 	inaccuracy uint,
 ) (time.Duration, error) {
 	if inaccuracy == 0 {
-		return 0, ErrInvalidTimeoutInaccuracy
+		return 0, ErrTimeoutInaccuracyZero
 	}
 
 	divider := consts.OneHundredPercent / inaccuracy
 
 	if divider == 0 {
-		return 0, ErrInvalidTimeoutInaccuracy
+		return 0, ErrTimeoutInaccuracyTooBig
 	}
 
 	timeout /= time.Duration(divider)

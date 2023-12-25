@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	ErrNegativeMinimumInterval = errors.New("minimum interval is negative")
-	ErrZeroConvertedInterval   = errors.New("converted interval is zero")
-	ErrZeroConvertedQuantity   = errors.New("converted quantity is zero")
-	ErrZeroNegativeInterval    = errors.New("interval is zero or negative")
-	ErrZeroQuantity            = errors.New("quantity is zero")
+	ErrConvertedIntervalZero   = errors.New("converted interval is zero")
+	ErrConvertedQuantityZero   = errors.New("converted quantity is zero")
+	ErrIntervalZeroNegative    = errors.New("interval is zero or negative")
+	ErrMinimumIntervalNegative = errors.New("minimum interval is negative")
+	ErrQuantityZero            = errors.New("quantity is zero")
 )
 
 // Quantity per Interval
@@ -24,11 +24,11 @@ type Rate struct {
 
 func (rate Rate) IsValid() error {
 	if rate.Interval <= 0 {
-		return ErrZeroNegativeInterval
+		return ErrIntervalZeroNegative
 	}
 
 	if rate.Quantity == 0 {
-		return ErrZeroQuantity
+		return ErrQuantityZero
 	}
 
 	return nil
@@ -44,15 +44,15 @@ func (rate Rate) Optimize() (Rate, error) {
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {
 	if rate.Interval <= 0 {
-		return Rate{}, ErrZeroNegativeInterval
+		return Rate{}, ErrIntervalZeroNegative
 	}
 
 	if rate.Quantity == 0 {
-		return Rate{}, ErrZeroQuantity
+		return Rate{}, ErrQuantityZero
 	}
 
 	if min < 0 {
-		return Rate{}, ErrNegativeMinimumInterval
+		return Rate{}, ErrMinimumIntervalNegative
 	}
 
 	divider, err := safe.UnsignedToSigned[uint64, time.Duration](rate.Quantity)
@@ -65,7 +65,7 @@ func (rate Rate) recalc(min time.Duration) (Rate, error) {
 
 	if interval <= min {
 		if min == 0 {
-			return Rate{}, ErrZeroConvertedInterval
+			return Rate{}, ErrConvertedIntervalZero
 		}
 
 		interval = min

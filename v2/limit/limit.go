@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrEmptyInput = errors.New("input channel was not specified")
+	ErrInputEmpty = errors.New("input channel was not specified")
 )
 
 const (
@@ -27,7 +27,7 @@ type Opts[Type any] struct {
 
 func (opts Opts[Type]) isValid() error {
 	if opts.Input == nil {
-		return ErrEmptyInput
+		return ErrInputEmpty
 	}
 
 	return opts.Limit.IsValid()

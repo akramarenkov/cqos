@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	ErrEmptyDivider             = errors.New("priorities divider was not specified")
-	ErrEmptyInput               = errors.New("input channels was not specified")
-	ErrTooSmallHandlersQuantity = errors.New("handlers quantity is too small")
-	ErrZeroHandlersQuantity     = errors.New("handlers quantity is zero")
+	ErrDividerEmpty             = errors.New("priorities divider was not specified")
+	ErrHandlersQuantityTooSmall = errors.New("handlers quantity is too small")
+	ErrHandlersQuantityZero     = errors.New("handlers quantity is zero")
+	ErrInputEmpty               = errors.New("input channels was not specified")
 )
 
 const (
@@ -71,15 +71,15 @@ type Discipline[Type any] struct {
 
 func (opts Opts[Type]) isValid() error {
 	if opts.Divider == nil {
-		return ErrEmptyDivider
+		return ErrDividerEmpty
 	}
 
 	if opts.HandlersQuantity == 0 {
-		return ErrZeroHandlersQuantity
+		return ErrHandlersQuantityZero
 	}
 
 	if len(opts.Inputs) == 0 {
-		return ErrEmptyInput
+		return ErrInputEmpty
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func prepare[Type any](opts Opts[Type]) (
 	}
 
 	if !common.IsDistributionFilled(strategic) {
-		return nil, nil, nil, ErrTooSmallHandlersQuantity
+		return nil, nil, nil, ErrHandlersQuantityTooSmall
 	}
 
 	return inputs, priorities, strategic, nil
