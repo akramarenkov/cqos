@@ -29,13 +29,12 @@ func ExampleDiscipline() {
 	}
 
 	// Used only in this example for detect that all written data are processed
-	measures := make(chan bool)
+	measures := make(chan string)
 	defer close(measures)
 
 	handle := func(item string) {
 		// Data processing
-		// fmt.Println(item)
-		measures <- true
+		measures <- item
 	}
 
 	// For equaling use divider.Fair divider, for prioritization use
