@@ -31,6 +31,7 @@ func main() {
     opts := join.Opts[int]{
         Input:    input,
         JoinSize: 5,
+        Timeout:  10 * time.Second,
     }
 
     discipline, err := join.New(opts)

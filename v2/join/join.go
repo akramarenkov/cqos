@@ -29,7 +29,8 @@ type Opts[Type any] struct {
 	// In this case, after the accumulated slice is no longer used it is necessary to
 	// inform the discipline about it by calling Release()
 	NoCopy bool
-	// Send timeout of accumulated slice
+	// Send timeout of accumulated slice. A zero or negative value means that no data is
+	// written to the output channel after the time has elapsed
 	Timeout time.Duration
 	// Due to the fact that it is not possible to reliably reset the timer/ticker
 	// (without false ticks), a ticker with a duration several times shorter than
