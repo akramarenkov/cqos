@@ -14,4 +14,4 @@ Library that allows you to control passage of data between Go channels
 
 * **join** - accumulates elements from the input channel into a slice and writes it to the output channel when the size or timeout is reached. See [README](./join/README.md)
 
-[Improved version V2 available](./v2)
+[Improved version 2 is available](./v2)
