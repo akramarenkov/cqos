@@ -11,10 +11,10 @@ linters:
     - govet
     - ineffassign
     - lll
+    - misspell
     - prealloc
     - revive
     - staticcheck
     - typecheck
     - unused
     - wsl
-    - gosec
