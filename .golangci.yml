@@ -1,7 +1,10 @@
 linters:
   enable:
     - bodyclose
+    - decorder
     - errcheck
+    - errname
+    - errorlint
     - gochecknoglobals
     - goconst
     - gocritic
@@ -14,7 +17,12 @@ linters:
     - ineffassign
     - lll
     - misspell
+    - nestif
+    - nilerr
+    - nilnil
     - prealloc
+    - predeclared
+    - reassign
     - revive
     - staticcheck
     - stylecheck
@@ -23,3 +31,4 @@ linters:
     - unconvert
     - unused
     - wsl
+    - zerologlint
