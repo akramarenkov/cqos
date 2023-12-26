@@ -418,7 +418,7 @@ func (dsc *Discipline[Type]) calcTactic() (bool, error) {
 func (dsc *Discipline[Type]) calcVacants() uint {
 	busy := calcDistributionQuantity(dsc.actual)
 
-	//we will not get an overflow because the correspondence of the quantities is
+	// we will not get an overflow because the correspondence of the quantities is
 	// checked at all stages of distribution
 	return dsc.opts.HandlersQuantity - busy
 }
