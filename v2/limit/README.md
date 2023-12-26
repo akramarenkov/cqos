@@ -6,6 +6,8 @@ Limits the speed of passing data elements from the input channel to the output c
 
 The speed limit is set by the **Rate** structure, in which the **Quantity** field specifies the number of data elements that must pass over the time interval specified in the **Interval** field
 
+## Peculiarities
+
 As we know, the speed of 1000 data elements per second is, in fact, the same speed as 1 data element per millisecond specified in different units of measurement
 
 However, the units of measurement affect the distribution of data elements written to the output channel over time and the performance of the discipline
@@ -14,7 +16,7 @@ If the speed is specified as 1000 data elements per second, first 1000 data elem
 
 If the speed is specified in the form of 1 data element per millisecond, first 1 data element will be written to the output channel, and then a pause will be made equal to 1 millisecond minus the time spent on writing 1 data element
 
-However, the performance of the discipline if the speed is specified in the form of 1 data element per millisecond will be lower
+However, the performance of the discipline if the speed is specified in the form of 1 data element per millisecond will be lower but the uniformity of the distribution of data elements over time will be higher
 
 Thus, when choosing units of measurement, you can balance between the uniform distribution of data elements over time and performance (the maximum achievable speed)
 
