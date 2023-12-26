@@ -15,25 +15,25 @@ jobs:
           go-version: '1.20'
           cache: false
       - run: | 
-        go test -coverprofile=coverage.out -covermode=atomic ./...
+          go test -coverprofile=coverage.out -covermode=atomic ./...
 
-        for dir in v[0-9]*;
-        do
-          if test ! -d "${dir}";
-          then
-            continue
-          fi
+          for dir in v[0-9]*;
+          do
+            if test ! -d "${dir}";
+            then
+              continue
+            fi
 
-          cd "${dir}"
-          if test "${?}" -ne 0;
-          then
-            continue
-          fi
+            cd "${dir}"
+            if test "${?}" -ne 0;
+            then
+              continue
+            fi
 
-          go test -coverprofile="../coverage-${dir}.out" -covermode=atomic ./...
+            go test -coverprofile="../coverage-${dir}.out" -covermode=atomic ./...
 
-          cd ..
-        done
+            cd ..
+          done
       - uses: codecov/codecov-action@v3
         with:
           files: coverage.out, coverage-*
