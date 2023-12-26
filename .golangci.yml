@@ -5,11 +5,15 @@ linters:
     - errcheck
     - errname
     - errorlint
+    - forbidigo
+    - gocheckcompilerdirectives
     - gochecknoglobals
     - goconst
     - gocritic
     - gocyclo
+    - godox
     - gofmt
+    - goheader
     - gomnd
     - gosec
     - gosimple
@@ -20,15 +24,19 @@ linters:
     - nestif
     - nilerr
     - nilnil
+    - perfsprint
     - prealloc
     - predeclared
     - reassign
     - revive
     - staticcheck
     - stylecheck
+    - tenv
+    - testableexamples
     - testifylint
     - typecheck
     - unconvert
     - unused
+    - wastedassign
     - wsl
     - zerologlint
