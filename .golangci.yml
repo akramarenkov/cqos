@@ -18,3 +18,4 @@ linters:
     - typecheck
     - unused
     - wsl
+    - testifylint

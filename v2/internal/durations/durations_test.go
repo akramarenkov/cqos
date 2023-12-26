@@ -31,14 +31,14 @@ func TestSort(t *testing.T) {
 func TestIsSorted(t *testing.T) {
 	durations := []time.Duration{5, 4, 3, 2, 1, 0}
 
-	require.Equal(t, false, IsSorted(durations))
+	require.False(t, IsSorted(durations))
 
 	Sort(durations)
 
-	require.Equal(t, true, IsSorted(durations))
-	require.Equal(t, true, IsSorted(nil))
-	require.Equal(t, true, IsSorted([]time.Duration{}))
-	require.Equal(t, true, IsSorted([]time.Duration{5}))
+	require.True(t, IsSorted(durations))
+	require.True(t, IsSorted(nil))
+	require.True(t, IsSorted([]time.Duration{}))
+	require.True(t, IsSorted([]time.Duration{5}))
 }
 
 func TestCalcTotalDuration(t *testing.T) {

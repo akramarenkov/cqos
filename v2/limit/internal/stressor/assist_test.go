@@ -11,5 +11,5 @@ func TestGetRandom(t *testing.T) {
 
 	data, err := getRandom(amount)
 	require.NoError(t, err)
-	require.Equal(t, amount, len(data))
+	require.Len(t, data, amount)
 }

@@ -164,7 +164,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
 
 func TestDisciplineRate(t *testing.T) {
@@ -189,7 +189,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
 
 func TestDisciplineFairUnbuffered(t *testing.T) {
@@ -215,7 +215,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
 
 func TestDisciplineRateUnbuffered(t *testing.T) {
@@ -241,7 +241,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	measures := msr.Play(discipline)
 
-	require.Equal(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
 
 func TestDisciplineBadDivider(t *testing.T) {
