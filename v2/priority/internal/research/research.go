@@ -52,7 +52,7 @@ func CalcDataQuantity(
 
 	sortByRelativeTime(measures)
 
-	min := time.Duration(-resolution)
+	min := -resolution
 	max := measures[len(measures)-1].RelativeTime
 
 	capacity := (max - min) / resolution
@@ -121,7 +121,7 @@ func CalcInProcessing(
 
 	sortByRelativeTime(measures)
 
-	min := time.Duration(-resolution)
+	min := -resolution
 	max := measures[len(measures)-1].RelativeTime
 
 	capacity := (max - min) / resolution
@@ -252,7 +252,7 @@ func processLatencies(
 		durations.Sort(latencies[priority])
 	}
 
-	min := time.Duration(-interval)
+	min := -interval
 	max := time.Duration(0)
 
 	for priority := range latencies {

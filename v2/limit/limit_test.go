@@ -135,7 +135,7 @@ func testDiscipline(
 	}
 
 	capacity := general.CalcByFactor(
-		int(quantity),
+		quantity,
 		defaultCapacityFactor,
 		1,
 	)
@@ -196,7 +196,7 @@ func calcExpectedDuration(
 
 func testUndisciplined(t *testing.T, quantity int) time.Duration {
 	capacity := general.CalcByFactor(
-		int(quantity),
+		quantity,
 		defaultCapacityFactor,
 		1,
 	)
@@ -244,7 +244,7 @@ func benchmarkDiscipline(
 	}
 
 	capacity := general.CalcByFactor(
-		int(quantity),
+		quantity,
 		defaultCapacityFactor,
 		1,
 	)
