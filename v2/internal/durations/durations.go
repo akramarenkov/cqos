@@ -1,3 +1,4 @@
+// Internal package used to work with slice of durations
 package durations
 
 import (

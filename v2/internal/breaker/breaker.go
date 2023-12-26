@@ -1,4 +1,4 @@
-// Mostly internal package used to break goroutine and wait it completion
+// Internal package used to break goroutine and wait it completion
 package breaker
 
 import "sync"

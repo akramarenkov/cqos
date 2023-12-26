@@ -1,4 +1,6 @@
-package stress
+// Internal package with implementation of theStressor that was used to load the
+// system and runtime
+package stressor
 
 import (
 	"runtime"
@@ -14,7 +16,7 @@ const (
 	defaultStartedAfter = 10
 )
 
-type Stress struct {
+type Stressor struct {
 	breaker *breaker.Breaker
 	starter *starter.Starter
 
@@ -22,7 +24,7 @@ type Stress struct {
 	data      string
 }
 
-func New(cpuFactor int, dataAmount int) (*Stress, error) {
+func New(cpuFactor int, dataAmount int) (*Stressor, error) {
 	if cpuFactor == 0 {
 		cpuFactor = defaultCPUFactor
 	}
@@ -36,7 +38,7 @@ func New(cpuFactor int, dataAmount int) (*Stress, error) {
 		return nil, err
 	}
 
-	str := &Stress{
+	str := &Stressor{
 		breaker: breaker.New(),
 		starter: starter.New(defaultStartedAfter),
 
@@ -51,17 +53,17 @@ func New(cpuFactor int, dataAmount int) (*Stress, error) {
 	return str, nil
 }
 
-func (str *Stress) Stop() {
+func (str *Stressor) Stop() {
 	str.breaker.Break()
 }
 
-func (str *Stress) main() {
+func (str *Stressor) main() {
 	defer str.breaker.Complete()
 
 	str.loop()
 }
 
-func (str *Stress) loop() {
+func (str *Stressor) loop() {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
@@ -81,7 +83,7 @@ func (str *Stress) loop() {
 	str.starter.Started()
 }
 
-func (str *Stress) runer(
+func (str *Stressor) runer(
 	id int,
 	wg *sync.WaitGroup,
 	input chan string,
@@ -104,7 +106,7 @@ func (str *Stress) runer(
 	}
 }
 
-func (str *Stress) stringer(
+func (str *Stressor) stringer(
 	id int,
 	wg *sync.WaitGroup,
 	input chan []rune,
