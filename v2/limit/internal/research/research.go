@@ -1,4 +1,4 @@
-// Internal package with research fucntions that are used for testing
+// Internal package with research functions that are used for testing
 package research
 
 import (
