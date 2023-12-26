@@ -68,7 +68,7 @@ func main() {
     }
 
     // Used only in this example for detect that all written data are processed
-    measures := make(chan bool)
+    measures := make(chan string)
     defer close(measures)
 
     // For equaling use divider.Fair divider, for prioritization use
@@ -114,8 +114,7 @@ func main() {
 
             for prioritized := range discipline.Output() {
                 // Data processing
-                // fmt.Println(prioritized.Item)
-                measures <- true
+                measures <- prioritized.Item
 
                 // Handler must indicate that current data has been processed and
                 // handler is ready to receive new data
