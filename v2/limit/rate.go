@@ -16,12 +16,17 @@ var (
 	ErrQuantityZero            = errors.New("quantity is zero")
 )
 
-// Quantity per Interval
+// Quantity data elements per time Interval
 type Rate struct {
 	Interval time.Duration
 	Quantity uint64
 }
 
+// Validates field values.
+//
+// Interval cannot be negative or equal to zero.
+//
+// Quantity cannot be equal to zero
 func (rate Rate) IsValid() error {
 	if rate.Interval <= 0 {
 		return ErrIntervalZeroNegative
@@ -34,10 +39,20 @@ func (rate Rate) IsValid() error {
 	return nil
 }
 
+// Recalculates the units of measurement of the Interval so that the Quantity is
+// equal to 1.
+//
+// Maximizes the uniformity of the distribution of data elements over time by
+// reducing the productivity of the discipline
 func (rate Rate) Flatten() (Rate, error) {
 	return rate.recalc(0)
 }
 
+// Recalculates the units of measurement of the interval so that the Quantity is
+// as small as possible but the Interval is not less than the recommended value.
+//
+// Increases the uniformity of the distribution of data elements over time,
+// almost without reducing the productivity of the discipline
 func (rate Rate) Optimize() (Rate, error) {
 	return rate.recalc(consts.ReliablyMeasurableDuration)
 }

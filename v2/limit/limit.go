@@ -1,3 +1,5 @@
+// Discipline that used to limits the speed of passing data elements from the
+// input channel to the output channel
 package limit
 
 import (
