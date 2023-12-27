@@ -1,98 +1,83 @@
 package priority
 
-import "math"
+import (
+	"math"
 
-const (
-	oneHundredPercent = 100
-	referenceFactor   = 1000
+	"github.com/akramarenkov/cqos/internal/consts"
+	"github.com/akramarenkov/cqos/priority/internal/common"
 )
 
-// inefficient implementation, but usually there are not so many priorities for
-// this to be a problem
-func genPriorityCombinations(priorities []uint) [][]uint {
-	combinations := make([][]uint, 0)
+const (
+	referenceFactor = 1000
+)
 
-	for _, priority := range priorities {
-		combinations = append(combinations, []uint{priority})
+func createPriorities(quantity int) []uint {
+	priorities := make([]uint, 0, quantity)
+
+	for id := quantity; id != 0; id-- {
+		priorities = append(priorities, uint(id))
 	}
 
-	traversed := make(map[int][][]uint)
+	return priorities
+}
+
+// If the number of combinations for n priorities is m, then
+// for n+1 priorities the number of combinations is 2m+1
+// accordingly, the increment is m+1
+func calcCombinationsQuantitySlow(priorities []uint) int {
+	quantity := 0
+
+	for length := 0; length < len(priorities); length++ {
+		quantity += quantity + 1
+	}
+
+	return quantity
+}
+
+// It is easy to see that this corresponds to the function 2^n - 1
+func calcCombinationsQuantity(priorities []uint) int {
+	const base = 2
+
+	return int(math.Pow(base, float64(len(priorities)))) - 1
+}
+
+// An inefficient implementation, but simple and usually there are not so many
+// priorities that this would be a problem.
+//
+// Slice of priorities must be sorted similar to how it does common.SortPriorities()
+// if it is necessary that the priorities also get into the divider being sorted
+func genPriorityCombinations(priorities []uint) [][]uint {
+	combinations := make([][]uint, 0, calcCombinationsQuantity(priorities))
 
 	for _, priority := range priorities {
 		for _, combination := range combinations {
-			if isPriorityExists(combination, priority) {
-				continue
-			}
-
-			newed := newCombination(combination, priority)
-
-			if isCombinationExists(traversed[len(newed)], newed) {
-				continue
-			}
-
-			traversed[len(newed)] = append(traversed[len(newed)], newed)
-
-			combinations = append(combinations, newed)
+			combinations = append(combinations, addToCombination(combination, priority))
 		}
+
+		combinations = append(combinations, addToCombination(nil, priority))
 	}
 
 	return combinations
 }
 
-func isPriorityExists(priorities []uint, verifiable uint) bool {
-	for _, priority := range priorities {
-		if priority == verifiable {
-			return true
-		}
-	}
+func addToCombination(combination []uint, priority uint) []uint {
+	created := make([]uint, len(combination)+1)
 
-	return false
+	copy(created, combination)
+
+	created[len(created)-1] = priority
+
+	return created
 }
 
-func newCombination(combination []uint, added uint) []uint {
-	newed := make([]uint, len(combination)+1)
+func createSortedCopy(priorities []uint) []uint {
+	copied := make([]uint, len(priorities))
 
-	copy(newed, combination)
+	copy(copied, priorities)
 
-	newed[len(newed)-1] = added
+	common.SortPriorities(copied)
 
-	sortPriorities(newed)
-
-	return newed
-}
-
-func isCombinationExists(combinations [][]uint, verifiable []uint) bool {
-	for _, combination := range combinations {
-		if isSortedPrioritiesEqual(combination, verifiable) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isSortedPrioritiesEqual(left []uint, right []uint) bool {
-	if len(left) != len(right) {
-		return false
-	}
-
-	for id := range left {
-		if right[id] != left[id] {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isDistributionFilled(distribution map[uint]uint) bool {
-	for _, quantity := range distribution {
-		if quantity == 0 {
-			return false
-		}
-	}
-
-	return true
+	return copied
 }
 
 func isNonFatalConfig(
@@ -103,7 +88,7 @@ func isNonFatalConfig(
 	for _, combination := range combinations {
 		distribution := divider(combination, quantity, nil)
 
-		if !isDistributionFilled(distribution) {
+		if !common.IsDistributionFilled(distribution) {
 			return false
 		}
 	}
@@ -123,6 +108,8 @@ func IsNonFatalConfig(
 	divider Divider,
 	quantity uint,
 ) bool {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
 	return isNonFatalConfig(combinations, divider, quantity)
@@ -135,6 +122,8 @@ func PickUpMinNonFatalQuantity(
 	divider Divider,
 	maxQuantity uint,
 ) uint {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
@@ -153,9 +142,11 @@ func PickUpMaxNonFatalQuantity(
 	divider Divider,
 	maxQuantity uint,
 ) uint {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
-	for quantity := maxQuantity; quantity > 0; quantity-- {
+	for quantity := maxQuantity; quantity != 0; quantity-- {
 		if isNonFatalConfig(combinations, divider, quantity) {
 			return quantity
 		}
@@ -164,12 +155,13 @@ func PickUpMaxNonFatalQuantity(
 	return 0
 }
 
+// diffLimit is specified as a percentage
 func isDistributionSuitable(
 	distribution map[uint]uint,
 	reference map[uint]uint,
 	totalQuantity uint,
 	referenceTotalQuantity uint,
-	limit float64,
+	diffLimit float64,
 ) bool {
 	ratio := float64(referenceTotalQuantity) / float64(totalQuantity)
 
@@ -181,11 +173,11 @@ func isDistributionSuitable(
 			return false
 		}
 
-		diff := 1.0 - ratio*float64(distribution[priority])/float64(referenceQuantity)
+		diff := 1.0 - (ratio*float64(distribution[priority]))/float64(referenceQuantity)
 
-		diff = oneHundredPercent * math.Abs(diff)
+		diff = consts.OneHundredPercent * math.Abs(diff)
 
-		if diff > limit {
+		if diff > diffLimit {
 			return false
 		}
 	}
@@ -198,14 +190,14 @@ func isSuitableConfig(
 	priorities []uint,
 	divider Divider,
 	quantity uint,
-	limit float64,
+	diffLimit float64,
 ) bool {
-	referenceTotalQuantity := referenceFactor * sumPriorities(priorities)
+	referenceTotalQuantity := referenceFactor * common.SumPriorities(priorities)
 
 	for _, combination := range combinations {
 		distribution := divider(combination, quantity, nil)
 
-		if !isDistributionFilled(distribution) {
+		if !common.IsDistributionFilled(distribution) {
 			return false
 		}
 
@@ -216,7 +208,7 @@ func isSuitableConfig(
 			reference,
 			quantity,
 			referenceTotalQuantity,
-			limit,
+			diffLimit,
 		)
 
 		if !suitable {
@@ -232,26 +224,30 @@ func isSuitableConfig(
 // handlers by priority, especially for small quantity of handlers. This function allows
 // you to determine that with the specified combination of priorities, the dividing
 // function and the quantity of handlers, the distribution error does not exceed
-// the limit
+// the limit, specified as a percentage
 func IsSuitableConfig(
 	priorities []uint,
 	divider Divider,
 	quantity uint,
 	limit float64,
 ) bool {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
 	return isSuitableConfig(combinations, priorities, divider, quantity, limit)
 }
 
 // Picks up the minimum quantity of handlers for which the division error does not
-// exceed the limit
+// exceed the limit, specified as a percentage
 func PickUpMinSuitableQuantity(
 	priorities []uint,
 	divider Divider,
 	maxQuantity uint,
 	limit float64,
 ) uint {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
 	for quantity := uint(1); quantity <= maxQuantity; quantity++ {
@@ -264,16 +260,18 @@ func PickUpMinSuitableQuantity(
 }
 
 // Picks up the maximum quantity of handlers for which the division error does not
-// exceed the limit
+// exceed the limit, specified as a percentage
 func PickUpMaxSuitableQuantity(
 	priorities []uint,
 	divider Divider,
 	maxQuantity uint,
 	limit float64,
 ) uint {
+	priorities = createSortedCopy(priorities)
+
 	combinations := genPriorityCombinations(priorities)
 
-	for quantity := maxQuantity; quantity > 0; quantity-- {
+	for quantity := maxQuantity; quantity != 0; quantity-- {
 		if isSuitableConfig(combinations, priorities, divider, quantity, limit) {
 			return quantity
 		}

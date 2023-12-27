@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/cqos/priority/internal/common"
 )
 
 var (
@@ -192,7 +193,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 		dsc.addPriority(channel, priority)
 	}
 
-	sortPriorities(dsc.priorities)
+	common.SortPriorities(dsc.priorities)
 
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
@@ -210,7 +211,7 @@ func (dsc *Discipline[Type]) AddInput(channel <-chan Type, priority uint) {
 func (dsc *Discipline[Type]) addInput(channel <-chan Type, priority uint) {
 	dsc.addPriority(channel, priority)
 
-	sortPriorities(dsc.priorities)
+	common.SortPriorities(dsc.priorities)
 
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }

@@ -1,6 +1,10 @@
 package priority
 
-import "math"
+import (
+	"math"
+
+	"github.com/akramarenkov/cqos/priority/internal/common"
+)
 
 // Distributes quantity of something by priorities. Determines how handlers are
 // distributed among priorities.
@@ -66,7 +70,7 @@ func RateDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 		distribution = make(map[uint]uint, len(priorities))
 	}
 
-	divider := sumPriorities(priorities)
+	divider := common.SumPriorities(priorities)
 	base := float64(dividend) / float64(divider)
 	remainder := dividend
 
