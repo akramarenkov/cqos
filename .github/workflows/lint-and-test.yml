@@ -22,16 +22,9 @@ jobs:
 
           for dir in v[0-9]*;
           do
-            if test ! -d "${dir}";
-            then
-              continue
-            fi
+            test -d "${dir}" || continue
 
-            cd "${dir}"
-            if test "${?}" -ne 0;
-            then
-              continue
-            fi
+            cd "${dir}" || continue
 
             go test -v -race ./...
 
