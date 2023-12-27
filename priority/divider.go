@@ -2,13 +2,15 @@ package priority
 
 import "math"
 
-// Distributes quantity of something by priorities. Determines how handlers are distributed among priorities.
+// Distributes quantity of something by priorities. Determines how handlers are
+// distributed among priorities.
 //
 // Slice of priorities is passed to this function sorted from highest to lowest.
 //
 // Sum of the distributed quantities must equal the original quantity.
 //
-// If distribution is nil then it must be created and returned, otherwise it must be updated and returned.
+// If distribution is nil then it must be created and returned, otherwise it must be
+// updated and returned.
 type Divider func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint
 
 // Distributes quantity evenly among the priorities.
@@ -28,25 +30,21 @@ func FairDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 		distribution = make(map[uint]uint, len(priorities))
 	}
 
-	step := float64(dividend) / float64(len(priorities))
-	part := uint(math.Round(step))
+	divider := uint(len(priorities))
+	base := dividend / divider
+	remainder := dividend - base*divider
 
-	remainder := dividend
-
+	// max value of remainder is len(priorities), so we simply increase distribution by one
 	for _, priority := range priorities {
-		if remainder < part {
-			distribution[priority] += remainder
-			remainder = 0
+		distribution[priority] += base
 
+		if remainder == 0 {
 			continue
 		}
 
-		distribution[priority] += part
-
-		remainder -= part
+		distribution[priority]++
+		remainder--
 	}
-
-	distribution[priorities[0]] += remainder
 
 	return distribution
 }
@@ -68,20 +66,16 @@ func RateDivider(priorities []uint, dividend uint, distribution map[uint]uint) m
 		distribution = make(map[uint]uint, len(priorities))
 	}
 
-	sum := sumPriorities(priorities)
-
-	step := float64(dividend) / float64(sum)
-
+	divider := sumPriorities(priorities)
+	base := float64(dividend) / float64(divider)
 	remainder := dividend
 
 	for _, priority := range priorities {
-		part := uint(math.Round(step * float64(priority)))
+		part := uint(math.Round(base * float64(priority)))
 
 		if remainder < part {
 			distribution[priority] += remainder
-			remainder = 0
-
-			continue
+			return distribution
 		}
 
 		distribution[priority] += part

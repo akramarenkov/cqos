@@ -76,9 +76,8 @@ func TestFairDividerEven(t *testing.T) {
 	distribution = FairDivider(priorities, 5, nil)
 	require.Equal(t, map[uint]uint{4: 2, 3: 1, 2: 1, 1: 1}, distribution)
 
-	// sequence of low priorities is not monotonic due to rounding in highest priorities
 	distribution = FairDivider(priorities, 6, nil)
-	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 0}, distribution)
+	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 1, 1: 1}, distribution)
 
 	distribution = FairDivider(priorities, 7, nil)
 	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 1}, distribution)
@@ -89,9 +88,8 @@ func TestFairDividerEven(t *testing.T) {
 	distribution = FairDivider(priorities, 9, nil)
 	require.Equal(t, map[uint]uint{4: 3, 3: 2, 2: 2, 1: 2}, distribution)
 
-	// sequence of low priorities is not monotonic due to rounding in highest priorities
 	distribution = FairDivider(priorities, 10, nil)
-	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 1}, distribution)
+	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 2, 1: 2}, distribution)
 
 	distribution = FairDivider(priorities, 11, nil)
 	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 2}, distribution)
@@ -184,33 +182,23 @@ func TestFairDividerDiscontinuous(t *testing.T) {
 }
 
 func TestFairDividerError(t *testing.T) {
-	distribution := FairDivider([]uint{6, 5, 4, 3, 2, 1}, 6, nil)
-	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
-
-	distribution = FairDivider([]uint{5, 4, 3, 2, 1}, 6, nil)
-	require.Equal(t, map[uint]uint{5: 2, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
-
 	// Fatal dividing error - values for one or more priorities are zero
 	// They also occurs because of the small value of the dividend
-	distribution = FairDivider([]uint{4, 3, 2, 1}, 6, nil)
-	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 0}, distribution)
+	distribution := FairDivider([]uint{6, 5, 4, 3, 2, 1}, 5, nil)
+	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 0}, distribution)
 
 	// At large values of the dividend values of the distribution are no longer zero
-	distribution = FairDivider([]uint{4, 3, 2, 1}, 12, nil)
-	require.Equal(t, map[uint]uint{4: 3, 3: 3, 2: 3, 1: 3}, distribution)
+	distribution = FairDivider([]uint{6, 5, 4, 3, 2, 1}, 6, nil)
+	require.Equal(t, map[uint]uint{6: 1, 5: 1, 4: 1, 3: 1, 2: 1, 1: 1}, distribution)
 
-	// At large values of the dividend values of the distribution are no longer zero
-	distribution = FairDivider([]uint{4, 3, 2, 1}, 60, nil)
-	require.Equal(t, map[uint]uint{4: 15, 3: 15, 2: 15, 1: 15}, distribution)
-
-	// Non-fatal dividing error - poor proportions
+	// Non-fatal dividing error - poor relative proportions
 	// Occurs because of the small value of the dividend
 	distribution = FairDivider([]uint{4, 3, 2, 1}, 7, nil)
 	require.Equal(t, map[uint]uint{4: 2, 3: 2, 2: 2, 1: 1}, distribution)
 
-	// At larger values of the dividend, the proportions differ not so significantly
+	// At larger values of the dividend, the relative proportions differ not so significantly
 	distribution = FairDivider([]uint{4, 3, 2, 1}, 70, nil)
-	require.Equal(t, map[uint]uint{4: 18, 3: 18, 2: 18, 1: 16}, distribution)
+	require.Equal(t, map[uint]uint{4: 18, 3: 18, 2: 17, 1: 17}, distribution)
 }
 
 func TestRateDivider(t *testing.T) {
