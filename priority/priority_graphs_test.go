@@ -8,13 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/internal/consts"
+
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
 
 func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -165,7 +167,7 @@ func TestDisciplineRateEvenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -316,7 +318,7 @@ func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -467,7 +469,7 @@ func TestDisciplineFairEvenProcessingTime(t *testing.T) {
 }
 
 func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -618,7 +620,7 @@ func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
 }
 
 func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
@@ -742,7 +744,7 @@ func TestUnmanagedEven(t *testing.T) {
 }
 
 func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 

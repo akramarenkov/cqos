@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/internal/consts"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -644,7 +645,7 @@ func TestDisciplineFairFatalDividingError(t *testing.T) {
 }
 
 func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
-	if os.Getenv("CQOS_ENABLE_GRAPHS") == "" {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
