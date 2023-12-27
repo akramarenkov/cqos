@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFairDivider(t *testing.T) {
+func TestFair(t *testing.T) {
 	priorities := []uint{3, 2, 1}
 
 	distribution := make(map[uint]uint)
@@ -72,7 +72,7 @@ func TestFairDivider(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 34, 2: 33, 1: 33}, distribution)
 }
 
-func TestFairDividerEven(t *testing.T) {
+func TestFairEven(t *testing.T) {
 	priorities := []uint{4, 3, 2, 1}
 
 	distribution := make(map[uint]uint)
@@ -132,7 +132,7 @@ func TestFairDividerEven(t *testing.T) {
 	require.Equal(t, map[uint]uint{4: 25, 3: 25, 2: 25, 1: 25}, distribution)
 }
 
-func TestFairDividerSingle(t *testing.T) {
+func TestFairSingle(t *testing.T) {
 	priorities := []uint{3}
 
 	distribution := make(map[uint]uint)
@@ -152,7 +152,7 @@ func TestFairDividerSingle(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 3}, distribution)
 }
 
-func TestFairDividerAdd(t *testing.T) {
+func TestFairAdd(t *testing.T) {
 	priorities := []uint{3, 2, 1}
 
 	distribution := map[uint]uint{3: 0, 1: 0}
@@ -185,7 +185,7 @@ func TestFairDividerAdd(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 8, 2: 17, 1: 25}, distribution)
 }
 
-func TestFairDividerDiscontinuous(t *testing.T) {
+func TestFairDiscontinuous(t *testing.T) {
 	priorities := []uint{3, 1}
 
 	distribution := make(map[uint]uint)
@@ -225,7 +225,7 @@ func TestFairDividerDiscontinuous(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 4, 1: 4}, distribution)
 }
 
-func TestFairDividerError(t *testing.T) {
+func TestFairError(t *testing.T) {
 	// Fatal dividing error - values for one or more priorities are zero
 	// They also occurs because of the small value of the dividend
 	distribution := make(map[uint]uint)
@@ -249,7 +249,7 @@ func TestFairDividerError(t *testing.T) {
 	require.Equal(t, map[uint]uint{4: 18, 3: 18, 2: 17, 1: 17}, distribution)
 }
 
-func TestRateDivider(t *testing.T) {
+func TestRate(t *testing.T) {
 	priorities := []uint{3, 2, 1}
 
 	distribution := make(map[uint]uint)
@@ -317,7 +317,7 @@ func TestRateDivider(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 50, 2: 33, 1: 17}, distribution)
 }
 
-func TestRateDividerEven(t *testing.T) {
+func TestRateEven(t *testing.T) {
 	priorities := []uint{4, 3, 2, 1}
 
 	distribution := make(map[uint]uint)
@@ -378,7 +378,7 @@ func TestRateDividerEven(t *testing.T) {
 	require.Equal(t, map[uint]uint{4: 40, 3: 30, 2: 20, 1: 10}, distribution)
 }
 
-func TestRateDividerSingle(t *testing.T) {
+func TestRateSingle(t *testing.T) {
 	priorities := []uint{3}
 
 	distribution := make(map[uint]uint)
@@ -398,7 +398,7 @@ func TestRateDividerSingle(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 3}, distribution)
 }
 
-func TestRateDividerAdd(t *testing.T) {
+func TestRateAdd(t *testing.T) {
 	priorities := []uint{3, 2, 1}
 
 	distribution := map[uint]uint{3: 0, 1: 0}
@@ -431,7 +431,7 @@ func TestRateDividerAdd(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 12, 2: 20, 1: 18}, distribution)
 }
 
-func TestRateDividerDiscontinuous(t *testing.T) {
+func TestRateDiscontinuous(t *testing.T) {
 	priorities := []uint{3, 1}
 
 	distribution := make(map[uint]uint)
@@ -499,7 +499,7 @@ func TestRateDividerDiscontinuous(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 11, 1: 4}, distribution)
 }
 
-func TestRateDividerError(t *testing.T) {
+func TestRateError(t *testing.T) {
 	distribution := make(map[uint]uint)
 	Rate([]uint{3, 2, 1}, 6, distribution)
 	require.Equal(t, map[uint]uint{3: 3, 2: 2, 1: 1}, distribution)
@@ -532,7 +532,7 @@ func TestRateDividerError(t *testing.T) {
 	require.Equal(t, map[uint]uint{3: 15, 1: 5}, distribution)
 }
 
-func TestRateDividerLifeHack(t *testing.T) {
+func TestRateLifeHack(t *testing.T) {
 	priorities := []uint{70, 20, 10}
 
 	distribution := make(map[uint]uint)
