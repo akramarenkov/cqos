@@ -2,6 +2,8 @@ package priority
 
 import (
 	"sync"
+
+	"github.com/akramarenkov/cqos/breaker"
 )
 
 type unmanagedOpts[Type any] struct {
@@ -12,10 +14,7 @@ type unmanagedOpts[Type any] struct {
 type unmanaged[Type any] struct {
 	opts unmanagedOpts[Type]
 
-	breaker   chan bool
-	completer chan bool
-	stopMutex *sync.Mutex
-	stopped   bool
+	breaker *breaker.Breaker
 }
 
 func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) {
@@ -26,9 +25,7 @@ func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) 
 	nmn := &unmanaged[Type]{
 		opts: opts,
 
-		breaker:   make(chan bool),
-		completer: make(chan bool),
-		stopMutex: &sync.Mutex{},
+		breaker: breaker.New(),
 	}
 
 	go nmn.main()
@@ -37,42 +34,29 @@ func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) 
 }
 
 func (nmn *unmanaged[Type]) Stop() {
-	nmn.stopMutex.Lock()
-	defer nmn.stopMutex.Unlock()
-
-	if nmn.stopped {
-		return
-	}
-
-	nmn.stop()
-
-	nmn.stopped = true
-}
-
-func (nmn *unmanaged[Type]) stop() {
-	close(nmn.breaker)
-	<-nmn.completer
+	nmn.breaker.Break()
 }
 
 func (nmn *unmanaged[Type]) main() {
-	defer close(nmn.completer)
+	defer nmn.breaker.Complete()
 
-	waiter := &sync.WaitGroup{}
-	defer waiter.Wait()
+	wg := &sync.WaitGroup{}
 
 	for priority := range nmn.opts.Inputs {
-		waiter.Add(1)
+		wg.Add(1)
 
-		go nmn.io(waiter, priority)
+		go nmn.io(wg, priority)
 	}
+
+	wg.Wait()
 }
 
-func (nmn *unmanaged[Type]) io(waiter *sync.WaitGroup, priority uint) {
-	defer waiter.Done()
+func (nmn *unmanaged[Type]) io(wg *sync.WaitGroup, priority uint) {
+	defer wg.Done()
 
 	for {
 		select {
-		case <-nmn.breaker:
+		case <-nmn.breaker.Breaked():
 			return
 		case item, opened := <-nmn.opts.Inputs[priority]:
 			if !opened {
@@ -92,7 +76,7 @@ func (nmn *unmanaged[Type]) send(item Type, priority uint) {
 
 	for {
 		select {
-		case <-nmn.breaker:
+		case <-nmn.breaker.Breaked():
 			return
 		case nmn.opts.Output <- prioritized:
 			return
