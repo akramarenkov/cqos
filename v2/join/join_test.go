@@ -57,6 +57,18 @@ func TestOptsValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestDiscipline(t *testing.T) {
+	testDiscipline(t, false, defaultTestTimeout)
+}
+
+func TestDisciplineNoCopy(t *testing.T) {
+	testDiscipline(t, true, defaultTestTimeout)
+}
+
+func TestDisciplineUntimeouted(t *testing.T) {
+	testDiscipline(t, false, 0)
+}
+
 func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 	quantity := 105
 
@@ -72,7 +84,10 @@ func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
+	joins := 0
+
 	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
 
 	go func() {
 		defer close(input)
@@ -83,10 +98,6 @@ func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 			input <- stage
 		}
 	}()
-
-	joins := 0
-
-	outSequence := make([]int, 0, quantity)
 
 	for slice := range discipline.Output() {
 		require.NotEqual(t, 0, slice)
@@ -106,18 +117,6 @@ func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 	require.Equal(t, expectedJoins, joins)
 }
 
-func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false, defaultTestTimeout)
-}
-
-func TestDisciplineNoCopy(t *testing.T) {
-	testDiscipline(t, true, defaultTestTimeout)
-}
-
-func TestDisciplineUntimeouted(t *testing.T) {
-	testDiscipline(t, false, 0)
-}
-
 func TestDisciplineTimeout(t *testing.T) {
 	quantity := 105
 	pauseAt := 52
@@ -133,7 +132,10 @@ func TestDisciplineTimeout(t *testing.T) {
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
+	joins := 0
+
 	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
 
 	go func() {
 		defer close(input)
@@ -148,10 +150,6 @@ func TestDisciplineTimeout(t *testing.T) {
 			input <- stage
 		}
 	}()
-
-	joins := 0
-
-	outSequence := make([]int, 0, quantity)
 
 	for slice := range discipline.Output() {
 		require.NotEqual(t, 0, slice)
@@ -168,7 +166,19 @@ func TestDisciplineTimeout(t *testing.T) {
 	require.Equal(t, expectedJoins, joins)
 }
 
-func benchmarkDiscipline(b *testing.B, noCopy bool) {
+func BenchmarkDiscipline(b *testing.B) {
+	benchmarkDiscipline(b, false, defaultTestTimeout)
+}
+
+func BenchmarkDisciplineReleased(b *testing.B) {
+	benchmarkDiscipline(b, true, defaultTestTimeout)
+}
+
+func BenchmarkDisciplineUntimeouted(b *testing.B) {
+	benchmarkDiscipline(b, false, 0)
+}
+
+func benchmarkDiscipline(b *testing.B, noCopy bool, timeout time.Duration) {
 	quantity := 10000000
 
 	input := make(chan int)
@@ -177,6 +187,7 @@ func benchmarkDiscipline(b *testing.B, noCopy bool) {
 		Input:    input,
 		JoinSize: 100,
 		NoCopy:   noCopy,
+		Timeout:  timeout,
 	}
 
 	discipline, err := New(opts)
@@ -195,12 +206,4 @@ func benchmarkDiscipline(b *testing.B, noCopy bool) {
 			discipline.Release()
 		}
 	}
-}
-
-func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false)
-}
-
-func BenchmarkDisciplineReleased(b *testing.B) {
-	benchmarkDiscipline(b, true)
 }

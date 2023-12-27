@@ -1,5 +1,5 @@
-// Accumulates elements from the input channel into a slice and writes it to the
-// output channel when the size or timeout is reached
+// Discipline that used to accumulates elements from the input channel into a slice and
+// writes it to the output channel when the size or timeout is reached
 package join
 
 import (
@@ -13,12 +13,10 @@ import (
 var (
 	ErrEmptyInput      = errors.New("input channel was not specified")
 	ErrInvalidJoinSize = errors.New("invalid join size")
-	ErrTimeoutTooSmall = errors.New("timeout value is too small")
 )
 
 const (
-	defaultTimeout        = 1 * time.Millisecond
-	defaultTimeoutDivider = 4
+	defaultTimeoutInaccuracy = 25
 )
 
 // Options of the created discipline
@@ -36,8 +34,16 @@ type Opts[Type any] struct {
 	// In this case, after the accumulated slice is used it is necessary to inform
 	// the discipline about it by writing to Released channel
 	Released <-chan struct{}
-	// Send timeout of accumulated slice
+	// Send timeout of accumulated slice. A zero or negative value means that no data is
+	// written to the output channel after the time has elapsed
 	Timeout time.Duration
+	// Due to the fact that it is not possible to reliably reset the timer/ticker
+	// (without false ticks), a ticker with a duration several times shorter than
+	// the timeout is used and to determine the expiration of the timeout,
+	// the current time is compared with the time of the last recording to
+	// the output channel. This method has an inaccuracy that can be set by
+	// this parameter in percents
+	TimeoutInaccuracy uint
 }
 
 func (opts Opts[Type]) isValid() error {
@@ -57,26 +63,26 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 		opts.Ctx = context.Background()
 	}
 
-	if opts.Timeout == 0 {
-		opts.Timeout = defaultTimeout
+	if opts.TimeoutInaccuracy == 0 {
+		opts.TimeoutInaccuracy = defaultTimeoutInaccuracy
 	}
 
 	return opts
 }
 
-// Main discipline
+// Join discipline
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	breaker *breaker.Breaker
 
-	output    chan []Type
-	sendAt    time.Time
-	join      []Type
-	timeouter *time.Ticker
+	interruptInterval time.Duration
+	join              []Type
+	output            chan []Type
+	sendAt            time.Time
 }
 
-// Creates and runs main discipline
+// Creates and runs discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -84,7 +90,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	duration, err := calcTimeouterDuration(opts.Timeout)
+	interval, err := calcInterruptIntervalZeroAllowed(
+		opts.Timeout,
+		opts.TimeoutInaccuracy,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -94,32 +103,21 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		breaker: breaker.New(),
 
-		output:    make(chan []Type, 1),
-		join:      make([]Type, 0, opts.JoinSize),
-		timeouter: time.NewTicker(duration),
+		interruptInterval: interval,
+		join:              make([]Type, 0, opts.JoinSize),
+		output:            make(chan []Type, 1),
 	}
 
-	go dsc.loop()
+	dsc.resetSendAt()
+
+	go dsc.main()
 
 	return dsc, nil
 }
 
-// Maximum timeout error is calculated as timeout + timeout/divider.
+// Returns output channel.
 //
-// Relative timeout error in percent is calculated as 100/divider.
-//
-// Remember that a ticker is 'divider' times more likely to be triggered
-func calcTimeouterDuration(timeout time.Duration) (time.Duration, error) {
-	timeout /= defaultTimeoutDivider
-
-	if timeout == 0 {
-		return 0, ErrTimeoutTooSmall
-	}
-
-	return timeout, nil
-}
-
-// Returns output channel
+// If this channel is closed, it means that the discipline is terminated
 func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
@@ -131,12 +129,23 @@ func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
 }
 
-func (dsc *Discipline[Type]) loop() {
+func (dsc *Discipline[Type]) main() {
 	defer dsc.breaker.Complete()
-	defer dsc.timeouter.Stop()
 	defer close(dsc.output)
 
-	dsc.resetSendAt()
+	if dsc.interruptInterval == 0 {
+		dsc.loopUntimeouted()
+		return
+	}
+
+	dsc.loop()
+}
+
+func (dsc *Discipline[Type]) loop() {
+	defer dsc.send()
+
+	ticker := time.NewTicker(dsc.interruptInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -144,13 +153,31 @@ func (dsc *Discipline[Type]) loop() {
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
-		case <-dsc.timeouter.C:
+		case <-ticker.C:
 			if dsc.isTimeouted() {
 				dsc.send()
 			}
 		case item, opened := <-dsc.opts.Input:
 			if !opened {
-				dsc.send()
+				return
+			}
+
+			dsc.process(item)
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) loopUntimeouted() {
+	defer dsc.send()
+
+	for {
+		select {
+		case <-dsc.breaker.Breaked():
+			return
+		case <-dsc.opts.Ctx.Done():
+			return
+		case item, opened := <-dsc.opts.Input:
+			if !opened {
 				return
 			}
 
@@ -170,6 +197,8 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) send() {
+	defer dsc.resetSendAt()
+
 	join := dsc.prepareJoin()
 
 	if len(join) == 0 {
@@ -195,7 +224,6 @@ func (dsc *Discipline[Type]) send() {
 	}
 
 	dsc.resetJoin()
-	dsc.resetSendAt()
 }
 
 func (dsc *Discipline[Type]) resetSendAt() {
