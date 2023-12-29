@@ -185,7 +185,7 @@ func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
@@ -255,7 +255,7 @@ func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
@@ -325,7 +325,7 @@ func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
@@ -395,7 +395,7 @@ func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
@@ -466,7 +466,7 @@ func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
 		NoFeedback:       true,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
@@ -534,7 +534,7 @@ func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	measurerOpts := measurerOpts{
 		HandlersQuantity: 6 * factor,
 		NoFeedback:       true,
-		UnbufferedInput:  !unbufferedInput,
+		UnbufferedInput:  unbufferedInput,
 	}
 
 	msr := newMeasurer(measurerOpts)
