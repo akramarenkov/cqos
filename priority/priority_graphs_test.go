@@ -865,3 +865,111 @@ func TestUnmanagedUneven(t *testing.T) {
 	testUnmanagedUneven(t, 1, false)
 	testUnmanagedUneven(t, 10, false)
 }
+
+func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
+		t.SkipNow()
+	}
+
+	measurerOpts := measurerOpts{
+		HandlersQuantity: handlersQuantity,
+	}
+
+	measurer := newMeasurer(measurerOpts)
+	defer measurer.Finalize()
+
+	measurer.AddWrite(1, 4000)
+
+	measurer.AddWrite(2, 500)
+	measurer.AddWaitDevastation(2)
+	measurer.AddDelay(2, 2*time.Second)
+	measurer.AddWrite(2, 500)
+	measurer.AddWaitDevastation(2)
+	measurer.AddDelay(2, 4*time.Second)
+	measurer.AddWrite(2, 1000)
+	measurer.AddWaitDevastation(2)
+	measurer.AddDelay(2, 2*time.Second)
+	measurer.AddWrite(2, 2000)
+
+	measurer.AddWrite(3, 500)
+	measurer.AddWaitDevastation(3)
+	measurer.AddDelay(3, 5*time.Second)
+	measurer.AddWrite(3, 4000)
+
+	measurer.AddWrite(4, 500)
+	measurer.AddWaitDevastation(3)
+	measurer.AddDelay(4, 5*time.Second)
+	measurer.AddWrite(4, 4000)
+
+	measurer.SetProcessDelay(1, 10*time.Millisecond)
+	measurer.SetProcessDelay(2, 10*time.Millisecond)
+	measurer.SetProcessDelay(3, 10*time.Millisecond)
+	measurer.SetProcessDelay(4, 10*time.Millisecond)
+
+	disciplineOpts := Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         measurer.GetFeedback(),
+		HandlersQuantity: handlersQuantity,
+		Inputs:           measurer.GetInputs(),
+		Output:           measurer.GetOutput(),
+	}
+
+	discipline, err := New(disciplineOpts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	measures := measurer.Play(discipline)
+
+	received := filterByKind(measures, measureKindReceived)
+
+	dqot, dqotX := convertToLineEcharts(
+		calcDataQuantity(received, 100*time.Millisecond),
+		1*time.Second,
+	)
+
+	dqotChart := charts.NewLine()
+
+	subtitle := fmt.Sprintf(
+		"Fair divider, even time processing, "+
+			"significant dividing error, "+
+			"handlers quantity: %d, buffered: %t, time: %s",
+		handlersQuantity,
+		!measurerOpts.UnbufferedInput,
+		time.Now().Format(time.RFC3339),
+	)
+
+	dqotChart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    "Data retrieval graph",
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	dqotChart.SetXAxis(dqotX).
+		AddSeries("4", dqot[4]).
+		AddSeries("3", dqot[3]).
+		AddSeries("2", dqot[2]).
+		AddSeries("1", dqot[1])
+
+	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" + strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
+
+	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
+	require.NoError(t, err)
+
+	err = dqotChart.Render(dqotFile)
+	require.NoError(t, err)
+}
+
+func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
+	testDisciplineFairEvenProcessingTimeDividingError(t, 6)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 7)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 8)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 9)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 10)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 11)
+	testDisciplineFairEvenProcessingTimeDividingError(t, 12)
+}
