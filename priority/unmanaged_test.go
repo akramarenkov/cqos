@@ -15,6 +15,8 @@ type unmanaged[Type any] struct {
 	opts unmanagedOpts[Type]
 
 	breaker *breaker.Breaker
+
+	err chan error
 }
 
 func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) {
@@ -26,6 +28,8 @@ func newUnmanaged[Type any](opts unmanagedOpts[Type]) (*unmanaged[Type], error) 
 		opts: opts,
 
 		breaker: breaker.New(),
+
+		err: make(chan error, 1),
 	}
 
 	go nmn.main()
@@ -37,7 +41,12 @@ func (nmn *unmanaged[Type]) Stop() {
 	nmn.breaker.Break()
 }
 
+func (nmn *unmanaged[Type]) Err() <-chan error {
+	return nmn.err
+}
+
 func (nmn *unmanaged[Type]) main() {
+	defer close(nmn.err)
 	defer nmn.breaker.Complete()
 
 	wg := &sync.WaitGroup{}

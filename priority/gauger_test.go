@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-const (
-	defaultChannelCapacity      = 100
-	defaultWaitDevastationDelay = 1 * time.Microsecond
-)
-
 type gaugeKind int
 
 const (
@@ -18,21 +13,6 @@ const (
 	gaugeKindProcessed
 	gaugeKindReceived
 )
-
-type actionKind int
-
-const (
-	actionKindDelay actionKind = iota + 1
-	actionKindWaitDevastation
-	actionKindWrite
-	actionKindWriteWithDelay
-)
-
-type action struct {
-	delay    time.Duration
-	kind     actionKind
-	quantity uint
-}
 
 type gauge struct {
 	Data         uint
