@@ -8,657 +8,495 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/internal/consts"
+	"github.com/akramarenkov/cqos/priority/internal/common"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
 
-func testDisciplineRateEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
-		t.SkipNow()
+func addLineSeries(line *charts.Line, serieses map[uint][]chartsopts.LineData) {
+	priorities := make([]uint, 0, len(serieses))
+
+	for priority := range serieses {
+		priorities = append(priorities, priority)
 	}
 
-	handlersQuantity := uint(6) * factor
+	common.SortPriorities(priorities)
 
-	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
-		UnbufferedInput:  !inputBuffered,
+	for _, priority := range priorities {
+		line.AddSeries(strconv.Itoa(int(priority)), serieses[priority])
+	}
+}
+
+func addBarSeries(bar *charts.Bar, serieses map[uint][]chartsopts.BarData) {
+	priorities := make([]uint, 0, len(serieses))
+
+	for priority := range serieses {
+		priorities = append(priorities, priority)
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	common.SortPriorities(priorities)
 
-	measurer.AddWrite(1, 4100*factor)
+	for _, priority := range priorities {
+		bar.AddSeries(strconv.Itoa(int(priority)), serieses[priority])
+	}
+}
 
-	measurer.AddWrite(2, 1500*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 750*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 700*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 3*time.Second)
-	measurer.AddWrite(2, 1200*factor)
-
-	measurer.AddWrite(3, 1000*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 8*time.Second)
-	measurer.AddWrite(3, 3700*factor)
-
-	measurer.SetProcessDelay(1, 10*time.Millisecond)
-	measurer.SetProcessDelay(2, 10*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
-
-	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
-		Feedback:         measurer.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-		Output:           measurer.GetOutput(),
+func createLineGraph(
+	t *testing.T,
+	title string,
+	subtitle string,
+	fileName string,
+	serieses map[uint][]chartsopts.LineData,
+	abscissa []int,
+) {
+	if len(serieses) == 0 {
+		return
 	}
 
-	discipline, err := New(disciplineOpts)
+	chart := charts.NewLine()
+
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    title,
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	addLineSeries(chart.SetXAxis(abscissa), serieses)
+
+	file, err := os.Create(fileName)
 	require.NoError(t, err)
 
-	defer discipline.Stop()
+	err = chart.Render(file)
+	require.NoError(t, err)
+}
 
-	measures := measurer.Play(discipline)
+func createBarGraph(
+	t *testing.T,
+	title string,
+	subtitle string,
+	fileName string,
+	serieses map[uint][]chartsopts.BarData,
+	abscissa []int,
+) {
+	if len(serieses) == 0 {
+		return
+	}
 
+	chart := charts.NewBar()
+
+	chart.SetGlobalOptions(
+		charts.WithTitleOpts(
+			chartsopts.Title{
+				Title:    title,
+				Subtitle: subtitle,
+			},
+		),
+	)
+
+	addBarSeries(chart.SetXAxis(abscissa), serieses)
+
+	file, err := os.Create(fileName)
+	require.NoError(t, err)
+
+	err = chart.Render(file)
+	require.NoError(t, err)
+}
+
+func createGraphs(
+	t *testing.T,
+	subtitleBase string,
+	filePrefix string,
+	handlersQuantity uint,
+	unbufferedInput bool,
+	measures []measure,
+	overTimeResolution time.Duration,
+	overTimeUnit time.Duration,
+	writeToFeedbackInterval time.Duration,
+) {
 	received := filterByKind(measures, measureKindReceived)
 
 	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
+		calcDataQuantity(received, overTimeResolution),
+		overTimeUnit,
 	)
 
 	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
+		calcInProcessing(measures, overTimeResolution),
+		overTimeUnit,
 	)
 
 	wtfl, wtflX := convertToBarEcharts(
-		calcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
+		calcWriteToFeedbackLatency(measures, writeToFeedbackInterval),
 	)
 
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
 	subtitle := fmt.Sprintf(
-		"Rate divider, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
+		subtitleBase+
+			", "+
+			"handlers quantity: %d, "+
+			"buffered: %t, "+
+			"time: %s",
 		handlersQuantity,
-		inputBuffered,
+		!unbufferedInput,
 		time.Now().Format(time.RFC3339),
 	)
 
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
+	baseName := "graph_" + filePrefix + "_" +
+		strconv.Itoa(int(handlersQuantity)) +
+		"_buffered_" +
+		strconv.FormatBool(!unbufferedInput)
+
+	createLineGraph(
+		t,
+		"Data retrieval graph",
+		subtitle,
+		baseName+"_data_retrieval.html",
+		dqot,
+		dqotX,
 	)
 
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
+	createLineGraph(
+		t,
+		"In processing graph",
+		subtitle,
+		baseName+"_in_processing.html",
+		ipot,
+		ipotX,
 	)
 
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
+	createBarGraph(
+		t,
+		"Write to feedback latency",
+		subtitle,
+		baseName+"_write_feedback_latency.html",
+		wtfl,
+		wtflX,
 	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_rate_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
-func TestDisciplineRateEvenProcessingTime(t *testing.T) {
-	testDisciplineRateEvenProcessingTime(t, 1, true)
-	testDisciplineRateEvenProcessingTime(t, 10, true)
-	testDisciplineRateEvenProcessingTime(t, 1, false)
-	testDisciplineRateEvenProcessingTime(t, 10, false)
-}
-
-func testDisciplineRateUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
-		UnbufferedInput:  !inputBuffered,
+		HandlersQuantity: 6 * factor,
+		UnbufferedInput:  !unbufferedInput,
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
 
-	measurer.AddWrite(1, 430*factor)
+	msr.AddWrite(1, 4000*factor)
 
-	measurer.AddWrite(2, 250*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 100*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 150*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 300*factor)
+	msr.AddWrite(2, 500*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 500*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 1000*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 2000*factor)
 
-	measurer.AddWrite(3, 1000*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 8*time.Second)
-	measurer.AddWrite(3, 3500*factor)
+	msr.AddWrite(3, 500*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 5*time.Second)
+	msr.AddWrite(3, 4000*factor)
 
-	measurer.SetProcessDelay(1, 100*time.Millisecond)
-	measurer.SetProcessDelay(2, 50*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
+	msr.SetProcessDelay(1, 10*time.Millisecond)
+	msr.SetProcessDelay(2, 10*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
 
-	disciplineOpts := Opts[uint]{
-		Divider:          RateDivider,
-		Feedback:         measurer.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-		Output:           measurer.GetOutput(),
-	}
-
-	discipline, err := New(disciplineOpts)
-	require.NoError(t, err)
-
-	defer discipline.Stop()
-
-	measures := measurer.Play(discipline)
-
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := convertToBarEcharts(
-		calcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Rate divider, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		inputBuffered,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_rate_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
-}
-
-func TestDisciplineRateUnevenProcessingTime(t *testing.T) {
-	testDisciplineRateUnevenProcessingTime(t, 1, true)
-	testDisciplineRateUnevenProcessingTime(t, 10, true)
-	testDisciplineRateUnevenProcessingTime(t, 1, false)
-	testDisciplineRateUnevenProcessingTime(t, 10, false)
-}
-
-func testDisciplineFairEvenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
-		t.SkipNow()
-	}
-
-	handlersQuantity := uint(6) * factor
-
-	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
-		UnbufferedInput:  !inputBuffered,
-	}
-
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
-
-	measurer.AddWrite(1, 4000*factor)
-
-	measurer.AddWrite(2, 500*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 500*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 1000*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 2000*factor)
-
-	measurer.AddWrite(3, 500*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 5*time.Second)
-	measurer.AddWrite(3, 4000*factor)
-
-	measurer.SetProcessDelay(1, 10*time.Millisecond)
-	measurer.SetProcessDelay(2, 10*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
-
-	disciplineOpts := Opts[uint]{
+	opts := Opts[uint]{
 		Divider:          FairDivider,
-		Feedback:         measurer.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-		Output:           measurer.GetOutput(),
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := New(opts)
 	require.NoError(t, err)
 
 	defer discipline.Stop()
 
-	measures := measurer.Play(discipline)
+	measures := msr.Play(discipline)
 
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	createGraphs(
+		t,
+		"Fair divider, even time processing",
+		"fair_even",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
 		1*time.Second,
+		100*time.Nanosecond,
 	)
-
-	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := convertToBarEcharts(
-		calcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		inputBuffered,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
-func TestDisciplineFairEvenProcessingTime(t *testing.T) {
-	testDisciplineFairEvenProcessingTime(t, 1, true)
-	testDisciplineFairEvenProcessingTime(t, 10, true)
-	testDisciplineFairEvenProcessingTime(t, 1, false)
-	testDisciplineFairEvenProcessingTime(t, 10, false)
+func TestGraphFairEven(t *testing.T) {
+	testGraphFairEven(t, 1, true)
+	testGraphFairEven(t, 10, true)
+	testGraphFairEven(t, 1, false)
+	testGraphFairEven(t, 10, false)
 }
 
-func testDisciplineFairUnevenProcessingTime(t *testing.T, factor uint, inputBuffered bool) {
+func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
-		UnbufferedInput:  !inputBuffered,
+		HandlersQuantity: 6 * factor,
+		UnbufferedInput:  !unbufferedInput,
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
 
-	measurer.AddWrite(1, 450*factor)
+	msr.AddWrite(1, 450*factor)
 
-	measurer.AddWrite(2, 100*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 100*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 200*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 400*factor)
+	msr.AddWrite(2, 100*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 100*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 200*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 400*factor)
 
-	measurer.AddWrite(3, 500*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 6*time.Second)
-	measurer.AddWrite(3, 3000*factor)
+	msr.AddWrite(3, 500*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 6*time.Second)
+	msr.AddWrite(3, 3000*factor)
 
-	measurer.SetProcessDelay(1, 100*time.Millisecond)
-	measurer.SetProcessDelay(2, 50*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
+	msr.SetProcessDelay(1, 100*time.Millisecond)
+	msr.SetProcessDelay(2, 50*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
 
-	disciplineOpts := Opts[uint]{
+	opts := Opts[uint]{
 		Divider:          FairDivider,
-		Feedback:         measurer.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-		Output:           measurer.GetOutput(),
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := New(opts)
 	require.NoError(t, err)
 
 	defer discipline.Stop()
 
-	measures := measurer.Play(discipline)
+	measures := msr.Play(discipline)
 
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	createGraphs(
+		t,
+		"Fair divider, uneven time processing",
+		"fair_uneven",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
 		1*time.Second,
+		100*time.Nanosecond,
 	)
-
-	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	wtfl, wtflX := convertToBarEcharts(
-		calcWriteToFeedbackLatency(measures, 100*time.Nanosecond),
-	)
-
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-	wtflChart := charts.NewBar()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		inputBuffered,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	wtflChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Write to feedback latency",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	wtflChart.SetXAxis(wtflX).
-		AddSeries("3", wtfl[3]).
-		AddSeries("2", wtfl[2]).
-		AddSeries("1", wtfl[1])
-
-	baseName := "graph_fair_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
-
-	wtflFile, err := os.Create(baseName + "_write_feedback_latency.html")
-	require.NoError(t, err)
-
-	err = wtflChart.Render(wtflFile)
-	require.NoError(t, err)
 }
 
-func TestDisciplineFairUnevenProcessingTime(t *testing.T) {
-	testDisciplineFairUnevenProcessingTime(t, 1, true)
-	testDisciplineFairUnevenProcessingTime(t, 10, true)
-	testDisciplineFairUnevenProcessingTime(t, 1, false)
-	testDisciplineFairUnevenProcessingTime(t, 10, false)
+func TestGraphFairUneven(t *testing.T) {
+	testGraphFairUneven(t, 1, true)
+	testGraphFairUneven(t, 10, true)
+	testGraphFairUneven(t, 1, false)
+	testGraphFairUneven(t, 10, false)
 }
 
-func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
+func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
+	measurerOpts := measurerOpts{
+		HandlersQuantity: 6 * factor,
+		UnbufferedInput:  !unbufferedInput,
+	}
+
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
+
+	msr.AddWrite(1, 4100*factor)
+
+	msr.AddWrite(2, 1500*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 750*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 700*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 3*time.Second)
+	msr.AddWrite(2, 1200*factor)
+
+	msr.AddWrite(3, 1000*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 8*time.Second)
+	msr.AddWrite(3, 3700*factor)
+
+	msr.SetProcessDelay(1, 10*time.Millisecond)
+	msr.SetProcessDelay(2, 10*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
+
+	opts := Opts[uint]{
+		Divider:          RateDivider,
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	measures := msr.Play(discipline)
+
+	createGraphs(
+		t,
+		"Rate divider, even time processing",
+		"rate_even",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
+	)
+}
+
+func TestGraphRateEven(t *testing.T) {
+	testGraphRateEven(t, 1, true)
+	testGraphRateEven(t, 10, true)
+	testGraphRateEven(t, 1, false)
+	testGraphRateEven(t, 10, false)
+}
+
+func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
+		t.SkipNow()
+	}
 
 	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
+		UnbufferedInput:  !unbufferedInput,
+	}
+
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
+
+	msr.AddWrite(1, 430*factor)
+
+	msr.AddWrite(2, 250*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 100*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 150*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 300*factor)
+
+	msr.AddWrite(3, 1000*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 8*time.Second)
+	msr.AddWrite(3, 3500*factor)
+
+	msr.SetProcessDelay(1, 100*time.Millisecond)
+	msr.SetProcessDelay(2, 50*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
+
+	opts := Opts[uint]{
+		Divider:          RateDivider,
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	measures := msr.Play(discipline)
+
+	createGraphs(
+		t,
+		"Rate divider, uneven time processing",
+		"rate_uneven",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
+		1*time.Second,
+		100*time.Nanosecond,
+	)
+}
+
+func TestGraphRateUneven(t *testing.T) {
+	testGraphRateUneven(t, 1, true)
+	testGraphRateUneven(t, 10, true)
+	testGraphRateUneven(t, 1, false)
+	testGraphRateUneven(t, 10, false)
+}
+
+func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
+	if os.Getenv(consts.EnableGraphsEnv) == "" {
+		t.SkipNow()
+	}
+
+	measurerOpts := measurerOpts{
+		HandlersQuantity: 6 * factor,
 		NoFeedback:       true,
-		UnbufferedInput:  !inputBuffered,
+		UnbufferedInput:  !unbufferedInput,
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
 
-	measurer.AddWrite(1, 4000*factor)
+	msr.AddWrite(1, 4000*factor)
 
-	measurer.AddWrite(2, 500*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 500*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 1000*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 2000*factor)
+	msr.AddWrite(2, 500*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 500*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 1000*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 2000*factor)
 
-	measurer.AddWrite(3, 500*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 5*time.Second)
-	measurer.AddWrite(3, 4000*factor)
+	msr.AddWrite(3, 500*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 5*time.Second)
+	msr.AddWrite(3, 4000*factor)
 
-	measurer.SetProcessDelay(1, 10*time.Millisecond)
-	measurer.SetProcessDelay(2, 10*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
+	msr.SetProcessDelay(1, 10*time.Millisecond)
+	msr.SetProcessDelay(2, 10*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
 
 	unmanagedOpts := unmanagedOpts[uint]{
-		Inputs: measurer.GetInputs(),
-		Output: measurer.GetOutput(),
+		Inputs: msr.GetInputs(),
+		Output: msr.GetOutput(),
 	}
 
 	unmanaged, err := newUnmanaged(unmanagedOpts)
@@ -666,123 +504,67 @@ func testUnmanagedEven(t *testing.T, factor uint, inputBuffered bool) {
 
 	defer unmanaged.Stop()
 
-	measures := measurer.Play(unmanaged)
+	measures := msr.Play(unmanaged)
 
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	createGraphs(
+		t,
+		"Unmanaged, even time processing",
+		"unmanaged_even",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
 		1*time.Second,
+		100*time.Nanosecond,
 	)
-
-	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Unmanaged, even time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		inputBuffered,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	baseName := "graph_unmanaged_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
 }
 
-func TestUnmanagedEven(t *testing.T) {
-	testUnmanagedEven(t, 1, true)
-	testUnmanagedEven(t, 10, true)
-	testUnmanagedEven(t, 1, false)
-	testUnmanagedEven(t, 10, false)
+func TestGraphUnmanagedEven(t *testing.T) {
+	testGraphUnmanagedEven(t, 1, true)
+	testGraphUnmanagedEven(t, 10, true)
+	testGraphUnmanagedEven(t, 1, false)
+	testGraphUnmanagedEven(t, 10, false)
 }
 
-func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
+func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
 
-	handlersQuantity := uint(6) * factor
-
 	measurerOpts := measurerOpts{
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6 * factor,
 		NoFeedback:       true,
-		UnbufferedInput:  !inputBuffered,
+		UnbufferedInput:  !unbufferedInput,
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
 
-	measurer.AddWrite(1, 500*factor)
+	msr.AddWrite(1, 500*factor)
 
-	measurer.AddWrite(2, 100*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 100*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 200*factor)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 400*factor)
+	msr.AddWrite(2, 100*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 100*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 200*factor)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 400*factor)
 
-	measurer.AddWrite(3, 100*factor)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 6*time.Second)
-	measurer.AddWrite(3, 1350*factor)
+	msr.AddWrite(3, 100*factor)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 6*time.Second)
+	msr.AddWrite(3, 1350*factor)
 
-	measurer.SetProcessDelay(1, 100*time.Millisecond)
-	measurer.SetProcessDelay(2, 50*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
+	msr.SetProcessDelay(1, 100*time.Millisecond)
+	msr.SetProcessDelay(2, 50*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
 
 	unmanagedOpts := unmanagedOpts[uint]{
-		Inputs: measurer.GetInputs(),
-		Output: measurer.GetOutput(),
+		Inputs: msr.GetInputs(),
+		Output: msr.GetOutput(),
 	}
 
 	unmanaged, err := newUnmanaged(unmanagedOpts)
@@ -790,83 +572,29 @@ func testUnmanagedUneven(t *testing.T, factor uint, inputBuffered bool) {
 
 	defer unmanaged.Stop()
 
-	measures := measurer.Play(unmanaged)
+	measures := msr.Play(unmanaged)
 
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	createGraphs(
+		t,
+		"Unmanaged, uneven time processing",
+		"unmanaged_uneven",
+		measurerOpts.HandlersQuantity,
+		unbufferedInput,
+		measures,
+		100*time.Millisecond,
 		1*time.Second,
+		100*time.Nanosecond,
 	)
-
-	ipot, ipotX := convertToLineEcharts(
-		calcInProcessing(measures, 100*time.Millisecond),
-		1*time.Second,
-	)
-
-	dqotChart := charts.NewLine()
-	ipotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Unmanaged, uneven time processing, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		inputBuffered,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	ipotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "In processing graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	ipotChart.SetXAxis(ipotX).
-		AddSeries("3", ipot[3]).
-		AddSeries("2", ipot[2]).
-		AddSeries("1", ipot[1])
-
-	baseName := "graph_unmanaged_uneven_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(inputBuffered)
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
-
-	ipotFile, err := os.Create(baseName + "_in_processing.html")
-	require.NoError(t, err)
-
-	err = ipotChart.Render(ipotFile)
-	require.NoError(t, err)
 }
 
-func TestUnmanagedUneven(t *testing.T) {
-	testUnmanagedUneven(t, 1, true)
-	testUnmanagedUneven(t, 10, true)
-	testUnmanagedUneven(t, 1, false)
-	testUnmanagedUneven(t, 10, false)
+func TestGraphUnmanagedUneven(t *testing.T) {
+	testGraphUnmanagedUneven(t, 1, true)
+	testGraphUnmanagedUneven(t, 10, true)
+	testGraphUnmanagedUneven(t, 1, false)
+	testGraphUnmanagedUneven(t, 10, false)
 }
 
-func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQuantity uint) {
+func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
 	if os.Getenv(consts.EnableGraphsEnv) == "" {
 		t.SkipNow()
 	}
@@ -875,101 +603,71 @@ func testDisciplineFairEvenProcessingTimeDividingError(t *testing.T, handlersQua
 		HandlersQuantity: handlersQuantity,
 	}
 
-	measurer := newMeasurer(measurerOpts)
-	defer measurer.Finalize()
+	msr := newMeasurer(measurerOpts)
+	defer msr.Finalize()
 
-	measurer.AddWrite(1, 4000)
+	msr.AddWrite(1, 4000)
 
-	measurer.AddWrite(2, 500)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 500)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 4*time.Second)
-	measurer.AddWrite(2, 1000)
-	measurer.AddWaitDevastation(2)
-	measurer.AddDelay(2, 2*time.Second)
-	measurer.AddWrite(2, 2000)
+	msr.AddWrite(2, 500)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 500)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 4*time.Second)
+	msr.AddWrite(2, 1000)
+	msr.AddWaitDevastation(2)
+	msr.AddDelay(2, 2*time.Second)
+	msr.AddWrite(2, 2000)
 
-	measurer.AddWrite(3, 500)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(3, 5*time.Second)
-	measurer.AddWrite(3, 4000)
+	msr.AddWrite(3, 500)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(3, 5*time.Second)
+	msr.AddWrite(3, 4000)
 
-	measurer.AddWrite(4, 500)
-	measurer.AddWaitDevastation(3)
-	measurer.AddDelay(4, 5*time.Second)
-	measurer.AddWrite(4, 4000)
+	msr.AddWrite(4, 500)
+	msr.AddWaitDevastation(3)
+	msr.AddDelay(4, 5*time.Second)
+	msr.AddWrite(4, 4000)
 
-	measurer.SetProcessDelay(1, 10*time.Millisecond)
-	measurer.SetProcessDelay(2, 10*time.Millisecond)
-	measurer.SetProcessDelay(3, 10*time.Millisecond)
-	measurer.SetProcessDelay(4, 10*time.Millisecond)
+	msr.SetProcessDelay(1, 10*time.Millisecond)
+	msr.SetProcessDelay(2, 10*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
+	msr.SetProcessDelay(4, 10*time.Millisecond)
 
-	disciplineOpts := Opts[uint]{
+	opts := Opts[uint]{
 		Divider:          FairDivider,
-		Feedback:         measurer.GetFeedback(),
-		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
-		Output:           measurer.GetOutput(),
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
 	}
 
-	discipline, err := New(disciplineOpts)
+	discipline, err := New(opts)
 	require.NoError(t, err)
 
 	defer discipline.Stop()
 
-	measures := measurer.Play(discipline)
+	measures := msr.Play(discipline)
 
-	received := filterByKind(measures, measureKindReceived)
-
-	dqot, dqotX := convertToLineEcharts(
-		calcDataQuantity(received, 100*time.Millisecond),
+	createGraphs(
+		t,
+		"Fair divider, even time processing, significant dividing error",
+		"fair_even_dividing_error",
+		measurerOpts.HandlersQuantity,
+		measurerOpts.UnbufferedInput,
+		measures,
+		100*time.Millisecond,
 		1*time.Second,
+		100*time.Nanosecond,
 	)
-
-	dqotChart := charts.NewLine()
-
-	subtitle := fmt.Sprintf(
-		"Fair divider, even time processing, "+
-			"significant dividing error, "+
-			"handlers quantity: %d, buffered: %t, time: %s",
-		handlersQuantity,
-		!measurerOpts.UnbufferedInput,
-		time.Now().Format(time.RFC3339),
-	)
-
-	dqotChart.SetGlobalOptions(
-		charts.WithTitleOpts(
-			chartsopts.Title{
-				Title:    "Data retrieval graph",
-				Subtitle: subtitle,
-			},
-		),
-	)
-
-	dqotChart.SetXAxis(dqotX).
-		AddSeries("4", dqot[4]).
-		AddSeries("3", dqot[3]).
-		AddSeries("2", dqot[2]).
-		AddSeries("1", dqot[1])
-
-	baseName := "graph_fair_even_" + strconv.Itoa(int(handlersQuantity)) +
-		"_buffered_" + strconv.FormatBool(!measurerOpts.UnbufferedInput) + "_dividing_error"
-
-	dqotFile, err := os.Create(baseName + "_data_retrieval.html")
-	require.NoError(t, err)
-
-	err = dqotChart.Render(dqotFile)
-	require.NoError(t, err)
 }
 
-func TestDisciplineFairEvenProcessingTimeDividingError(t *testing.T) {
-	testDisciplineFairEvenProcessingTimeDividingError(t, 6)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 7)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 8)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 9)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 10)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 11)
-	testDisciplineFairEvenProcessingTimeDividingError(t, 12)
+func TestGraphFairEvenDividingError(t *testing.T) {
+	testGraphFairEvenDividingError(t, 6)
+	testGraphFairEvenDividingError(t, 7)
+	testGraphFairEvenDividingError(t, 8)
+	testGraphFairEvenDividingError(t, 9)
+	testGraphFairEvenDividingError(t, 10)
+	testGraphFairEvenDividingError(t, 11)
+	testGraphFairEvenDividingError(t, 12)
 }
