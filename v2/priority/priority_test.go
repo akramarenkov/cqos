@@ -50,22 +50,22 @@ func BenchmarkDisciplineFair(b *testing.B) {
 		HandlersQuantity: 600,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 5000000)
-	measurer.AddWrite(2, 5000000)
-	measurer.AddWrite(3, 5000000)
+	msr.AddWrite(1, 5000000)
+	msr.AddWrite(2, 5000000)
+	msr.AddWrite(3, 5000000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Fair,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	_ = measurer.Play(discipline)
+	_ = msr.Play(discipline)
 }
 
 func BenchmarkDisciplineRate(b *testing.B) {
@@ -74,22 +74,22 @@ func BenchmarkDisciplineRate(b *testing.B) {
 		HandlersQuantity: 600,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 5000000)
-	measurer.AddWrite(2, 5000000)
-	measurer.AddWrite(3, 5000000)
+	msr.AddWrite(1, 5000000)
+	msr.AddWrite(2, 5000000)
+	msr.AddWrite(3, 5000000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Rate,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	_ = measurer.Play(discipline)
+	_ = msr.Play(discipline)
 }
 
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
@@ -99,22 +99,22 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 		UnbufferedInput:  true,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 5000000)
-	measurer.AddWrite(2, 5000000)
-	measurer.AddWrite(3, 5000000)
+	msr.AddWrite(1, 5000000)
+	msr.AddWrite(2, 5000000)
+	msr.AddWrite(3, 5000000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Fair,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	_ = measurer.Play(discipline)
+	_ = msr.Play(discipline)
 }
 
 func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
@@ -124,22 +124,22 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 		UnbufferedInput:  true,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 5000000)
-	measurer.AddWrite(2, 5000000)
-	measurer.AddWrite(3, 5000000)
+	msr.AddWrite(1, 5000000)
+	msr.AddWrite(2, 5000000)
+	msr.AddWrite(3, 5000000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Rate,
 		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	_ = measurer.Play(discipline)
+	_ = msr.Play(discipline)
 }
 
 func TestDisciplineFair(t *testing.T) {
@@ -362,22 +362,22 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 1000000)
-	measurer.AddWrite(2, 100000)
-	measurer.AddWrite(3, 10000)
+	msr.AddWrite(1, 1000000)
+	msr.AddWrite(2, 100000)
+	msr.AddWrite(3, 10000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Fair,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	measures := measurer.Play(discipline)
+	measures := msr.Play(discipline)
 
 	quantities := research.CalcInProcessing(measures, 100*time.Millisecond)
 
@@ -395,22 +395,22 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 		HandlersQuantity: 2 * handlersQuantity,
 	}
 
-	measurer := measurer.New(measurerOpts)
+	msr := measurer.New(measurerOpts)
 
-	measurer.AddWrite(1, 100000)
-	measurer.AddWrite(2, 100000)
-	measurer.AddWrite(3, 100000)
+	msr.AddWrite(1, 100000)
+	msr.AddWrite(2, 100000)
+	msr.AddWrite(3, 100000)
 
 	opts := Opts[uint]{
 		Divider:          divider.Rate,
 		HandlersQuantity: handlersQuantity,
-		Inputs:           measurer.GetInputs(),
+		Inputs:           msr.GetInputs(),
 	}
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	measures := measurer.Play(discipline)
+	measures := msr.Play(discipline)
 
 	quantities := research.CalcInProcessing(measures, 100*time.Millisecond)
 
