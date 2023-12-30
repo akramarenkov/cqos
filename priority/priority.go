@@ -164,7 +164,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // the error is an incorrectly working dividing function in which the sum of
 // the distributed quantities is not equal to the original quantity.
 //
-// The single nil value means that the discipline has terminated in normal mode
+// The single nil value means that the discipline has terminated in normal mode.
+//
+// If you are sure that the divider is working correctly, then you don’t have to
+// read from this channel and you don’t have to check the received value
 func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
