@@ -289,8 +289,7 @@ func TestSimpleBadDivider(t *testing.T) {
 	received := 0
 
 	defer func() {
-		require.NotEqual(t, 0, received)
-		require.NotEqual(t, itemsQuantity*len(inputs), received)
+		require.Equal(t, 0, received)
 	}()
 
 	for {

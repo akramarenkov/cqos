@@ -12,10 +12,11 @@ import (
 )
 
 var (
-	ErrEmptyDivider     = errors.New("priorities divider was not specified")
-	ErrEmptyFeedback    = errors.New("feedback channel was not specified")
-	ErrEmptyOutput      = errors.New("output channel was not specified")
-	ErrQuantityExceeded = errors.New("value of handlers quantity has been exceeded")
+	ErrEmptyDivider         = errors.New("priorities divider was not specified")
+	ErrEmptyFeedback        = errors.New("feedback channel was not specified")
+	ErrEmptyOutput          = errors.New("output channel was not specified")
+	ErrHandlersQuantityZero = errors.New("handlers quantity is zero")
+	ErrQuantityExceeded     = errors.New("value of handlers quantity has been exceeded")
 )
 
 const (
@@ -53,7 +54,7 @@ type Opts[Type any] struct {
 	Output chan<- Prioritized[Type]
 }
 
-// Main prioritization discipline.
+// Prioritization discipline.
 //
 // Preferably input channels should be buffered for performance reasons.
 //
@@ -92,6 +93,10 @@ type Discipline[Type any] struct {
 func (opts Opts[Type]) isValid() error {
 	if opts.Divider == nil {
 		return ErrEmptyDivider
+	}
+
+	if opts.HandlersQuantity == 0 {
+		return ErrHandlersQuantityZero
 	}
 
 	if opts.Feedback == nil {
@@ -149,7 +154,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	dsc.updateInputs(opts.Inputs)
 
-	go dsc.loop()
+	go dsc.main()
 
 	return dsc, nil
 }
@@ -238,7 +243,7 @@ func (dsc *Discipline[Type]) removeInput(priority uint) {
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
-func (dsc *Discipline[Type]) loop() {
+func (dsc *Discipline[Type]) main() {
 	defer dsc.breaker.Complete()
 	defer dsc.graceful.Complete()
 	defer close(dsc.err)
@@ -246,18 +251,20 @@ func (dsc *Discipline[Type]) loop() {
 	defer close(dsc.inputRmvs)
 	defer dsc.interrupter.Stop()
 
-	defer func() {
-		if value := recover(); value != nil {
-			dsc.err <- value.(error)
-		}
-	}()
+	if err := dsc.loop(); err != nil {
+		dsc.err <- err
+	}
+}
+
+func (dsc *Discipline[Type]) loop() error {
+	defer dsc.waitZeroActual()
 
 	for {
 		select {
 		case <-dsc.breaker.Breaked():
-			return
+			return nil
 		case <-dsc.opts.Ctx.Done():
-			return
+			return nil
 		case add := <-dsc.inputAdds:
 			dsc.addInput(add.channel, add.priority)
 		case priority := <-dsc.inputRmvs:
@@ -269,16 +276,62 @@ func (dsc *Discipline[Type]) loop() {
 
 		dsc.clearActual()
 
-		if processed := dsc.main(); processed == 0 {
+		processed, err := dsc.base()
+		if err != nil {
+			return err
+		}
+
+		if processed == 0 {
 			select {
 			case <-dsc.graceful.Breaked():
 				if dsc.isZeroActual() && dsc.isDrainedInputs() {
-					return
+					return nil
 				}
 			default:
 			}
 
 			time.Sleep(defaultIdleDelay)
+		}
+
+		dsc.getLimitedFeedback()
+	}
+}
+
+func (dsc *Discipline[Type]) waitZeroActual() {
+	for !dsc.isZeroActual() {
+		select {
+		case <-dsc.breaker.Breaked():
+			return
+		case <-dsc.opts.Ctx.Done():
+			return
+		case priority := <-dsc.opts.Feedback:
+			dsc.decreaseActual(priority)
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) getOneFeedback() {
+	select {
+	case <-dsc.breaker.Breaked():
+		return
+	case <-dsc.opts.Ctx.Done():
+		return
+	case priority := <-dsc.opts.Feedback:
+		dsc.decreaseActual(priority)
+	}
+}
+
+func (dsc *Discipline[Type]) getLimitedFeedback() {
+	for collected := 0; collected < dsc.feedbackLimit; collected++ {
+		select {
+		case <-dsc.breaker.Breaked():
+			return
+		case <-dsc.opts.Ctx.Done():
+			return
+		case priority := <-dsc.opts.Feedback:
+			dsc.decreaseActual(priority)
+		default:
+			return
 		}
 	}
 }
@@ -316,20 +369,42 @@ func (dsc *Discipline[Type]) isInputExists(priority uint) bool {
 	return exists
 }
 
-func (dsc *Discipline[Type]) main() uint {
+func (dsc *Discipline[Type]) base() (uint, error) {
 	processed := uint(0)
 
-	dsc.calcTactic()
-
-	processed += dsc.prioritize()
-
-	if proceed := dsc.recalcTactic(); !proceed {
-		return processed
+	if err := dsc.waitCalcTactic(); err != nil {
+		return processed, err
 	}
 
 	processed += dsc.prioritize()
 
-	return processed
+	proceed, err := dsc.recalcTactic()
+	if err != nil {
+		return processed, err
+	}
+
+	if !proceed {
+		return processed, nil
+	}
+
+	processed += dsc.prioritize()
+
+	return processed, nil
+}
+
+func (dsc *Discipline[Type]) waitCalcTactic() error {
+	for {
+		proceed, err := dsc.calcTactic()
+		if err != nil {
+			return err
+		}
+
+		if proceed {
+			return nil
+		}
+
+		dsc.getOneFeedback()
+	}
 }
 
 func (dsc *Discipline[Type]) prioritize() uint {
@@ -349,11 +424,7 @@ func (dsc *Discipline[Type]) prioritize() uint {
 func (dsc *Discipline[Type]) io(priority uint) uint {
 	processed := uint(0)
 
-	for {
-		if dsc.tactic[priority] == 0 {
-			return processed
-		}
-
+	for dsc.tactic[priority] != 0 {
 		select {
 		case <-dsc.breaker.Breaked():
 			return processed
@@ -366,12 +437,12 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			}
 
 			processed += dsc.send(item, priority)
-		case precedency := <-dsc.opts.Feedback:
-			dsc.decreaseActual(precedency)
 		default:
 			return processed
 		}
 	}
+
+	return processed
 }
 
 func (dsc *Discipline[Type]) iou(priority uint) uint {
@@ -379,11 +450,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 
 	interrupt := false
 
-	for {
-		if dsc.tactic[priority] == 0 {
-			return processed
-		}
-
+	for dsc.tactic[priority] != 0 {
 		select {
 		case <-dsc.breaker.Breaked():
 			return processed
@@ -398,8 +465,6 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = false
 
 			processed += dsc.send(item, priority)
-		case precedency := <-dsc.opts.Feedback:
-			dsc.decreaseActual(precedency)
 		case <-dsc.interrupter.C:
 			if interrupt {
 				return processed
@@ -408,6 +473,8 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = true
 		}
 	}
+
+	return processed
 }
 
 func (dsc *Discipline[Type]) markInputAsDrained(priority uint) {
@@ -424,21 +491,17 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 		Item:     item,
 	}
 
-	for {
-		select {
-		case <-dsc.breaker.Breaked():
-			return 0
-		case <-dsc.opts.Ctx.Done():
-			return 0
-		case dsc.opts.Output <- prioritized:
-			dsc.decreaseTactic(priority)
-			dsc.increaseActual(priority)
-
-			return 1
-		case precedency := <-dsc.opts.Feedback:
-			dsc.decreaseActual(precedency)
-		}
+	select {
+	case <-dsc.breaker.Breaked():
+		return 0
+	case <-dsc.opts.Ctx.Done():
+		return 0
+	case dsc.opts.Output <- prioritized:
+		dsc.decreaseTactic(priority)
+		dsc.increaseActual(priority)
 	}
+
+	return 1
 }
 
 func (dsc *Discipline[Type]) increaseActual(priority uint) {
@@ -453,53 +516,41 @@ func (dsc *Discipline[Type]) decreaseTactic(priority uint) {
 	dsc.tactic[priority]--
 }
 
-func (dsc *Discipline[Type]) calcTactic() {
-	for {
-		if !dsc.pickUpTactic() {
-			select {
-			case <-dsc.breaker.Breaked():
-				return
-			case <-dsc.opts.Ctx.Done():
-				return
-			case priority := <-dsc.opts.Feedback:
-				dsc.decreaseActual(priority)
-			}
-
-			continue
-		}
-
-		return
+func (dsc *Discipline[Type]) calcTactic() (bool, error) {
+	vacants, err := dsc.calcVacants()
+	if err != nil {
+		return false, err
 	}
-}
-
-func (dsc *Discipline[Type]) pickUpTactic() bool {
-	vacants := dsc.calcVacants()
 
 	if vacants == 0 {
-		return false
+		return false, nil
 	}
 
-	if picked := dsc.pickUpTacticSimpleAddition(vacants); picked {
-		return true
+	if picked := dsc.calcTacticByAddUpToStrategic(vacants); picked {
+		return true, nil
 	}
 
-	return dsc.pickUpTacticBase(vacants)
+	return dsc.calcTacticBase(vacants)
 }
 
-func (dsc *Discipline[Type]) pickUpTacticBase(vacants uint) bool {
-	dsc.resetTactic()
-	dsc.updateUncrowded()
-	dsc.opts.Divider(dsc.uncrowded, vacants, dsc.tactic)
+func (dsc *Discipline[Type]) calcVacants() (uint, error) {
+	busy := calcDistributionQuantity(dsc.actual)
 
-	return dsc.isTacticFilled(dsc.uncrowded)
+	// we will not get an overflow because the correspondence of the quantities is
+	// checked at all stages of distribution
+	if dsc.opts.HandlersQuantity < busy {
+		return 0, ErrQuantityExceeded
+	}
+
+	return dsc.opts.HandlersQuantity - busy, nil
 }
 
-func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
+func (dsc *Discipline[Type]) calcTacticByAddUpToStrategic(vacants uint) bool {
 	dsc.resetTactic()
 
 	picked := uint(0)
 
-	for priority := range dsc.actual {
+	for _, priority := range dsc.priorities {
 		if dsc.actual[priority] > dsc.strategic[priority] {
 			return false
 		}
@@ -509,7 +560,40 @@ func (dsc *Discipline[Type]) pickUpTacticSimpleAddition(vacants uint) bool {
 		picked += dsc.tactic[priority]
 	}
 
-	return picked != 0 && picked <= vacants
+	return picked == vacants
+}
+
+func (dsc *Discipline[Type]) calcTacticBase(vacants uint) (bool, error) {
+	dsc.resetTactic()
+	dsc.updateUncrowded()
+
+	err := safeDivide(
+		dsc.opts.Divider,
+		dsc.uncrowded,
+		vacants,
+		dsc.tactic,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return dsc.isTacticFilled(dsc.uncrowded), nil
+}
+
+func (dsc *Discipline[Type]) updateUncrowded() {
+	dsc.uncrowded = dsc.uncrowded[:0]
+
+	for _, priority := range dsc.priorities {
+		if dsc.actual[priority] < dsc.strategic[priority] {
+			dsc.uncrowded = append(dsc.uncrowded, priority)
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) resetTactic() {
+	for priority := range dsc.tactic {
+		dsc.tactic[priority] = 0
+	}
 }
 
 func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
@@ -522,77 +606,54 @@ func (dsc *Discipline[Type]) isTacticFilled(priorities []uint) bool {
 	return true
 }
 
-func (dsc *Discipline[Type]) resetTactic() {
-	for priority := range dsc.tactic {
-		dsc.tactic[priority] = 0
-	}
-}
+func (dsc *Discipline[Type]) recalcTactic() (bool, error) {
+	remainder := calcDistributionQuantity(dsc.tactic)
 
-func (dsc *Discipline[Type]) calcVacants() uint {
-	busy := uint(0)
-
-	for _, quantity := range dsc.actual {
-		busy += quantity
-	}
-
-	// In order not to overload the code with error returns due to one possible error
-	if dsc.opts.HandlersQuantity < busy {
-		panic(ErrQuantityExceeded)
-	}
-
-	return dsc.opts.HandlersQuantity - busy
-}
-
-func (dsc *Discipline[Type]) updateUncrowded() {
-	dsc.uncrowded = dsc.uncrowded[:0]
-
-	for _, priority := range dsc.priorities {
-		if dsc.actual[priority] >= dsc.strategic[priority] {
-			continue
-		}
-
-		dsc.uncrowded = append(dsc.uncrowded, priority)
-	}
-}
-
-func (dsc *Discipline[Type]) recalcTactic() bool {
-	remainder := dsc.updateUseful()
-
+	dsc.updateUseful()
 	dsc.resetTactic()
-	dsc.opts.Divider(dsc.useful, dsc.opts.HandlersQuantity, dsc.tactic)
 
-	dsc.reUpdateUseful()
+	err := safeDivide(
+		dsc.opts.Divider,
+		dsc.useful,
+		dsc.opts.HandlersQuantity,
+		dsc.tactic,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	dsc.updateUsefulLikeUncrowded()
 	dsc.resetTactic()
-	dsc.opts.Divider(dsc.useful, remainder, dsc.tactic)
 
-	return dsc.isTacticFilled(dsc.useful)
+	err = safeDivide(
+		dsc.opts.Divider,
+		dsc.useful,
+		remainder,
+		dsc.tactic,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return dsc.isTacticFilled(dsc.useful), nil
 }
 
-func (dsc *Discipline[Type]) updateUseful() uint {
-	remainder := uint(0)
-
+func (dsc *Discipline[Type]) updateUseful() {
 	dsc.useful = dsc.useful[:0]
 
 	for _, priority := range dsc.priorities {
-		if dsc.tactic[priority] != 0 {
-			remainder += dsc.tactic[priority]
-			continue
+		if dsc.tactic[priority] == 0 {
+			dsc.useful = append(dsc.useful, priority)
 		}
-
-		dsc.useful = append(dsc.useful, priority)
 	}
-
-	return remainder
 }
 
-func (dsc *Discipline[Type]) reUpdateUseful() {
+func (dsc *Discipline[Type]) updateUsefulLikeUncrowded() {
 	dsc.useful = dsc.useful[:0]
 
 	for _, priority := range dsc.priorities {
-		if dsc.actual[priority] >= dsc.tactic[priority] {
-			continue
+		if dsc.actual[priority] < dsc.tactic[priority] {
+			dsc.useful = append(dsc.useful, priority)
 		}
-
-		dsc.useful = append(dsc.useful, priority)
 	}
 }
