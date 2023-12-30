@@ -27,12 +27,6 @@ func ExampleDiscipline() {
 		1: inputs[1],
 	}
 
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
 	// Data from input channels passed to handlers by output channel
 	output := make(chan priority.Prioritized[string])
 
@@ -41,11 +35,11 @@ func ExampleDiscipline() {
 	defer close(feedback)
 
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan string)
+	defer close(measures)
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	disciplineOpts := priority.Opts[string]{
+	opts := priority.Opts[string]{
 		Divider:          priority.RateDivider,
 		Feedback:         feedback,
 		HandlersQuantity: uint(handlersQuantity),
@@ -53,7 +47,7 @@ func ExampleDiscipline() {
 		Output:           output,
 	}
 
-	discipline, err := priority.New(disciplineOpts)
+	discipline, err := priority.New(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -63,29 +57,13 @@ func ExampleDiscipline() {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	// Run handlers, that process data
-	for handler := 0; handler < handlersQuantity; handler++ {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
-			for prioritized := range output {
-				// Data processing
-				// fmt.Println(prioritized.Item)
-				measurements <- true
-
-				feedback <- prioritized.Priority
-			}
-		}()
-	}
-
 	// Run writers, that write data to input channels
 	for priority, input := range inputs {
 		wg.Add(1)
 
 		go func(precedency uint, channel chan string) {
 			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -97,13 +75,29 @@ func ExampleDiscipline() {
 		}(priority, input)
 	}
 
+	// Run handlers, that process data
+	for handler := 0; handler < handlersQuantity; handler++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for prioritized := range output {
+				// Data processing
+				measures <- prioritized.Item
+
+				feedback <- prioritized.Priority
+			}
+		}()
+	}
+
 	// Terminate handlers
 	defer close(output)
 
 	received := 0
 
 	// Wait for process all written data
-	for range measurements {
+	for range measures {
 		received++
 
 		if received == itemsQuantity*len(inputs) {
@@ -142,10 +136,11 @@ func ExampleDiscipline_GracefulStop() {
 	defer close(feedback)
 
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
+	measures := make(chan string)
+	defer close(measures)
 
 	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
-	disciplineOpts := priority.Opts[string]{
+	opts := priority.Opts[string]{
 		Divider:          priority.RateDivider,
 		Feedback:         feedback,
 		HandlersQuantity: uint(handlersQuantity),
@@ -153,39 +148,21 @@ func ExampleDiscipline_GracefulStop() {
 		Output:           output,
 	}
 
-	discipline, err := priority.New(disciplineOpts)
+	discipline, err := priority.New(opts)
 	if err != nil {
 		panic(err)
 	}
 
-	wgh := &sync.WaitGroup{}
-	defer wgh.Wait()
-
-	// Run handlers, that process data
-	for handler := 0; handler < handlersQuantity; handler++ {
-		wgh.Add(1)
-
-		go func() {
-			defer wgh.Done()
-
-			for prioritized := range output {
-				// Data processing
-				// fmt.Println(prioritized.Item)
-				measurements <- true
-
-				feedback <- prioritized.Priority
-			}
-		}()
-	}
-
-	wgw := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	// Run writers, that write data to input channels
 	for priority, input := range inputs {
-		wgw.Add(1)
+		wg.Add(1)
 
 		go func(precedency uint, channel chan string) {
-			defer wgw.Done()
+			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -197,43 +174,45 @@ func ExampleDiscipline_GracefulStop() {
 		}(priority, input)
 	}
 
+	// Run handlers, that process data
+	for handler := 0; handler < handlersQuantity; handler++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for prioritized := range output {
+				// Data processing
+				measures <- prioritized.Item
+
+				feedback <- prioritized.Priority
+			}
+		}()
+	}
+
 	// Terminate handlers
 	defer close(output)
 
 	obtained := make(chan int)
-	defer close(obtained)
 
-	// Counting the amount of received data
 	go func() {
+		defer close(obtained)
+
 		received := 0
 
-		for range measurements {
+		// Wait for process all written data
+		for range measures {
 			received++
+
+			if received == itemsQuantity*len(inputs) {
+				obtained <- received
+				return
+			}
 		}
-
-		obtained <- received
 	}()
-
-	// You must end write to input channels and close them (or remove),
-	// otherwise graceful stop not be ended
-	wgw.Wait()
-
-	for _, input := range inputs {
-		close(input)
-	}
 
 	discipline.GracefulStop()
 
-	// Terminate measurements
-	close(measurements)
-
-	received := <-obtained
-
-	// Verify data received from discipline
-	if received != itemsQuantity*len(inputs) {
-		panic("graceful stop work not properly")
-	}
-
-	fmt.Println("Processed items quantity:", received)
+	fmt.Println("Processed items quantity:", <-obtained)
 	// Output: Processed items quantity: 300
 }
