@@ -180,8 +180,8 @@ func (dsc *Discipline[Type]) Stop() {
 //
 // Waits draining input channels, waits end processing data in handlers and terminates.
 //
-// You must end write to input channels and close them (or remove),
-// otherwise graceful stop not be ended
+// You must end write to input channels and close them (or remove), otherwise graceful
+// stop not be ended
 func (dsc *Discipline[Type]) GracefulStop() {
 	dsc.graceful.Break()
 }
@@ -284,7 +284,7 @@ func (dsc *Discipline[Type]) loop() error {
 		if processed == 0 {
 			select {
 			case <-dsc.graceful.Breaked():
-				if dsc.isZeroActual() && dsc.isDrainedInputs() {
+				if dsc.isDrainedInputs() {
 					return nil
 				}
 			default:

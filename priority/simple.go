@@ -17,13 +17,12 @@ var (
 	ErrEmptyHandle = errors.New("handle function was not specified")
 )
 
-// Callback function called in handlers of simplified prioritization
-// discipline when an item is received.
+// Callback function called in handlers when an item is received.
 //
 // Function should be interrupted when context is canceled
 type Handle[Type any] func(ctx context.Context, item Type)
 
-// Options of the created simplified prioritization discipline
+// Options of the created discipline
 type SimpleOpts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
@@ -57,10 +56,15 @@ func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
 
 // Simplified version of the discipline that runs handlers on its own and
 // hides the output and feedback channels
+//
+// Preferably input channels should be buffered for performance reasons.
+//
+// For equaling use divider.Fair divider, for prioritization use divider.Rate divider or
+// custom divider
 type Simple[Type any] struct {
 	opts SimpleOpts[Type]
 
-	discipline *Discipline[Type]
+	priority *Discipline[Type]
 
 	breaker  *breaker.Breaker
 	graceful *breaker.Breaker
@@ -73,7 +77,7 @@ type Simple[Type any] struct {
 	err chan error
 }
 
-// Creates and runs simplified prioritization discipline
+// Creates and runs discipline
 func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -81,12 +85,16 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 	opts = opts.normalize()
 
-	capacity := general.CalcByFactor(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+	capacity := general.CalcByFactor(
+		int(opts.HandlersQuantity),
+		defaultCapacityFactor,
+		1,
+	)
 
 	output := make(chan Prioritized[Type], capacity)
 	feedback := make(chan uint, capacity)
 
-	disciplineOpts := Opts[Type]{
+	priorityOpts := Opts[Type]{
 		Divider:          opts.Divider,
 		Feedback:         feedback,
 		HandlersQuantity: opts.HandlersQuantity,
@@ -94,7 +102,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		Output:           output,
 	}
 
-	discipline, err := New(disciplineOpts)
+	priority, err := New(priorityOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +110,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 	smpl := &Simple[Type]{
 		opts: opts,
 
-		discipline: discipline,
+		priority: priority,
 
 		breaker:  breaker.New(),
 		graceful: breaker.New(),
@@ -115,7 +123,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 		err: make(chan error, 1),
 	}
 
-	go smpl.handlers()
+	go smpl.main()
 
 	return smpl, nil
 }
@@ -141,13 +149,13 @@ func (smpl *Simple[Type]) Stop() {
 //
 // Waits draining input channels, waits end processing data in handlers and terminates.
 //
-// You must end write to input channels and close them,
-// otherwise graceful stop not be ended
+// You must end write to input channels and close them, otherwise graceful stop not be
+// ended
 func (smpl *Simple[Type]) GracefulStop() {
 	smpl.graceful.Break()
 }
 
-func (smpl *Simple[Type]) handlers() {
+func (smpl *Simple[Type]) main() {
 	defer smpl.breaker.Complete()
 	defer smpl.graceful.Complete()
 	defer close(smpl.err)
@@ -158,7 +166,7 @@ func (smpl *Simple[Type]) handlers() {
 	ctx, cancel := context.WithCancel(smpl.opts.Ctx)
 	defer cancel()
 
-	defer smpl.discipline.Stop()
+	defer smpl.priority.Stop()
 
 	for id := uint(0); id < smpl.opts.HandlersQuantity; id++ {
 		smpl.wg.Add(1)
@@ -170,8 +178,8 @@ func (smpl *Simple[Type]) handlers() {
 	case <-smpl.breaker.Breaked():
 	case <-smpl.opts.Ctx.Done():
 	case <-smpl.graceful.Breaked():
-		smpl.discipline.GracefulStop()
-	case err := <-smpl.discipline.Err():
+		smpl.priority.GracefulStop()
+	case err := <-smpl.priority.Err():
 		smpl.err <- err
 	}
 }
