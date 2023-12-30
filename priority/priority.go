@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 )
 
@@ -18,11 +19,12 @@ var (
 )
 
 const (
-	defaultIdleDelay        = 1 * time.Nanosecond
-	defaultInterruptTimeout = 1 * time.Nanosecond
+	defaultFeedbackLimitFactor = 0.1
+	defaultIdleDelay           = 1 * time.Nanosecond
+	defaultInterruptTimeout    = 1 * time.Nanosecond
 )
 
-type input[Type any] struct {
+type inputAdd[Type any] struct {
 	channel  <-chan Type
 	priority uint
 }
@@ -66,22 +68,23 @@ type Discipline[Type any] struct {
 	breaker  *breaker.Breaker
 	graceful *breaker.Breaker
 
-	inputs     map[uint]<-chan Type
-	priorities []uint
-	inputAdds  chan input[Type]
-	inputRmvs  chan uint
+	inputs map[uint]common.Input[Type]
 
+	priorities []uint
+
+	inputAdds chan inputAdd[Type]
+	inputRmvs chan uint
+
+	actual    map[uint]uint
 	strategic map[uint]uint
 	tactic    map[uint]uint
-	actual    map[uint]uint
 
 	uncrowded []uint
 	useful    []uint
 
-	interrupter *time.Ticker
-	unbuffered  map[uint]bool
+	feedbackLimit int
 
-	drained map[uint]bool
+	interrupter *time.Ticker
 
 	err chan error
 }
@@ -116,24 +119,30 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
+	feedbackLimit := general.CalcByFactor(
+		int(opts.HandlersQuantity),
+		defaultFeedbackLimitFactor,
+		len(opts.Inputs),
+	)
+
 	dsc := &Discipline[Type]{
 		opts: opts.normalize(),
 
 		breaker:  breaker.New(),
 		graceful: breaker.New(),
 
-		inputs:    make(map[uint]<-chan Type),
-		inputAdds: make(chan input[Type]),
+		inputs: make(map[uint]common.Input[Type]),
+
+		inputAdds: make(chan inputAdd[Type]),
 		inputRmvs: make(chan uint),
 
+		actual:    make(map[uint]uint),
 		strategic: make(map[uint]uint),
 		tactic:    make(map[uint]uint),
-		actual:    make(map[uint]uint),
+
+		feedbackLimit: feedbackLimit,
 
 		interrupter: time.NewTicker(defaultInterruptTimeout),
-		unbuffered:  make(map[uint]bool),
-
-		drained: make(map[uint]bool),
 
 		err: make(chan error, 1),
 	}
@@ -175,11 +184,11 @@ func (dsc *Discipline[Type]) GracefulStop() {
 func (dsc *Discipline[Type]) addPriority(channel <-chan Type, priority uint) {
 	_, exists := dsc.inputs[priority]
 
-	dsc.inputs[priority] = channel
-
-	if cap(channel) == 0 {
-		dsc.unbuffered[priority] = true
+	input := common.Input[Type]{
+		Channel: channel,
 	}
+
+	dsc.inputs[priority] = input
 
 	if exists {
 		return
@@ -200,7 +209,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 
 // Adds or updates (if it added previously) input channel for specified priority
 func (dsc *Discipline[Type]) AddInput(channel <-chan Type, priority uint) {
-	in := input[Type]{
+	in := inputAdd[Type]{
 		channel:  channel,
 		priority: priority,
 	}
@@ -224,8 +233,6 @@ func (dsc *Discipline[Type]) RemoveInput(priority uint) {
 func (dsc *Discipline[Type]) removeInput(priority uint) {
 	delete(dsc.inputs, priority)
 	delete(dsc.tactic, priority)
-	delete(dsc.unbuffered, priority)
-	delete(dsc.drained, priority)
 
 	dsc.priorities = removePriority(dsc.priorities, priority)
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
@@ -295,8 +302,8 @@ func (dsc *Discipline[Type]) isZeroActual() bool {
 }
 
 func (dsc *Discipline[Type]) isDrainedInputs() bool {
-	for priority := range dsc.inputs {
-		if !dsc.drained[priority] {
+	for _, input := range dsc.inputs {
+		if !input.Drained {
 			return false
 		}
 	}
@@ -329,7 +336,7 @@ func (dsc *Discipline[Type]) prioritize() uint {
 	processed := uint(0)
 
 	for _, priority := range dsc.priorities {
-		if !dsc.unbuffered[priority] {
+		if cap(dsc.inputs[priority].Channel) != 0 {
 			processed += dsc.io(priority)
 		} else {
 			processed += dsc.iou(priority)
@@ -352,9 +359,9 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
-		case item, opened := <-dsc.inputs[priority]:
+		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
-				dsc.drained[priority] = true
+				dsc.markInputAsDrained(priority)
 				return processed
 			}
 
@@ -382,9 +389,9 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
-		case item, opened := <-dsc.inputs[priority]:
+		case item, opened := <-dsc.inputs[priority].Channel:
 			if !opened {
-				dsc.drained[priority] = true
+				dsc.markInputAsDrained(priority)
 				return processed
 			}
 
@@ -401,6 +408,14 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 			interrupt = true
 		}
 	}
+}
+
+func (dsc *Discipline[Type]) markInputAsDrained(priority uint) {
+	input := dsc.inputs[priority]
+
+	input.Drained = true
+
+	dsc.inputs[priority] = input
 }
 
 func (dsc *Discipline[Type]) send(item Type, priority uint) uint {

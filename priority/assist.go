@@ -2,7 +2,6 @@ package priority
 
 import (
 	"errors"
-	"math"
 
 	"github.com/akramarenkov/safe"
 )
@@ -24,16 +23,6 @@ func removePriority(priorities []uint, removed uint) []uint {
 	}
 
 	return priorities[:kept]
-}
-
-func calcCapacity(base int, factor float64, reserve int) int {
-	capacity := int(math.Round(factor * float64(base)))
-
-	if capacity == 0 {
-		capacity = reserve
-	}
-
-	return capacity
 }
 
 func calcDistributionQuantity(distribution map[uint]uint) uint {

@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/priority/internal/durations"
-	"github.com/akramarenkov/cqos/priority/internal/qot"
+	"github.com/akramarenkov/cqos/internal/durations"
+	"github.com/akramarenkov/cqos/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )

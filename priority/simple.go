@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/cqos/internal/general"
 )
 
 const (
@@ -80,7 +81,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 	opts = opts.normalize()
 
-	capacity := calcCapacity(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
+	capacity := general.CalcByFactor(int(opts.HandlersQuantity), defaultCapacityFactor, 1)
 
 	output := make(chan Prioritized[Type], capacity)
 	feedback := make(chan uint, capacity)
