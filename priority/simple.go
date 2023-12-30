@@ -7,10 +7,7 @@ import (
 
 	"github.com/akramarenkov/cqos/breaker"
 	"github.com/akramarenkov/cqos/internal/general"
-)
-
-const (
-	defaultCapacityFactor = 0.1
+	"github.com/akramarenkov/cqos/priority/internal/common"
 )
 
 var (
@@ -55,7 +52,7 @@ func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
 }
 
 // Simplified version of the discipline that runs handlers on its own and
-// hides the output and feedback channels
+// hides the output and feedback channels.
 //
 // Preferably input channels should be buffered for performance reasons.
 //
@@ -87,7 +84,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 	capacity := general.CalcByFactor(
 		int(opts.HandlersQuantity),
-		defaultCapacityFactor,
+		common.DefaultCapacityFactor,
 		1,
 	)
 

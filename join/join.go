@@ -23,8 +23,8 @@ const (
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
-	// Input data channel. For graceful termination it is enough to
-	// close the input channel
+	// Input data channel. For graceful termination it is enough to close the input
+	// channel
 	Input <-chan Type
 	// Output slice size
 	JoinSize uint

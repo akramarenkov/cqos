@@ -1,4 +1,4 @@
-// Used to distributes data among handlers according to priority
+// Discipline that used to distributes data among handlers according to priority
 package priority
 
 import (
@@ -36,7 +36,7 @@ type Prioritized[Type any] struct {
 	Priority uint
 }
 
-// Options of the created main prioritization discipline
+// Options of the created discipline
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
@@ -118,7 +118,7 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Creates and runs main prioritization discipline
+// Creates and runs discipline
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
