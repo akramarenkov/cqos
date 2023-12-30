@@ -332,14 +332,18 @@ func (msr *Measurer) Play(discipline Discipline[uint]) []Measure {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	wg.Add(1)
+
 	go func() {
+		defer wg.Done()
+
 		if err := <-discipline.Err(); err != nil {
 			cancel()
 		}
 	}()
-
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
 
 	msr.runWriters(ctx, wg)
 	msr.runHandlers(ctx, wg, channel, discipline)
