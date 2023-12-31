@@ -85,7 +85,7 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 	capacity := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		common.DefaultCapacityFactor,
-		1,
+		len(opts.Inputs),
 	)
 
 	output := make(chan Prioritized[Type], capacity)

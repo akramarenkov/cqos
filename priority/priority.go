@@ -127,7 +127,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	feedbackLimit := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		defaultFeedbackLimitFactor,
-		len(opts.Inputs),
+		1,
 	)
 
 	dsc := &Discipline[Type]{

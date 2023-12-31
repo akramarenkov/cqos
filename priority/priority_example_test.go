@@ -38,7 +38,8 @@ func ExampleDiscipline() {
 	measures := make(chan string)
 	defer close(measures)
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use FairDivider, for prioritization use
+	// RateDivider or custom divider
 	opts := priority.Opts[string]{
 		Divider:          priority.RateDivider,
 		Feedback:         feedback,
@@ -86,6 +87,8 @@ func ExampleDiscipline() {
 				// Data processing
 				measures <- prioritized.Item
 
+				// Handler must indicate that current data has been processed and
+				// handler is ready to receive new data
 				feedback <- prioritized.Priority
 			}
 		}()

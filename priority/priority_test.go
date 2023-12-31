@@ -9,11 +9,9 @@ import (
 )
 
 func TestOptsValidation(t *testing.T) {
-	handlersQuantity := uint(6)
-
 	opts := Opts[uint]{
 		Feedback:         make(chan uint),
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 		Output:           make(chan Prioritized[uint]),
 	}
 
@@ -22,8 +20,17 @@ func TestOptsValidation(t *testing.T) {
 
 	opts = Opts[uint]{
 		Divider:          FairDivider,
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 		Output:           make(chan Prioritized[uint]),
+	}
+
+	_, err = New(opts)
+	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Divider:  FairDivider,
+		Feedback: make(chan uint),
+		Output:   make(chan Prioritized[uint]),
 	}
 
 	_, err = New(opts)
@@ -32,11 +39,21 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[uint]{
 		Divider:          FairDivider,
 		Feedback:         make(chan uint),
-		HandlersQuantity: handlersQuantity,
+		HandlersQuantity: 6,
 	}
 
 	_, err = New(opts)
 	require.Error(t, err)
+
+	opts = Opts[uint]{
+		Divider:          FairDivider,
+		Feedback:         make(chan uint),
+		HandlersQuantity: 6,
+		Output:           make(chan Prioritized[uint]),
+	}
+
+	_, err = New(opts)
+	require.NoError(t, err)
 }
 
 func BenchmarkDisciplineFair(b *testing.B) {

@@ -66,12 +66,6 @@ func main() {
         1: inputs[1],
     }
 
-    defer func() {
-        for _, input := range inputs {
-            close(input)
-        }
-    }()
-
     // Data from input channels passed to handlers by output channel
     output := make(chan priority.Prioritized[string])
 
@@ -80,11 +74,12 @@ func main() {
     defer close(feedback)
 
     // Used only in this example for detect that all written data are processed
-    measurements := make(chan bool)
-    defer close(measurements)
+    measures := make(chan string)
+    defer close(measures)
 
-    // For equaling use FairDivider, for prioritization use RateDivider or custom divider
-    disciplineOpts := priority.Opts[string]{
+    // For equaling use FairDivider, for prioritization use
+    // RateDivider or custom divider
+    opts := priority.Opts[string]{
         Divider:          priority.RateDivider,
         Feedback:         feedback,
         HandlersQuantity: uint(handlersQuantity),
@@ -92,7 +87,7 @@ func main() {
         Output:           output,
     }
 
-    discipline, err := priority.New(disciplineOpts)
+    discipline, err := priority.New(opts)
     if err != nil {
         panic(err)
     }
@@ -102,29 +97,13 @@ func main() {
     wg := &sync.WaitGroup{}
     defer wg.Wait()
 
-    // Run handlers, that process data
-    for handler := 0; handler < handlersQuantity; handler++ {
-        wg.Add(1)
-
-        go func() {
-            defer wg.Done()
-
-            for prioritized := range output {
-                // Data processing
-                // fmt.Println(prioritized.Item)
-                measurements <- true
-
-                feedback <- prioritized.Priority
-            }
-        }()
-    }
-
     // Run writers, that write data to input channels
     for priority, input := range inputs {
         wg.Add(1)
 
         go func(precedency uint, channel chan string) {
             defer wg.Done()
+            defer close(channel)
 
             base := strconv.Itoa(int(precedency))
 
@@ -136,13 +115,31 @@ func main() {
         }(priority, input)
     }
 
+    // Run handlers, that process data
+    for handler := 0; handler < handlersQuantity; handler++ {
+        wg.Add(1)
+
+        go func() {
+            defer wg.Done()
+
+            for prioritized := range output {
+                // Data processing
+                measures <- prioritized.Item
+
+                // Handler must indicate that current data has been processed and
+                // handler is ready to receive new data
+                feedback <- prioritized.Priority
+            }
+        }()
+    }
+
     // Terminate handlers
     defer close(output)
 
     received := 0
 
     // Wait for process all written data
-    for range measurements {
+    for range measures {
         received++
 
         if received == itemsQuantity*len(inputs) {
