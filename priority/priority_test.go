@@ -46,7 +46,6 @@ func BenchmarkDisciplineFair(b *testing.B) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 5000000)
 	msr.AddWrite(2, 5000000)
@@ -65,7 +64,7 @@ func BenchmarkDisciplineFair(b *testing.B) {
 
 	defer discipline.Stop()
 
-	_ = msr.Play(discipline)
+	_ = msr.Play(discipline, false)
 }
 
 func BenchmarkDisciplineRate(b *testing.B) {
@@ -75,7 +74,6 @@ func BenchmarkDisciplineRate(b *testing.B) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 5000000)
 	msr.AddWrite(2, 5000000)
@@ -94,7 +92,7 @@ func BenchmarkDisciplineRate(b *testing.B) {
 
 	defer discipline.Stop()
 
-	_ = msr.Play(discipline)
+	_ = msr.Play(discipline, false)
 }
 
 func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
@@ -105,7 +103,6 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 5000000)
 	msr.AddWrite(2, 5000000)
@@ -124,7 +121,7 @@ func BenchmarkDisciplineFairUnbuffered(b *testing.B) {
 
 	defer discipline.Stop()
 
-	_ = msr.Play(discipline)
+	_ = msr.Play(discipline, false)
 }
 
 func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
@@ -135,7 +132,6 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 5000000)
 	msr.AddWrite(2, 5000000)
@@ -154,7 +150,7 @@ func BenchmarkDisciplineRateUnbuffered(b *testing.B) {
 
 	defer discipline.Stop()
 
-	_ = msr.Play(discipline)
+	_ = msr.Play(discipline, false)
 }
 
 func TestDisciplineFair(t *testing.T) {
@@ -163,7 +159,6 @@ func TestDisciplineFair(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -182,7 +177,7 @@ func TestDisciplineFair(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -193,7 +188,6 @@ func TestDisciplineRate(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -212,7 +206,7 @@ func TestDisciplineRate(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -224,7 +218,6 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -243,7 +236,7 @@ func TestDisciplineFairUnbuffered(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -255,7 +248,6 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -274,7 +266,7 @@ func TestDisciplineRateUnbuffered(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -285,7 +277,6 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 1000000)
 	msr.AddWrite(2, 1000000)
@@ -343,7 +334,7 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 		discipline.AddInput(inputs[3], 7)
 	}()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	<-waiter
 
@@ -356,7 +347,6 @@ func TestDisciplineBadDivider(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -385,7 +375,7 @@ func TestDisciplineBadDivider(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.NotEqual(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
@@ -396,7 +386,6 @@ func TestDisciplineStop(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -424,7 +413,7 @@ func TestDisciplineStop(t *testing.T) {
 	defer discipline.Stop()
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, true)
 
 	require.NotEqual(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
 }
@@ -455,8 +444,7 @@ func TestDisciplineGracefulStop(t *testing.T) {
 		discipline.GracefulStop()
 	}()
 
-	measures := msr.Play(discipline)
-	msr.Finalize()
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -469,7 +457,6 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 1000000)
 	msr.AddWrite(2, 100000)
@@ -488,7 +475,7 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	quantities := calcInProcessing(measures, 100*time.Millisecond)
 
@@ -507,7 +494,6 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -526,7 +512,7 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	quantities := calcInProcessing(measures, 100*time.Millisecond)
 
@@ -543,7 +529,6 @@ func TestDisciplineFairTooSmallHandlersQuantity(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -562,7 +547,7 @@ func TestDisciplineFairTooSmallHandlersQuantity(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }
@@ -573,7 +558,6 @@ func TestDisciplineRateTooSmallHandlersQuantity(t *testing.T) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 100000)
 	msr.AddWrite(2, 100000)
@@ -592,7 +576,7 @@ func TestDisciplineRateTooSmallHandlersQuantity(t *testing.T) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }

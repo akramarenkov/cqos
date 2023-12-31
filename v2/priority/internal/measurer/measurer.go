@@ -316,11 +316,11 @@ func (msr *Measurer) handle(
 }
 
 func (msr *Measurer) prepare() (chan Measure, []Measure) {
-	quantity := msr.GetExpectedMeasuresQuantity()
-
 	if msr.opts.DisableMeasures {
-		quantity = 0
+		return make(chan Measure), make([]Measure, 0)
 	}
+
+	quantity := msr.GetExpectedMeasuresQuantity()
 
 	return make(chan Measure, quantity), make([]Measure, 0, quantity)
 }

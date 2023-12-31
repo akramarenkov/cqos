@@ -14,6 +14,7 @@ const (
 )
 
 type measureDiscipline[Type any] interface {
+	Stop()
 	Err() <-chan error
 }
 
@@ -95,11 +96,6 @@ func newMeasurer(opts measurerOpts) *measurer {
 	}
 
 	return msr
-}
-
-func (msr *measurer) Finalize() {
-	close(msr.feedback)
-	close(msr.output)
 }
 
 func (msr *measurer) updateInput(priority uint) {
@@ -311,6 +307,10 @@ func (msr *measurer) handle(
 	starter *starter.Starter,
 ) {
 	if msr.opts.DisableMeasures {
+		channel <- measure{}
+		channel <- measure{}
+		channel <- measure{}
+
 		if !msr.opts.NoFeedback {
 			msr.feedback <- item.Priority
 		}
@@ -356,22 +356,23 @@ func (msr *measurer) prepare() (chan measure, []measure) {
 	quantity := msr.GetExpectedMeasuresQuantity()
 
 	if msr.opts.DisableMeasures {
-		quantity = 0
+		return make(chan measure, quantity), make([]measure, 0)
 	}
 
 	return make(chan measure, quantity), make([]measure, 0, quantity)
 }
 
-func (msr *measurer) Play(discipline measureDiscipline[uint]) []measure {
+func (msr *measurer) Play(
+	discipline measureDiscipline[uint],
+	incomplete bool,
+) []measure {
+	defer close(msr.feedback)
+
 	channel, measures := msr.prepare()
 	defer close(channel)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		<-discipline.Err()
-		cancel()
-	}()
+	defer cancel()
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
@@ -379,20 +380,25 @@ func (msr *measurer) Play(discipline measureDiscipline[uint]) []measure {
 	msr.runWriters(ctx, wg)
 	msr.runHandlers(ctx, wg, channel)
 
-	if msr.opts.DisableMeasures {
-		return nil
-	}
+	defer close(msr.output)
 
-	defer cancel()
+	received := 0
 
 	for {
 		select {
-		case <-ctx.Done():
-			return measures
+		case err := <-discipline.Err():
+			if err != nil || incomplete {
+				cancel()
+				return measures
+			}
 		case measure := <-channel:
-			measures = append(measures, measure)
+			if !msr.opts.DisableMeasures {
+				measures = append(measures, measure)
+			}
 
-			if len(measures) == cap(channel) {
+			received++
+
+			if received == cap(channel) {
 				return measures
 			}
 		}

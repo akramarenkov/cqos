@@ -189,7 +189,6 @@ func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 4000*factor)
 
@@ -226,7 +225,7 @@ func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	createGraphs(
 		t,
@@ -259,7 +258,6 @@ func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 450*factor)
 
@@ -296,7 +294,7 @@ func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	createGraphs(
 		t,
@@ -329,7 +327,6 @@ func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 4100*factor)
 
@@ -366,7 +363,7 @@ func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	createGraphs(
 		t,
@@ -399,7 +396,6 @@ func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 430*factor)
 
@@ -436,7 +432,7 @@ func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	createGraphs(
 		t,
@@ -470,7 +466,6 @@ func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 4000*factor)
 
@@ -504,7 +499,7 @@ func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer unmanaged.Stop()
 
-	measures := msr.Play(unmanaged)
+	measures := msr.Play(unmanaged, false)
 
 	createGraphs(
 		t,
@@ -538,7 +533,6 @@ func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 500*factor)
 
@@ -572,7 +566,7 @@ func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
 
 	defer unmanaged.Stop()
 
-	measures := msr.Play(unmanaged)
+	measures := msr.Play(unmanaged, false)
 
 	createGraphs(
 		t,
@@ -604,7 +598,6 @@ func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
 	}
 
 	msr := newMeasurer(measurerOpts)
-	defer msr.Finalize()
 
 	msr.AddWrite(1, 4000)
 
@@ -647,7 +640,7 @@ func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
 
 	defer discipline.Stop()
 
-	measures := msr.Play(discipline)
+	measures := msr.Play(discipline, false)
 
 	createGraphs(
 		t,
