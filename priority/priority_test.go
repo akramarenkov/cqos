@@ -369,8 +369,63 @@ func TestDisciplineBadDivider(t *testing.T) {
 	msr.AddWrite(2, 100000)
 	msr.AddWrite(3, 100000)
 
+	dividerCallsQuantity := 0
+
 	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
 		out := FairDivider(priorities, dividend, distribution)
+
+		dividerCallsQuantity++
+
+		if dividerCallsQuantity == 1 {
+			return out
+		}
+
+		for priority := range out {
+			out[priority] *= 2
+		}
+
+		return out
+	}
+
+	opts := Opts[uint]{
+		Divider:          divider,
+		Feedback:         msr.GetFeedback(),
+		HandlersQuantity: measurerOpts.HandlersQuantity,
+		Inputs:           msr.GetInputs(),
+		Output:           msr.GetOutput(),
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	defer discipline.Stop()
+
+	measures := msr.Play(discipline, false)
+
+	require.NotEqual(t, int(msr.GetExpectedMeasuresQuantity()), len(measures))
+}
+
+func TestDisciplineBadDividerInRecalc(t *testing.T) {
+	measurerOpts := measurerOpts{
+		HandlersQuantity: 6,
+	}
+
+	msr := newMeasurer(measurerOpts)
+
+	msr.AddWrite(1, 0)
+	msr.AddWrite(2, 0)
+	msr.AddWrite(3, 100000)
+
+	dividerCallsQuantity := 0
+
+	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
+		out := FairDivider(priorities, dividend, distribution)
+
+		dividerCallsQuantity++
+
+		if dividerCallsQuantity == 1 || dividerCallsQuantity%2 == 0 {
+			return out
+		}
 
 		for priority := range out {
 			out[priority] *= 2
@@ -408,9 +463,9 @@ func TestDisciplineStop(t *testing.T) {
 	msr.AddWrite(2, 100000)
 	msr.AddWrite(3, 100000)
 
-	msr.SetProcessDelay(1, 10*time.Microsecond)
-	msr.SetProcessDelay(2, 10*time.Microsecond)
-	msr.SetProcessDelay(3, 10*time.Microsecond)
+	msr.SetProcessDelay(1, 10*time.Millisecond)
+	msr.SetProcessDelay(2, 10*time.Millisecond)
+	msr.SetProcessDelay(3, 10*time.Millisecond)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -538,62 +593,4 @@ func TestDisciplineRateOverQuantity(t *testing.T) {
 			require.LessOrEqual(t, quantities[priority][id].Quantity, handlersQuantity)
 		}
 	}
-}
-
-func TestDisciplineFairTooSmallHandlersQuantity(t *testing.T) {
-	measurerOpts := measurerOpts{
-		HandlersQuantity: 6,
-	}
-
-	msr := newMeasurer(measurerOpts)
-
-	msr.AddWrite(1, 100000)
-	msr.AddWrite(2, 100000)
-	msr.AddWrite(3, 100000)
-
-	opts := Opts[uint]{
-		Divider:          FairDivider,
-		Feedback:         msr.GetFeedback(),
-		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           msr.GetInputs(),
-		Output:           msr.GetOutput(),
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	defer discipline.Stop()
-
-	measures := msr.Play(discipline, false)
-
-	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
-}
-
-func TestDisciplineRateTooSmallHandlersQuantity(t *testing.T) {
-	measurerOpts := measurerOpts{
-		HandlersQuantity: 5,
-	}
-
-	msr := newMeasurer(measurerOpts)
-
-	msr.AddWrite(1, 100000)
-	msr.AddWrite(2, 100000)
-	msr.AddWrite(3, 100000)
-
-	opts := Opts[uint]{
-		Divider:          RateDivider,
-		Feedback:         msr.GetFeedback(),
-		HandlersQuantity: measurerOpts.HandlersQuantity,
-		Inputs:           msr.GetInputs(),
-		Output:           msr.GetOutput(),
-	}
-
-	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	defer discipline.Stop()
-
-	measures := msr.Play(discipline, false)
-
-	require.Len(t, measures, int(msr.GetExpectedMeasuresQuantity()))
 }

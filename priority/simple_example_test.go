@@ -28,26 +28,20 @@ func ExampleSimple() {
 		1: inputs[1],
 	}
 
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan string)
+	defer close(measures)
 
 	handle := func(ctx context.Context, item string) {
 		// Data processing
-		// fmt.Println(item)
 		select {
 		case <-ctx.Done():
-		case measurements <- true:
+		case measures <- item:
 		}
 	}
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use FairDivider, for prioritization use
+	// RateDivider or custom divider
 	opts := priority.SimpleOpts[string]{
 		Divider:          priority.RateDivider,
 		Handle:           handle,
@@ -71,6 +65,7 @@ func ExampleSimple() {
 
 		go func(precedency uint, channel chan string) {
 			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -85,7 +80,7 @@ func ExampleSimple() {
 	received := 0
 
 	// Wait for process all written data
-	for range measurements {
+	for range measures {
 		received++
 
 		if received == itemsQuantity*len(inputs) {
@@ -117,18 +112,19 @@ func ExampleSimple_GracefulStop() {
 	}
 
 	// Used only in this example for detect that all written data are processed
-	measurements := make(chan bool)
+	measures := make(chan string)
+	defer close(measures)
 
 	handle := func(ctx context.Context, item string) {
 		// Data processing
-		// fmt.Println(item)
 		select {
 		case <-ctx.Done():
-		case measurements <- true:
+		case measures <- item:
 		}
 	}
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use FairDivider, for prioritization use
+	// RateDivider or custom divider
 	opts := priority.SimpleOpts[string]{
 		Divider:          priority.RateDivider,
 		Handle:           handle,
@@ -142,6 +138,7 @@ func ExampleSimple_GracefulStop() {
 	}
 
 	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	// Run writers, that write data to input channels
 	for priority, input := range inputs {
@@ -149,6 +146,7 @@ func ExampleSimple_GracefulStop() {
 
 		go func(precedency uint, channel chan string) {
 			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -161,39 +159,25 @@ func ExampleSimple_GracefulStop() {
 	}
 
 	obtained := make(chan int)
-	defer close(obtained)
 
-	// Counting the amount of received data
 	go func() {
+		defer close(obtained)
+
 		received := 0
 
-		for range measurements {
+		// Wait for process all written data
+		for range measures {
 			received++
+
+			if received == itemsQuantity*len(inputs) {
+				obtained <- received
+				return
+			}
 		}
-
-		obtained <- received
 	}()
-
-	// You must end write to input channels and close them (or remove),
-	// otherwise graceful stop not be ended
-	wg.Wait()
-
-	for _, input := range inputs {
-		close(input)
-	}
 
 	simple.GracefulStop()
 
-	// Terminate measurements
-	close(measurements)
-
-	received := <-obtained
-
-	// Verify data received from discipline
-	if received != itemsQuantity*len(inputs) {
-		panic("graceful stop work not properly")
-	}
-
-	fmt.Println("Processed items quantity:", received)
+	fmt.Println("Processed items quantity:", <-obtained)
 	// Output: Processed items quantity: 300
 }

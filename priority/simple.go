@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrEmptyHandle = errors.New("handle function was not specified")
+	ErrEmptyInput  = errors.New("input channels was not specified")
 )
 
 // Callback function called in handlers when an item is received.
@@ -38,6 +39,10 @@ type SimpleOpts[Type any] struct {
 func (opts SimpleOpts[Type]) isValid() error {
 	if opts.Handle == nil {
 		return ErrEmptyHandle
+	}
+
+	if len(opts.Inputs) == 0 {
+		return ErrEmptyInput
 	}
 
 	return nil

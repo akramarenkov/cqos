@@ -142,7 +142,8 @@ func ExampleDiscipline_GracefulStop() {
 	measures := make(chan string)
 	defer close(measures)
 
-	// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+	// For equaling use FairDivider, for prioritization use
+	// RateDivider or custom divider
 	opts := priority.Opts[string]{
 		Divider:          priority.RateDivider,
 		Feedback:         feedback,

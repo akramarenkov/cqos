@@ -10,6 +10,62 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSimpleOptsValidation(t *testing.T) {
+	opts := SimpleOpts[string]{
+		Handle:           func(ctx context.Context, item string) {},
+		HandlersQuantity: 6,
+		Inputs: map[uint]<-chan string{
+			1: make(chan string),
+		},
+	}
+
+	_, err := NewSimple(opts)
+	require.Error(t, err)
+
+	opts = SimpleOpts[string]{
+		Divider:          RateDivider,
+		HandlersQuantity: 6,
+		Inputs: map[uint]<-chan string{
+			1: make(chan string),
+		},
+	}
+
+	_, err = NewSimple(opts)
+	require.Error(t, err)
+
+	opts = SimpleOpts[string]{
+		Divider: RateDivider,
+		Handle:  func(ctx context.Context, item string) {},
+		Inputs: map[uint]<-chan string{
+			1: make(chan string),
+		},
+	}
+
+	_, err = NewSimple(opts)
+	require.Error(t, err)
+
+	opts = SimpleOpts[string]{
+		Divider:          RateDivider,
+		Handle:           func(ctx context.Context, item string) {},
+		HandlersQuantity: 6,
+	}
+
+	_, err = NewSimple(opts)
+	require.Error(t, err)
+
+	opts = SimpleOpts[string]{
+		Divider:          RateDivider,
+		Handle:           func(ctx context.Context, item string) {},
+		HandlersQuantity: 6,
+		Inputs: map[uint]<-chan string{
+			1: make(chan string),
+		},
+	}
+
+	_, err = NewSimple(opts)
+	require.NoError(t, err)
+}
+
 func TestSimple(t *testing.T) {
 	handlersQuantity := 100
 	inputCapacity := 10
@@ -180,22 +236,6 @@ func TestSimpleStop(t *testing.T) {
 			}
 		}
 	}
-}
-
-func TestSimpleOptsValidation(t *testing.T) {
-	opts := SimpleOpts[string]{
-		Handle: func(ctx context.Context, item string) {},
-	}
-
-	_, err := NewSimple(opts)
-	require.Error(t, err)
-
-	opts = SimpleOpts[string]{
-		Divider: RateDivider,
-	}
-
-	_, err = NewSimple(opts)
-	require.Error(t, err)
 }
 
 func TestSimpleBadDivider(t *testing.T) {
