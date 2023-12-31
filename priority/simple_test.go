@@ -12,8 +12,7 @@ import (
 
 func TestSimpleOptsValidation(t *testing.T) {
 	opts := SimpleOpts[string]{
-		Handle:           func(ctx context.Context, item string) {},
-		HandlersQuantity: 6,
+		Handle: func(ctx context.Context, item string) {},
 		Inputs: map[uint]<-chan string{
 			1: make(chan string),
 		},
@@ -23,8 +22,7 @@ func TestSimpleOptsValidation(t *testing.T) {
 	require.Error(t, err)
 
 	opts = SimpleOpts[string]{
-		Divider:          RateDivider,
-		HandlersQuantity: 6,
+		Divider: RateDivider,
 		Inputs: map[uint]<-chan string{
 			1: make(chan string),
 		},
@@ -36,34 +34,10 @@ func TestSimpleOptsValidation(t *testing.T) {
 	opts = SimpleOpts[string]{
 		Divider: RateDivider,
 		Handle:  func(ctx context.Context, item string) {},
-		Inputs: map[uint]<-chan string{
-			1: make(chan string),
-		},
 	}
 
 	_, err = NewSimple(opts)
 	require.Error(t, err)
-
-	opts = SimpleOpts[string]{
-		Divider:          RateDivider,
-		Handle:           func(ctx context.Context, item string) {},
-		HandlersQuantity: 6,
-	}
-
-	_, err = NewSimple(opts)
-	require.Error(t, err)
-
-	opts = SimpleOpts[string]{
-		Divider:          RateDivider,
-		Handle:           func(ctx context.Context, item string) {},
-		HandlersQuantity: 6,
-		Inputs: map[uint]<-chan string{
-			1: make(chan string),
-		},
-	}
-
-	_, err = NewSimple(opts)
-	require.NoError(t, err)
 }
 
 func TestSimple(t *testing.T) {
