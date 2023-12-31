@@ -1,6 +1,7 @@
 package join
 
 import (
+	"context"
 	"math"
 	"testing"
 	"time"
@@ -170,6 +171,89 @@ func TestDisciplineTimeout(t *testing.T) {
 
 	require.Equal(t, inSequence, outSequence)
 	require.Equal(t, expectedJoins, joins)
+}
+
+func TestDisciplineStop(t *testing.T) {
+	testDisciplineStop(t, false, false, defaultTestTimeout)
+	testDisciplineStop(t, false, false, 0)
+	testDisciplineStop(t, false, true, 0)
+}
+
+func TestDisciplineStopByCtx(t *testing.T) {
+	testDisciplineStop(t, true, false, defaultTestTimeout)
+	testDisciplineStop(t, true, false, 0)
+	testDisciplineStop(t, true, true, 0)
+}
+
+func testDisciplineStop(
+	t *testing.T,
+	byCtx bool,
+	useReleased bool,
+	timeout time.Duration,
+) {
+	quantity := 105
+	stopAt := 52
+
+	input := make(chan int)
+
+	released := make(chan struct{})
+	defer close(released)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	opts := Opts[int]{
+		Ctx:      ctx,
+		Input:    input,
+		JoinSize: 10,
+		Timeout:  timeout,
+	}
+
+	if useReleased {
+		opts.Released = released
+	}
+
+	discipline, err := New(opts)
+	require.NoError(t, err)
+
+	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
+
+	stop := func() {
+		if byCtx {
+			cancel()
+			return
+		}
+
+		discipline.Stop()
+	}
+
+	go func() {
+		defer close(input)
+
+		for stage := 1; stage <= quantity; stage++ {
+			if stage == stopAt {
+				stop()
+				return
+			}
+
+			inSequence = append(inSequence, stage)
+
+			input <- stage
+		}
+	}()
+
+	for slice := range discipline.Output() {
+		require.NotEqual(t, 0, slice)
+
+		outSequence = append(outSequence, slice...)
+
+		if useReleased {
+			stop()
+		}
+	}
+
+	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
