@@ -72,21 +72,24 @@ func (dsc *Discipline[Type]) main() {
 	defer close(dsc.err)
 	defer close(dsc.output)
 
-	wg := &sync.WaitGroup{}
+	dsc.loop()
+}
 
-	for priority := range dsc.opts.Inputs {
+func (dsc *Discipline[Type]) loop() {
+	wg := &sync.WaitGroup{}
+	defer wg.Wait()
+
+	for priority := range dsc.inputs {
 		wg.Add(1)
 
 		go dsc.io(wg, priority)
 	}
-
-	wg.Wait()
 }
 
 func (dsc *Discipline[Type]) io(wg *sync.WaitGroup, priority uint) {
 	defer wg.Done()
 
-	for item := range dsc.opts.Inputs[priority] {
+	for item := range dsc.inputs[priority].Channel {
 		dsc.send(item, priority)
 	}
 }

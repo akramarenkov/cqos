@@ -49,15 +49,18 @@ func (nmn *unmanaged[Type]) main() {
 	defer close(nmn.err)
 	defer nmn.breaker.Complete()
 
+	nmn.loop()
+}
+
+func (nmn *unmanaged[Type]) loop() {
 	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	for priority := range nmn.opts.Inputs {
 		wg.Add(1)
 
 		go nmn.io(wg, priority)
 	}
-
-	wg.Wait()
 }
 
 func (nmn *unmanaged[Type]) io(wg *sync.WaitGroup, priority uint) {
