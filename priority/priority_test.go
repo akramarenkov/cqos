@@ -295,9 +295,9 @@ func TestDisciplineAddRemoveInput(t *testing.T) {
 
 	msr := newMeasurer(measurerOpts)
 
-	msr.AddWrite(1, 1000000)
-	msr.AddWrite(2, 1000000)
-	msr.AddWrite(3, 1000000)
+	msr.AddWrite(1, 200000)
+	msr.AddWrite(2, 200000)
+	msr.AddWrite(3, 200000)
 
 	inputs := msr.GetInputs()
 
@@ -530,9 +530,9 @@ func TestDisciplineFairOverQuantity(t *testing.T) {
 
 	msr := newMeasurer(measurerOpts)
 
-	msr.AddWrite(1, 1000000)
-	msr.AddWrite(2, 100000)
-	msr.AddWrite(3, 10000)
+	msr.AddWrite(1, 100000)
+	msr.AddWrite(2, 50000)
+	msr.AddWrite(3, 25000)
 
 	opts := Opts[uint]{
 		Divider:          FairDivider,
