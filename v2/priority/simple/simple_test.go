@@ -26,6 +26,14 @@ func TestOptsValidation(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestDiscipline(t *testing.T) {
+	testDiscipline(t, false)
+}
+
+func TestBadDivider(t *testing.T) {
+	testDiscipline(t, true)
+}
+
 func testDiscipline(t *testing.T, useBadDivider bool) {
 	handlersQuantity := 100
 	inputCapacity := 10
@@ -43,13 +51,13 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 		inputsOpts[priority] = channel
 	}
 
-	measures := make(chan bool)
+	measures := make(chan string)
 	defer close(measures)
 
 	handle := func(item string) {
 		time.Sleep(1 * time.Millisecond)
 
-		measures <- true
+		measures <- item
 	}
 
 	dividerCallsQuantity := 0
@@ -124,12 +132,4 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 	} else {
 		require.Equal(t, itemsQuantity*len(inputs), received)
 	}
-}
-
-func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false)
-}
-
-func TestBadDivider(t *testing.T) {
-	testDiscipline(t, true)
 }

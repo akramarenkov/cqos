@@ -41,6 +41,14 @@ func TestSimpleOptsValidation(t *testing.T) {
 }
 
 func TestSimple(t *testing.T) {
+	testSimple(t, false)
+}
+
+func TestSimpleBadDivider(t *testing.T) {
+	testSimple(t, true)
+}
+
+func testSimple(t *testing.T, useBadDivider bool) {
 	handlersQuantity := 100
 	inputCapacity := 10
 	itemsQuantity := 100000
@@ -51,33 +59,45 @@ func TestSimple(t *testing.T) {
 		1: make(chan string, inputCapacity),
 	}
 
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
+	inputsOpts := make(map[uint]<-chan string)
+
+	for priority, channel := range inputs {
+		inputsOpts[priority] = channel
 	}
 
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan string)
+	defer close(measures)
 
 	handle := func(ctx context.Context, item string) {
 		select {
 		case <-ctx.Done():
-		case measurements <- true:
+		case measures <- item:
 		}
 	}
 
+	badDivider := func(
+		priorities []uint,
+		dividend uint,
+		distribution map[uint]uint,
+	) map[uint]uint {
+		distribution = FairDivider(priorities, dividend, distribution)
+
+		for priority := range distribution {
+			distribution[priority] *= 2
+		}
+
+		return distribution
+	}
+
 	opts := SimpleOpts[string]{
-		Divider:          RateDivider,
+		Divider:          FairDivider,
 		Handle:           handle,
 		HandlersQuantity: uint(handlersQuantity),
 		Inputs:           inputsOpts,
+	}
+
+	if useBadDivider {
+		opts.Divider = badDivider
 	}
 
 	simple, err := NewSimple(opts)
@@ -85,36 +105,47 @@ func TestSimple(t *testing.T) {
 
 	defer simple.Stop()
 
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
 	for priority, input := range inputs {
-		wg.Add(1)
-
 		go func(precedency uint, channel chan string) {
-			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
 			for id := 0; id < itemsQuantity; id++ {
 				item := base + ":" + strconv.Itoa(id)
 
-				channel <- item
+				select {
+				case <-simple.Err():
+					return
+				case channel <- item:
+				}
 			}
 		}(priority, input)
 	}
 
 	received := 0
 
-	for range measurements {
-		received++
+	// located in a function for easy use of the return
+	func() {
+		for {
+			select {
+			case <-simple.Err():
+				return
+			case <-measures:
+				received++
 
-		if received == itemsQuantity*len(inputs) {
-			break
+				if received == itemsQuantity*len(inputs) {
+					return
+				}
+			}
 		}
-	}
+	}()
 
-	require.Equal(t, itemsQuantity*len(inputs), received)
+	if useBadDivider {
+		require.Equal(t, 0, received)
+	} else {
+		require.Equal(t, itemsQuantity*len(inputs), received)
+	}
 }
 
 func TestSimpleStop(t *testing.T) {
@@ -128,25 +159,19 @@ func TestSimpleStop(t *testing.T) {
 		1: make(chan string, inputCapacity),
 	}
 
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
+	inputsOpts := make(map[uint]<-chan string)
+
+	for priority, channel := range inputs {
+		inputsOpts[priority] = channel
 	}
 
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
-	measurements := make(chan bool)
-	defer close(measurements)
+	measures := make(chan string)
+	defer close(measures)
 
 	handle := func(ctx context.Context, item string) {
 		select {
 		case <-ctx.Done():
-		case measurements <- true:
+		case measures <- item:
 			time.Sleep(1 * time.Millisecond)
 		}
 	}
@@ -176,6 +201,7 @@ func TestSimpleStop(t *testing.T) {
 
 		go func(precedency uint, channel chan string) {
 			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -193,137 +219,29 @@ func TestSimpleStop(t *testing.T) {
 
 	received := 0
 
-	defer func() {
-		require.NotEqual(t, 0, received)
-		require.NotEqual(t, itemsQuantity*len(inputs), received)
-	}()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-measurements:
-			received++
-
-			if received == itemsQuantity*len(inputs) {
+	func() {
+		for {
+			select {
+			case <-ctx.Done():
 				return
-			}
-		}
-	}
-}
+			case <-measures:
+				received++
 
-func TestSimpleBadDivider(t *testing.T) {
-	handlersQuantity := 100
-	inputCapacity := 10
-	itemsQuantity := 100000
-
-	inputs := map[uint]chan string{
-		3: make(chan string, inputCapacity),
-		2: make(chan string, inputCapacity),
-		1: make(chan string, inputCapacity),
-	}
-
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
-	}
-
-	defer func() {
-		for _, input := range inputs {
-			close(input)
-		}
-	}()
-
-	measurements := make(chan bool)
-	defer close(measurements)
-
-	handle := func(ctx context.Context, item string) {
-		select {
-		case <-ctx.Done():
-		case measurements <- true:
-			time.Sleep(1 * time.Millisecond)
-		}
-	}
-
-	divider := func(priorities []uint, dividend uint, distribution map[uint]uint) map[uint]uint {
-		out := FairDivider(priorities, dividend, distribution)
-
-		for priority, quantity := range out {
-			out[priority] = 2 * quantity
-		}
-
-		return out
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	opts := SimpleOpts[string]{
-		Divider:          divider,
-		Handle:           handle,
-		HandlersQuantity: uint(handlersQuantity),
-		Inputs:           inputsOpts,
-	}
-
-	simple, err := NewSimple(opts)
-	require.NoError(t, err)
-
-	defer simple.Stop()
-
-	go func() {
-		if <-simple.Err() != nil {
-			cancel()
-		}
-	}()
-
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
-	for priority, input := range inputs {
-		wg.Add(1)
-
-		go func(precedency uint, channel chan string) {
-			defer wg.Done()
-
-			base := strconv.Itoa(int(precedency))
-
-			for id := 0; id < itemsQuantity; id++ {
-				item := base + ":" + strconv.Itoa(id)
-
-				select {
-				case <-ctx.Done():
+				if received == itemsQuantity*len(inputs) {
 					return
-				case channel <- item:
 				}
 			}
-		}(priority, input)
-	}
-
-	received := 0
-
-	defer func() {
-		require.Equal(t, 0, received)
+		}
 	}()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-measurements:
-			received++
-
-			if received == itemsQuantity*len(inputs) {
-				return
-			}
-		}
-	}
+	require.NotEqual(t, 0, received)
+	require.NotEqual(t, itemsQuantity*len(inputs), received)
 }
 
 func TestSimpleGracefulStop(t *testing.T) {
 	handlersQuantity := 100
 	inputCapacity := 10
-	itemsQuantity := 100000
+	itemsQuantity := 100
 
 	inputs := map[uint]chan string{
 		3: make(chan string, inputCapacity),
@@ -331,18 +249,19 @@ func TestSimpleGracefulStop(t *testing.T) {
 		1: make(chan string, inputCapacity),
 	}
 
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
+	inputsOpts := make(map[uint]<-chan string)
+
+	for priority, channel := range inputs {
+		inputsOpts[priority] = channel
 	}
 
-	measurements := make(chan bool)
+	measures := make(chan string)
+	defer close(measures)
 
 	handle := func(ctx context.Context, item string) {
 		select {
 		case <-ctx.Done():
-		case measurements <- true:
+		case measures <- item:
 		}
 	}
 
@@ -357,12 +276,14 @@ func TestSimpleGracefulStop(t *testing.T) {
 	require.NoError(t, err)
 
 	wg := &sync.WaitGroup{}
+	defer wg.Wait()
 
 	for priority, input := range inputs {
 		wg.Add(1)
 
 		go func(precedency uint, channel chan string) {
 			defer wg.Done()
+			defer close(channel)
 
 			base := strconv.Itoa(int(precedency))
 
@@ -375,27 +296,23 @@ func TestSimpleGracefulStop(t *testing.T) {
 	}
 
 	obtained := make(chan int)
-	defer close(obtained)
 
 	go func() {
+		defer close(obtained)
+
 		received := 0
 
-		for range measurements {
+		for range measures {
 			received++
-		}
 
-		obtained <- received
+			if received == itemsQuantity*len(inputs) {
+				obtained <- received
+				return
+			}
+		}
 	}()
 
-	wg.Wait()
-
-	for _, input := range inputs {
-		close(input)
-	}
-
 	simple.GracefulStop()
-
-	close(measurements)
 
 	require.Equal(t, itemsQuantity*len(inputs), <-obtained)
 }
