@@ -3,9 +3,11 @@ package join
 import (
 	"context"
 	"math"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/breaker"
 	"github.com/akramarenkov/cqos/internal/consts"
 
 	"github.com/stretchr/testify/require"
@@ -228,7 +230,14 @@ func testDisciplineStop(
 		discipline.Stop()
 	}
 
+	interrupter := breaker.NewClosing()
+
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+
 	go func() {
+		defer wg.Done()
 		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
@@ -239,7 +248,11 @@ func testDisciplineStop(
 
 			inSequence = append(inSequence, stage)
 
-			input <- stage
+			select {
+			case input <- stage:
+			case <-interrupter.Closed():
+				return
+			}
 		}
 	}()
 
@@ -250,8 +263,11 @@ func testDisciplineStop(
 
 		if useReleased {
 			stop()
+			interrupter.Close()
 		}
 	}
+
+	wg.Wait()
 
 	require.GreaterOrEqual(t, len(outSequence), len(inSequence)*80/100)
 }
