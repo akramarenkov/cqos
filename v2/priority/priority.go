@@ -91,17 +91,23 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := general.CalcByFactor(
+	capacity, err := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		common.DefaultCapacityFactor,
 		len(opts.Inputs),
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	feedbackLimit := general.CalcByFactor(
+	feedbackLimit, err := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		defaultFeedbackLimitFactor,
 		len(opts.Inputs),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	inputs, priorities, strategic, err := prepare(opts)
 	if err != nil {

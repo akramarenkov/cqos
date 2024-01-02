@@ -1,13 +1,28 @@
 package general
 
-import "math"
+import (
+	"math"
 
-func CalcByFactor(base int, factor float64, min int) int {
-	capacity := int(math.Round(factor * float64(base)))
+	"github.com/akramarenkov/safe"
 
-	if capacity < min {
-		return min
+	"golang.org/x/exp/constraints"
+)
+
+func CalcByFactor[Type constraints.Integer](
+	base Type,
+	factor float64,
+	min Type,
+) (Type, error) {
+	product := math.Round(factor * float64(base))
+
+	converted, err := safe.FloatToInt[float64, Type](product)
+	if err != nil {
+		return 0, err
 	}
 
-	return capacity
+	if converted < min {
+		return min, nil
+	}
+
+	return converted, nil
 }

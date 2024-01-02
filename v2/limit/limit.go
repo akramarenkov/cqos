@@ -48,11 +48,14 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity := general.CalcByFactor(
+	capacity, err := general.CalcByFactor(
 		int(opts.Limit.Quantity),
 		defaultCapacityFactor,
 		1,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	dsc := &Discipline[Type]{
 		opts: opts,

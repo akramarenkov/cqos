@@ -25,11 +25,14 @@ type Discipline[Type any] struct {
 }
 
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
-	capacity := general.CalcByFactor(
+	capacity, err := general.CalcByFactor(
 		int(opts.HandlersQuantity),
 		common.DefaultCapacityFactor,
 		len(opts.Inputs),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	dsc := &Discipline[Type]{
 		opts: opts,
