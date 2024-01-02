@@ -8,7 +8,7 @@ Works in two modes:
 
 1. Making a copy of the slice before writing it to the output channel
 
-2. Writes to the output channel of the accumulated slice without copying, in this case it is necessary to inform the discipline that the slice is no longer used by writing to the Released channel
+2. Writes to the output channel of the accumulated slice without copying, in this case it is necessary to inform the discipline that the slice is no longer used by call the Release() method
 
 ## Usage
 

@@ -10,11 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	defaultTestTimeout = (consts.OneHundredPercent *
-		consts.ReliablyMeasurableDuration) / defaultTimeoutInaccuracy
-)
-
 func TestOptsValidation(t *testing.T) {
 	opts := Opts[int]{
 		JoinSize: 10,
@@ -33,7 +28,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  10 * time.Millisecond,
+		Timeout:  consts.ReliablyMeasurableDuration,
 	}
 
 	_, err = New(opts)
@@ -42,6 +37,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
+		Timeout:  minDefaultTimeout,
 	}
 
 	_, err = New(opts)
@@ -50,7 +46,6 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  100 * time.Millisecond,
 	}
 
 	_, err = New(opts)
@@ -58,11 +53,11 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false, defaultTestTimeout)
+	testDiscipline(t, false, minDefaultTimeout)
 }
 
 func TestDisciplineNoCopy(t *testing.T) {
-	testDiscipline(t, true, defaultTestTimeout)
+	testDiscipline(t, true, minDefaultTimeout)
 }
 
 func TestDisciplineUntimeouted(t *testing.T) {
@@ -167,11 +162,11 @@ func TestDisciplineTimeout(t *testing.T) {
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, defaultTestTimeout)
+	benchmarkDiscipline(b, false, minDefaultTimeout)
 }
 
-func BenchmarkDisciplineReleased(b *testing.B) {
-	benchmarkDiscipline(b, true, defaultTestTimeout)
+func BenchmarkDisciplineRelease(b *testing.B) {
+	benchmarkDiscipline(b, true, minDefaultTimeout)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {
@@ -179,7 +174,7 @@ func BenchmarkDisciplineUntimeouted(b *testing.B) {
 }
 
 func benchmarkDiscipline(b *testing.B, noCopy bool, timeout time.Duration) {
-	quantity := 10000000
+	quantity := b.N
 
 	input := make(chan int)
 

@@ -5,6 +5,7 @@ package join
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/akramarenkov/cqos/breaker"
@@ -13,10 +14,6 @@ import (
 var (
 	ErrEmptyInput      = errors.New("input channel was not specified")
 	ErrInvalidJoinSize = errors.New("invalid join size")
-)
-
-const (
-	defaultTimeoutInaccuracy = 25
 )
 
 // Options of the created discipline
@@ -90,7 +87,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	interval, err := calcInterruptIntervalZeroAllowed(
+	interval, err := calcInterruptIntervalNonPositiveAllowed(
 		opts.Timeout,
 		opts.TimeoutInaccuracy,
 	)
@@ -239,11 +236,7 @@ func (dsc *Discipline[Type]) resetJoin() {
 }
 
 func (dsc *Discipline[Type]) copyJoin() []Type {
-	sent := make([]Type, len(dsc.join))
-
-	copy(sent, dsc.join)
-
-	return sent
+	return slices.Clone(dsc.join)
 }
 
 func (dsc *Discipline[Type]) prepareJoin() []Type {

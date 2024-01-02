@@ -4,16 +4,13 @@ package join
 
 import (
 	"errors"
+	"slices"
 	"time"
 )
 
 var (
 	ErrInputEmpty   = errors.New("input channel was not specified")
 	ErrJoinSizeZero = errors.New("join size is zero")
-)
-
-const (
-	defaultTimeoutInaccuracy = 25
 )
 
 // Options of the created discipline
@@ -80,7 +77,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	interval, err := calcInterruptIntervalZeroAllowed(
+	interval, err := calcInterruptIntervalNonPositiveAllowed(
 		opts.Timeout,
 		opts.TimeoutInaccuracy,
 	)
@@ -201,11 +198,7 @@ func (dsc *Discipline[Type]) resetJoin() {
 }
 
 func (dsc *Discipline[Type]) copyJoin() []Type {
-	sent := make([]Type, len(dsc.join))
-
-	copy(sent, dsc.join)
-
-	return sent
+	return slices.Clone(dsc.join)
 }
 
 func (dsc *Discipline[Type]) prepareJoin() []Type {
