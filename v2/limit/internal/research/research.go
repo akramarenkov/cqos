@@ -2,12 +2,12 @@
 package research
 
 import (
+	"slices"
 	"sort"
 	"strconv"
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -22,7 +22,7 @@ func CalcIntervalQuantities(
 		return nil, 0
 	}
 
-	durations.Sort(relativeTimes)
+	slices.Sort(relativeTimes)
 
 	maxRelativeTimes := relativeTimes[len(relativeTimes)-1]
 
@@ -108,7 +108,7 @@ func CalcRelativeDeviations(
 		return nil
 	}
 
-	durations.Sort(relativeTimes)
+	slices.Sort(relativeTimes)
 
 	deviations := make(map[int]int, deviationsLength)
 

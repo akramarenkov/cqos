@@ -1,10 +1,10 @@
 package priority
 
 import (
+	"slices"
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/internal/durations"
 	"github.com/akramarenkov/cqos/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -247,7 +247,7 @@ func processLatencies(
 	interval time.Duration,
 ) map[uint][]qot.QuantityOverTime {
 	for priority := range latencies {
-		durations.Sort(latencies[priority])
+		slices.Sort(latencies[priority])
 	}
 
 	min := -interval

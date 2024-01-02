@@ -2,10 +2,10 @@
 package research
 
 import (
+	"slices"
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
@@ -249,7 +249,7 @@ func processLatencies(
 	interval time.Duration,
 ) map[uint][]qot.QuantityOverTime {
 	for priority := range latencies {
-		durations.Sort(latencies[priority])
+		slices.Sort(latencies[priority])
 	}
 
 	min := -interval
