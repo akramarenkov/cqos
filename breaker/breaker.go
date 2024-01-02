@@ -3,7 +3,7 @@ package breaker
 
 import "sync"
 
-// Safely closes the channel
+// Closes the channel, but only once
 type Closing struct {
 	channel chan struct{}
 	once    *sync.Once
