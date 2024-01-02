@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/internal/durations"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 	"github.com/akramarenkov/cqos/v2/limit/internal/stressor"
 
@@ -530,7 +529,7 @@ func formatTotalDuration(expected time.Duration, relativeTimes []time.Duration) 
 	out := fmt.Sprintf(
 		"total duration: {expected:  %s, actual: %s}",
 		expected,
-		durations.CalcTotalDuration(relativeTimes),
+		research.CalcTotalDuration(relativeTimes),
 	)
 
 	return out
