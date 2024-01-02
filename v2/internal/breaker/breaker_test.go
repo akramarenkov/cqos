@@ -6,32 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestClosing(t *testing.T) {
-	closing := NewClosing()
-
-	select {
-	case <-closing.Closed():
-		require.FailNow(t, "must not be closed")
-	default:
-	}
-
-	closing.Close()
-
-	select {
-	case <-closing.Closed():
-	default:
-		require.FailNow(t, "must be closed")
-	}
-
-	closing.Close()
-
-	select {
-	case <-closing.Closed():
-	default:
-		require.FailNow(t, "must be closed")
-	}
-}
-
 func TestBreaker(t *testing.T) {
 	breaker := New()
 

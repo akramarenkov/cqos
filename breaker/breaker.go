@@ -5,59 +5,53 @@ import "sync"
 
 // Safely closes the channel
 type Closing struct {
-	closable chan struct{}
-	closed   bool
-	mutex    *sync.Mutex
+	channel chan struct{}
+	once    *sync.Once
 }
 
 func NewClosing() *Closing {
 	cls := &Closing{
-		closable: make(chan struct{}),
-		mutex:    &sync.Mutex{},
+		channel: make(chan struct{}),
+		once:    &sync.Once{},
 	}
 
 	return cls
 }
 
 func (cls *Closing) Close() {
-	cls.mutex.Lock()
-	defer cls.mutex.Unlock()
-
-	if cls.closed {
-		return
+	do := func() {
+		close(cls.channel)
 	}
 
-	close(cls.closable)
-
-	cls.closed = true
+	cls.once.Do(do)
 }
 
 func (cls *Closing) Closed() <-chan struct{} {
-	return cls.closable
+	return cls.channel
 }
 
 // Used to break goroutine and wait it completion
 type Breaker struct {
-	breaker   *Closing
-	completer *Closing
+	completer   *Closing
+	interrupter *Closing
 }
 
 func New() *Breaker {
 	brk := &Breaker{
-		breaker:   NewClosing(),
-		completer: NewClosing(),
+		completer:   NewClosing(),
+		interrupter: NewClosing(),
 	}
 
 	return brk
 }
 
 func (brk *Breaker) Break() {
-	brk.breaker.Close()
+	brk.interrupter.Close()
 	<-brk.completer.Closed()
 }
 
 func (brk *Breaker) Breaked() <-chan struct{} {
-	return brk.breaker.Closed()
+	return brk.interrupter.Closed()
 }
 
 func (brk *Breaker) Complete() {

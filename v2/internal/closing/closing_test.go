@@ -1,4 +1,4 @@
-package breaker
+package closing
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestClosing(t *testing.T) {
-	closing := NewClosing()
+	closing := New()
 
 	select {
 	case <-closing.Closed():
@@ -32,39 +32,8 @@ func TestClosing(t *testing.T) {
 	}
 }
 
-func TestBreaker(t *testing.T) {
-	breaker := New()
-
-	select {
-	case <-breaker.Breaked():
-		require.FailNow(t, "must not be breaked")
-	default:
-	}
-
-	go func() {
-		defer breaker.Complete()
-		<-breaker.Breaked()
-	}()
-
-	breaker.Break()
-
-	select {
-	case <-breaker.Breaked():
-	default:
-		require.FailNow(t, "must be breaked")
-	}
-
-	breaker.Break()
-
-	select {
-	case <-breaker.Breaked():
-	default:
-		require.FailNow(t, "must be breaked")
-	}
-}
-
 func BenchmarkRace(b *testing.B) {
-	closing := NewClosing()
+	closing := New()
 
 	for run := 0; run < b.N; run++ {
 		b.RunParallel(

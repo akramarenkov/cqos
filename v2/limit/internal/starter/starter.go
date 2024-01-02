@@ -5,7 +5,7 @@ package starter
 import (
 	"sync"
 
-	"github.com/akramarenkov/cqos/v2/internal/breaker"
+	"github.com/akramarenkov/cqos/v2/internal/closing"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 
 type Starter struct {
 	added     []uint
-	closing   breaker.Closing
+	closing   *closing.Closing
 	doneAfter uint
 	mutex     *sync.RWMutex
 	wg        *sync.WaitGroup
@@ -26,7 +26,7 @@ func New(doneAfter uint) *Starter {
 	}
 
 	str := &Starter{
-		closing:   *breaker.NewClosing(),
+		closing:   closing.New(),
 		doneAfter: doneAfter,
 		mutex:     &sync.RWMutex{},
 		wg:        &sync.WaitGroup{},
