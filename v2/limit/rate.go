@@ -58,12 +58,8 @@ func (rate Rate) Optimize() (Rate, error) {
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {
-	if rate.Interval <= 0 {
-		return Rate{}, ErrIntervalZeroNegative
-	}
-
-	if rate.Quantity == 0 {
-		return Rate{}, ErrQuantityZero
+	if err := rate.IsValid(); err != nil {
+		return Rate{}, err
 	}
 
 	if min < 0 {
