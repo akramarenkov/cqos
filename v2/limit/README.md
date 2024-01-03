@@ -20,7 +20,7 @@ However, the performance of the discipline if the speed is specified in the form
 
 Thus, when choosing units of measurement, you can balance between the uniform distribution of data elements over time and performance (the maximum achievable speed)
 
-Based on measurements, specifying a time interval of less than 10 milliseconds greatly reduces performance
+Based on measurements, specifying a time interval of less than 10 milliseconds significantly reduces performance and accuracy
 
 ## Usage
 
