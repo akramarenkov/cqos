@@ -1,4 +1,4 @@
-// Internal package with quantity over time struct used in research
+// Internal package with quantity over time struct used in research.
 package qot
 
 import (

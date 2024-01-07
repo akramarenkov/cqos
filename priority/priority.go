@@ -1,4 +1,4 @@
-// Discipline that used to distributes data among handlers according to priority
+// Discipline that used to distributes data among handlers according to priority.
 package priority
 
 import (
@@ -30,13 +30,13 @@ type inputAdd[Type any] struct {
 	priority uint
 }
 
-// Describes the data distributed by the prioritization discipline
+// Describes the data distributed by the prioritization discipline.
 type Prioritized[Type any] struct {
 	Item     Type
 	Priority uint
 }
 
-// Options of the created discipline
+// Options of the created discipline.
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
@@ -62,7 +62,7 @@ type Opts[Type any] struct {
 //
 // Handlers must write priority of processed data to feedback channel after it has been processed.
 //
-// For equaling use FairDivider, for prioritization use RateDivider or custom divider
+// For equaling use FairDivider, for prioritization use RateDivider or custom divider.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -118,7 +118,7 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -170,14 +170,14 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // The single nil value means that the discipline has terminated in normal mode.
 //
 // If you are sure that the divider is working correctly, then you don’t have to
-// read from this channel and you don’t have to check the received value
+// read from this channel and you don’t have to check the received value.
 func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
 
 // Roughly terminates work of the discipline.
 //
-// Use for wait completion at terminates via context
+// Use for wait completion at terminates via context.
 func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
 }
@@ -187,7 +187,7 @@ func (dsc *Discipline[Type]) Stop() {
 // Waits draining input channels, waits end processing data in handlers and terminates.
 //
 // You must end write to input channels and close them (or remove), otherwise graceful
-// stop not be ended
+// stop not be ended.
 func (dsc *Discipline[Type]) GracefulStop() {
 	dsc.graceful.Break()
 }
@@ -218,7 +218,7 @@ func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
-// Adds or updates (if it added previously) input channel for specified priority
+// Adds or updates (if it added previously) input channel for specified priority.
 func (dsc *Discipline[Type]) AddInput(channel <-chan Type, priority uint) {
 	in := inputAdd[Type]{
 		channel:  channel,
@@ -236,7 +236,7 @@ func (dsc *Discipline[Type]) addInput(channel <-chan Type, priority uint) {
 	dsc.strategic = dsc.opts.Divider(dsc.priorities, dsc.opts.HandlersQuantity, nil)
 }
 
-// Removes input channel for specified priority
+// Removes input channel for specified priority.
 func (dsc *Discipline[Type]) RemoveInput(priority uint) {
 	dsc.inputRmvs <- priority
 }

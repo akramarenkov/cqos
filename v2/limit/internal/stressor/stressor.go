@@ -1,5 +1,5 @@
 // Internal package with implementation of the Stressor that was used to load the
-// system and runtime
+// system and runtime.
 package stressor
 
 import (

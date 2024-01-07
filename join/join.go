@@ -1,5 +1,5 @@
 // Discipline that used to accumulates elements from the input channel into a slice and
-// writes it to the output channel when the size or timeout is reached
+// writes it to the output channel when the size or timeout is reached.
 package join
 
 import (
@@ -16,7 +16,7 @@ var (
 	ErrInvalidJoinSize = errors.New("invalid join size")
 )
 
-// Options of the created discipline
+// Options of the created discipline.
 type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
@@ -67,7 +67,7 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Join discipline
+// Join discipline.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -79,7 +79,7 @@ type Discipline[Type any] struct {
 	sendAt            time.Time
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -114,14 +114,14 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 // Returns output channel.
 //
-// If this channel is closed, it means that the discipline is terminated
+// If this channel is closed, it means that the discipline is terminated.
 func (dsc *Discipline[Type]) Output() <-chan []Type {
 	return dsc.output
 }
 
 // Roughly terminates work of the discipline.
 //
-// Use for wait completion at terminates via context
+// Use for wait completion at terminates via context.
 func (dsc *Discipline[Type]) Stop() {
 	dsc.breaker.Break()
 }

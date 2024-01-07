@@ -1,9 +1,9 @@
-// Internal package used to closes the channel once
+// Internal package used to closes the channel once.
 package closing
 
 import "sync"
 
-// Closes the channel, but only once
+// Closes the channel, but only once.
 type Closing struct {
 	channel chan struct{}
 	once    *sync.Once

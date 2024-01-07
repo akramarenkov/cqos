@@ -272,7 +272,7 @@ func benchmarkDiscipline(
 		}
 	}()
 
-	for range discipline.Output() { // nolint:revive
+	for range discipline.Output() { //nolint:revive
 	}
 
 	duration := time.Since(startedAt)

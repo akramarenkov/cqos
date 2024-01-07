@@ -1,9 +1,9 @@
-// Mostly internal package used to break goroutine and wait it completion
+// Mostly internal package used to break goroutine and wait it completion.
 package breaker
 
 import "sync"
 
-// Closes the channel, but only once
+// Closes the channel, but only once.
 type Closing struct {
 	channel chan struct{}
 	once    *sync.Once
@@ -30,7 +30,7 @@ func (cls *Closing) Closed() <-chan struct{} {
 	return cls.channel
 }
 
-// Used to break goroutine and wait it completion
+// Used to break goroutine and wait it completion.
 type Breaker struct {
 	completer   *Closing
 	interrupter *Closing

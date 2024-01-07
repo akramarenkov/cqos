@@ -1,16 +1,22 @@
 linters:
   enable:
+    - bidichk
     - bodyclose
     - decorder
     - errcheck
     - errname
     - errorlint
+    - exportloopref
     - forbidigo
+    - forcetypeassert
     - gocheckcompilerdirectives
     - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
     - goconst
     - gocritic
     - gocyclo
+    - godot
     - godox
     - gofmt
     - goheader
@@ -24,11 +30,13 @@ linters:
     - nestif
     - nilerr
     - nilnil
+    - nolintlint
     - perfsprint
     - prealloc
     - predeclared
     - reassign
     - revive
+    - sqlclosecheck
     - staticcheck
     - stylecheck
     - tenv
@@ -37,6 +45,7 @@ linters:
     - typecheck
     - unconvert
     - unused
+    - usestdlibvars
     - wastedassign
     - wsl
     - zerologlint

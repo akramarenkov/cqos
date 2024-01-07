@@ -1,5 +1,5 @@
 // Discipline that used to limits the speed of passing data elements from the
-// input channel to the output channel
+// input channel to the output channel.
 package limit
 
 import (
@@ -18,7 +18,7 @@ const (
 	defaultCapacityFactor = 0.1
 )
 
-// Options of the created discipline
+// Options of the created discipline.
 type Opts[Type any] struct {
 	// Input data channel. For terminate discipline it is necessary and sufficient to
 	// close the input channel
@@ -35,14 +35,14 @@ func (opts Opts[Type]) isValid() error {
 	return opts.Limit.IsValid()
 }
 
-// Limit discipline
+// Limit discipline.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	output chan Type
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 // Returns output channel.
 //
-// If this channel is closed, it means that the discipline is terminated
+// If this channel is closed, it means that the discipline is terminated.
 func (dsc *Discipline[Type]) Output() <-chan Type {
 	return dsc.output
 }

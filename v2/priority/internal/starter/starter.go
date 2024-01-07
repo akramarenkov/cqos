@@ -1,5 +1,5 @@
 // Internal package with implementation of the Starter which is used to run multiple
-// goroutines at the same time
+// goroutines at the same time.
 package starter
 
 import (

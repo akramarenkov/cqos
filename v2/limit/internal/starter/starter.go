@@ -1,5 +1,5 @@
 // Internal package with implementation of the Starter that used to wait for the start
-// of all goroutines after they have declared readiness n times
+// of all goroutines after they have declared readiness n times.
 package starter
 
 import (

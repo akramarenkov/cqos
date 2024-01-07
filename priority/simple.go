@@ -17,10 +17,10 @@ var (
 
 // Callback function called in handlers when an item is received.
 //
-// Function should be interrupted when context is canceled
+// Function should be interrupted when context is canceled.
 type Handle[Type any] func(ctx context.Context, item Type)
 
-// Options of the created discipline
+// Options of the created discipline.
 type SimpleOpts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
@@ -62,7 +62,7 @@ func (opts SimpleOpts[Type]) normalize() SimpleOpts[Type] {
 // Preferably input channels should be buffered for performance reasons.
 //
 // For equaling use divider.Fair divider, for prioritization use divider.Rate divider or
-// custom divider
+// custom divider.
 type Simple[Type any] struct {
 	opts SimpleOpts[Type]
 
@@ -79,7 +79,7 @@ type Simple[Type any] struct {
 	err chan error
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -138,14 +138,14 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 // the error is an incorrectly working dividing function in which the sum of
 // the distributed quantities is not equal to the original quantity.
 //
-// The single nil value means that the discipline has terminated in normal mode
+// The single nil value means that the discipline has terminated in normal mode.
 func (smpl *Simple[Type]) Err() <-chan error {
 	return smpl.err
 }
 
 // Roughly terminates work of the discipline.
 //
-// Use for wait completion at terminates via context
+// Use for wait completion at terminates via context.
 func (smpl *Simple[Type]) Stop() {
 	smpl.breaker.Break()
 }
@@ -155,7 +155,7 @@ func (smpl *Simple[Type]) Stop() {
 // Waits draining input channels, waits end processing data in handlers and terminates.
 //
 // You must end write to input channels and close them, otherwise graceful stop not be
-// ended
+// ended.
 func (smpl *Simple[Type]) GracefulStop() {
 	smpl.graceful.Break()
 }

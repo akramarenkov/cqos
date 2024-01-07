@@ -1,4 +1,4 @@
-// Discipline that used to distributes data among handlers according to priority
+// Discipline that used to distributes data among handlers according to priority.
 package priority
 
 import (
@@ -24,7 +24,7 @@ const (
 	defaultInterruptTimeout    = 1 * time.Nanosecond
 )
 
-// Options of the created discipline
+// Options of the created discipline.
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
 	Divider divider.Divider
@@ -45,7 +45,7 @@ type Opts[Type any] struct {
 // Handlers must call Release() method after the current data item has been processed.
 //
 // For equaling use divider.Fair divider, for prioritization use divider.Rate divider or
-// custom divider
+// custom divider.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -85,7 +85,7 @@ func (opts Opts[Type]) isValid() error {
 	return nil
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -180,12 +180,12 @@ func prepare[Type any](opts Opts[Type]) (
 
 // Returns output channel.
 //
-// If this channel is closed, it means that the discipline is terminated
+// If this channel is closed, it means that the discipline is terminated.
 func (dsc *Discipline[Type]) Output() <-chan types.Prioritized[Type] {
 	return dsc.output
 }
 
-// Marks that current data has been processed and handler is ready to receive new data
+// Marks that current data has been processed and handler is ready to receive new data.
 func (dsc *Discipline[Type]) Release(priority uint) {
 	dsc.feedback <- priority
 }
@@ -198,7 +198,7 @@ func (dsc *Discipline[Type]) Release(priority uint) {
 // The single nil value means that the discipline has terminated in normal mode.
 //
 // If you are sure that the divider is working correctly, then you don’t have to
-// read from this channel and you don’t have to check the received value
+// read from this channel and you don’t have to check the received value.
 func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }

@@ -12,10 +12,10 @@ var (
 	ErrHandleEmpty = errors.New("handle function was not specified")
 )
 
-// Callback function called in handlers when an item is received
+// Callback function called in handlers when an item is received.
 type Handle[Type any] func(item Type)
 
-// Options of the created discipline
+// Options of the created discipline.
 type Opts[Type any] struct {
 	// Determines how handlers are distributed among priorities
 	Divider divider.Divider
@@ -42,14 +42,14 @@ func (opts Opts[Type]) isValid() error {
 // Preferably input channels should be buffered for performance reasons.
 //
 // For equaling use divider.Fair divider, for prioritization use divider.Rate divider or
-// custom divider
+// custom divider.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
 	priority *priority.Discipline[Type]
 }
 
-// Creates and runs discipline
+// Creates and runs discipline.
 func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	if err := opts.isValid(); err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 // the error is an incorrectly working dividing function in which the sum of
 // the distributed quantities is not equal to the original quantity.
 //
-// The single nil value means that the discipline has terminated in normal mode
+// The single nil value means that the discipline has terminated in normal mode.
 func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.priority.Err()
 }

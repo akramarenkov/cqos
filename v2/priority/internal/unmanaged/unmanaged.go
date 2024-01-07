@@ -1,5 +1,5 @@
 // Internal package with the implementation of a discipline that does not
-// manage data according to their priority
+// manage data according to their priority.
 package unmanaged
 
 import (

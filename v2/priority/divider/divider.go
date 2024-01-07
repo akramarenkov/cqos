@@ -1,5 +1,5 @@
 // Several dividers are implemented here that distributes quantity of something by
-// priorities
+// priorities.
 package divider
 
 import (
@@ -13,7 +13,7 @@ import (
 //
 // Slice of priorities is passed to this function sorted from highest to lowest.
 //
-// Sum of the distributed quantities must equal the original quantity
+// Sum of the distributed quantities must equal the original quantity.
 type Divider func(priorities []uint, dividend uint, distribution map[uint]uint)
 
 // Distributes quantity evenly among the priorities.

@@ -1,9 +1,9 @@
-// Internal package used to break goroutine and wait it completion
+// Internal package used to break goroutine and wait it completion.
 package breaker
 
 import "github.com/akramarenkov/cqos/v2/internal/closing"
 
-// Used to break goroutine and wait it completion
+// Used to break goroutine and wait it completion.
 type Breaker struct {
 	completer   *closing.Closing
 	interrupter *closing.Closing

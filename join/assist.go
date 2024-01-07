@@ -15,7 +15,7 @@ var (
 
 // Maximum timeout error is calculated as timeout + timeout/divider.
 //
-// Relative timeout error in percent (inaccuracy) is calculated as 100/divider
+// Relative timeout error in percent (inaccuracy) is calculated as 100/divider.
 func calcInterruptInterval(
 	timeout time.Duration,
 	inaccuracy uint,

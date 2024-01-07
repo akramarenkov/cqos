@@ -1,4 +1,4 @@
-// Internal package with implementation of the measurer which is used for testing
+// Internal package with implementation of the measurer which is used for testing.
 package measurer
 
 import (
