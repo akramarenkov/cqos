@@ -18,8 +18,7 @@ jobs:
           cache: false
       - uses: actions/checkout@v3
       - run: |
-          go test -v -race ./...
-          go test -v -race -bench=^BenchmarkRace -run=^$ ./...
+          go test -v -race -bench=^BenchmarkRace ./...
 
           for dir in v[0-9]*;
           do
@@ -27,8 +26,7 @@ jobs:
 
             cd "${dir}" || continue
 
-            go test -v -race ./...
-            go test -v -race -bench=^BenchmarkRace -run=^$ ./...
+            go test -v -race -bench=^BenchmarkRace ./...
 
             cd ..
           done
