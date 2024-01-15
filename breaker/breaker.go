@@ -19,11 +19,11 @@ func NewClosing() *Closing {
 }
 
 func (cls *Closing) Close() {
-	do := func() {
-		close(cls.channel)
-	}
+	cls.once.Do(cls.close)
+}
 
-	cls.once.Do(do)
+func (cls *Closing) close() {
+	close(cls.channel)
 }
 
 func (cls *Closing) Closed() <-chan struct{} {
