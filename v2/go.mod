@@ -3,6 +3,7 @@ module github.com/akramarenkov/cqos/v2
 go 1.21
 
 require (
+	github.com/akramarenkov/breaker v0.0.1
 	github.com/akramarenkov/safe v0.2.2
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-echarts/go-echarts/v2 v2.3.2

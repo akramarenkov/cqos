@@ -3,7 +3,7 @@ package priority
 import (
 	"sync"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/breaker/breaker"
 )
 
 type unmanagedOpts[Type any] struct {
@@ -68,7 +68,7 @@ func (nmn *unmanaged[Type]) io(wg *sync.WaitGroup, priority uint) {
 
 	for {
 		select {
-		case <-nmn.breaker.Breaked():
+		case <-nmn.breaker.IsBreaked():
 			return
 		case item, opened := <-nmn.opts.Inputs[priority]:
 			if !opened {
@@ -88,7 +88,7 @@ func (nmn *unmanaged[Type]) send(item Type, priority uint) {
 
 	for {
 		select {
-		case <-nmn.breaker.Breaked():
+		case <-nmn.breaker.IsBreaked():
 			return
 		case nmn.opts.Output <- prioritized:
 			return

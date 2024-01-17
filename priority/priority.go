@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/breaker/breaker"
 	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 )
@@ -267,7 +267,7 @@ func (dsc *Discipline[Type]) loop() error {
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return nil
 		case <-dsc.opts.Ctx.Done():
 			return nil
@@ -289,7 +289,7 @@ func (dsc *Discipline[Type]) loop() error {
 
 		if processed == 0 {
 			select {
-			case <-dsc.graceful.Breaked():
+			case <-dsc.graceful.IsBreaked():
 				if dsc.isDrainedInputs() {
 					return nil
 				}
@@ -306,7 +306,7 @@ func (dsc *Discipline[Type]) loop() error {
 func (dsc *Discipline[Type]) waitZeroActual() {
 	for !dsc.isZeroActual() {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
@@ -318,7 +318,7 @@ func (dsc *Discipline[Type]) waitZeroActual() {
 
 func (dsc *Discipline[Type]) getOneFeedback() {
 	select {
-	case <-dsc.breaker.Breaked():
+	case <-dsc.breaker.IsBreaked():
 		return
 	case <-dsc.opts.Ctx.Done():
 		return
@@ -330,7 +330,7 @@ func (dsc *Discipline[Type]) getOneFeedback() {
 func (dsc *Discipline[Type]) getLimitedFeedback() {
 	for collected := 0; collected < dsc.feedbackLimit; collected++ {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
@@ -432,7 +432,7 @@ func (dsc *Discipline[Type]) io(priority uint) uint {
 
 	for dsc.tactic[priority] != 0 {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
@@ -458,7 +458,7 @@ func (dsc *Discipline[Type]) iou(priority uint) uint {
 
 	for dsc.tactic[priority] != 0 {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return processed
 		case <-dsc.opts.Ctx.Done():
 			return processed
@@ -498,7 +498,7 @@ func (dsc *Discipline[Type]) send(item Type, priority uint) uint {
 	}
 
 	select {
-	case <-dsc.breaker.Breaked():
+	case <-dsc.breaker.IsBreaked():
 		return 0
 	case <-dsc.opts.Ctx.Done():
 		return 0

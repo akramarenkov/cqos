@@ -5,7 +5,7 @@ package starter
 import (
 	"sync"
 
-	"github.com/akramarenkov/cqos/v2/internal/closing"
+	"github.com/akramarenkov/breaker/closing"
 )
 
 const (
@@ -74,5 +74,5 @@ func (str *Starter) Started() {
 }
 
 func (str *Starter) Wait() {
-	<-str.closing.Closed()
+	<-str.closing.IsClosed()
 }

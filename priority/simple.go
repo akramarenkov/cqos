@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/breaker/breaker"
 	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 )
@@ -180,9 +180,9 @@ func (smpl *Simple[Type]) main() {
 	}
 
 	select {
-	case <-smpl.breaker.Breaked():
+	case <-smpl.breaker.IsBreaked():
 	case <-smpl.opts.Ctx.Done():
-	case <-smpl.graceful.Breaked():
+	case <-smpl.graceful.IsBreaked():
 		smpl.priority.GracefulStop()
 	case err := <-smpl.priority.Err():
 		smpl.err <- err

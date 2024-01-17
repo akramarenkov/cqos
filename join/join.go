@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/breaker/breaker"
 )
 
 var (
@@ -146,7 +146,7 @@ func (dsc *Discipline[Type]) loop() {
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
@@ -169,7 +169,7 @@ func (dsc *Discipline[Type]) loopUntimeouted() {
 
 	for {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
@@ -203,7 +203,7 @@ func (dsc *Discipline[Type]) send() {
 	}
 
 	select {
-	case <-dsc.breaker.Breaked():
+	case <-dsc.breaker.IsBreaked():
 		return
 	case <-dsc.opts.Ctx.Done():
 		return
@@ -212,7 +212,7 @@ func (dsc *Discipline[Type]) send() {
 
 	if dsc.opts.Released != nil {
 		select {
-		case <-dsc.breaker.Breaked():
+		case <-dsc.breaker.IsBreaked():
 			return
 		case <-dsc.opts.Ctx.Done():
 			return

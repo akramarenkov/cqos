@@ -1,3 +1,5 @@
+github.com/akramarenkov/breaker v0.0.1 h1:9O8/I6vukxysUyRD6KCHFPNkghOk0JRKpx/G9s6/evg=
+github.com/akramarenkov/breaker v0.0.1/go.mod h1:4c9UrUJPjADBiZgS2iu5dNrV3idBFNN+hWQSHQ0dsPY=
 github.com/akramarenkov/safe v0.2.2 h1:b0rye/8e+aIfAa5KR6ug4uxGD++CQ3lVd5XR+P/S5nI=
 github.com/akramarenkov/safe v0.2.2/go.mod h1:53RYNRwB1ebeNwnn2O4NejhYnQB9sH4v3w/teZ7jWyU=
 github.com/caarlos0/env/v10 v10.0.0 h1:yIHUBZGsyqCnpTkbjk8asUlx6RFhhEs+h7TOBdgdzXA=

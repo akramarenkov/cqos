@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/breaker"
+	"github.com/akramarenkov/breaker/closing"
 	"github.com/akramarenkov/cqos/internal/consts"
 
 	"github.com/stretchr/testify/require"
@@ -225,7 +225,7 @@ func testDisciplineStop(
 		discipline.Stop()
 	}
 
-	interrupter := breaker.NewClosing()
+	interrupter := closing.New()
 
 	wg := &sync.WaitGroup{}
 
@@ -244,7 +244,7 @@ func testDisciplineStop(
 			inSequence = append(inSequence, stage)
 
 			select {
-			case <-interrupter.Closed():
+			case <-interrupter.IsClosed():
 				return
 			case input <- stage:
 			}

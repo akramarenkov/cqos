@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/akramarenkov/cqos/v2/internal/breaker"
+	"github.com/akramarenkov/breaker/breaker"
 	"github.com/akramarenkov/cqos/v2/limit/internal/starter"
 )
 
@@ -93,11 +93,11 @@ func (str *Stressor) runer(
 
 	for {
 		select {
-		case <-str.breaker.Breaked():
+		case <-str.breaker.IsBreaked():
 			return
 		case data := <-input:
 			select {
-			case <-str.breaker.Breaked():
+			case <-str.breaker.IsBreaked():
 				return
 			case output <- []rune(data):
 				str.starter.Done(id)
@@ -116,11 +116,11 @@ func (str *Stressor) stringer(
 
 	for {
 		select {
-		case <-str.breaker.Breaked():
+		case <-str.breaker.IsBreaked():
 			return
 		case data := <-input:
 			select {
-			case <-str.breaker.Breaked():
+			case <-str.breaker.IsBreaked():
 				return
 			case output <- string(data):
 				str.starter.Done(id)
