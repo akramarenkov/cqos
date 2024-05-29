@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/stressor"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
-	"github.com/akramarenkov/cqos/v2/limit/internal/stressor"
 
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
