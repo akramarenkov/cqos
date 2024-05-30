@@ -1,0 +1,1081 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="161cm" height="48cm" viewBox="8 16 3203 958" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="100" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="117.131">
+      <tspan x="50" y="117.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="30">
+    <tspan x="10" y="30">1. send/accumulate duration ratio = 1/4 </tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="220">
+    <tspan x="10" y="220">2. send/accumulate duration ratio = 1/2 </tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="410">
+    <tspan x="10" y="410">3. send/accumulate duration ratio = 1/1 </tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="600">
+    <tspan x="10" y="600">4. send/accumulate duration ratio = 2/1 </tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="790">
+    <tspan x="10" y="790">5. send/accumulate duration ratio = 4/1 </tspan>
+  </text>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="67.1312">
+      <tspan x="50" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="110" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="150" y="67.1312">
+      <tspan x="150" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="210" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="250" y="67.1312">
+      <tspan x="250" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="310" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="350" y="67.1312">
+      <tspan x="350" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="67.1312">
+      <tspan x="450" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="510" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="550" y="67.1312">
+      <tspan x="550" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="610" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="650" y="67.1312">
+      <tspan x="650" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="710" y="50" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="750" y="67.1312">
+      <tspan x="750" y="67.1312">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="90" y="130" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="147.131">
+      <tspan x="130" y="147.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="170" y="100" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="117.131">
+      <tspan x="210" y="117.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="130" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="147.131">
+      <tspan x="290" y="147.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="330" y="100" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="117.131">
+      <tspan x="370" y="117.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="130" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="147.131">
+      <tspan x="450" y="147.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="100" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="117.131">
+      <tspan x="530" y="117.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="570" y="130" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="147.131">
+      <tspan x="610" y="147.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="257.131">
+      <tspan x="50" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="130" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="170" y="257.131">
+      <tspan x="170" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="257.131">
+      <tspan x="290" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="370" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="410" y="257.131">
+      <tspan x="410" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="257.131">
+      <tspan x="530" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="610" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="650" y="257.131">
+      <tspan x="650" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="730" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="770" y="257.131">
+      <tspan x="770" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="850" y="240" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="890" y="257.131">
+      <tspan x="890" y="257.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="290" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="307.131">
+      <tspan x="50" y="307.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="90" y="320" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="337.131">
+      <tspan x="130" y="337.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="170" y="290" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="307.131">
+      <tspan x="210" y="307.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="320" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="337.131">
+      <tspan x="290" y="337.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="330" y="290" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="307.131">
+      <tspan x="370" y="307.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="320" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="337.131">
+      <tspan x="450" y="337.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="290" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="307.131">
+      <tspan x="530" y="307.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="570" y="320" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="337.131">
+      <tspan x="610" y="337.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="447.131">
+      <tspan x="50" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="170" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="447.131">
+      <tspan x="210" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="330" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="447.131">
+      <tspan x="370" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="447.131">
+      <tspan x="530" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="650" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="690" y="447.131">
+      <tspan x="690" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="810" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="850" y="447.131">
+      <tspan x="850" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="970" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="447.131">
+      <tspan x="1010" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1130" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1170" y="447.131">
+      <tspan x="1170" y="447.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1210" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1250" y="447.131">
+      <tspan x="1250" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="497.131">
+      <tspan x="50" y="497.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="90" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="527.131">
+      <tspan x="130" y="527.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="170" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="497.131">
+      <tspan x="210" y="497.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="527.131">
+      <tspan x="290" y="527.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="330" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="497.131">
+      <tspan x="370" y="497.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="527.131">
+      <tspan x="450" y="527.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="497.131">
+      <tspan x="530" y="497.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="570" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="527.131">
+      <tspan x="610" y="527.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="637.131">
+      <tspan x="50" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="637.131">
+      <tspan x="290" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="490" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="637.131">
+      <tspan x="530" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="730" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="770" y="637.131">
+      <tspan x="770" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="970" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="637.131">
+      <tspan x="1010" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1210" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1250" y="637.131">
+      <tspan x="1250" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1450" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1490" y="637.131">
+      <tspan x="1490" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1690" y="620" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1730" y="637.131">
+      <tspan x="1730" y="637.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="687.131">
+      <tspan x="50" y="687.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="90" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="717.131">
+      <tspan x="130" y="717.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="250" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="687.131">
+      <tspan x="290" y="687.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="717.131">
+      <tspan x="450" y="717.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="570" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="687.131">
+      <tspan x="610" y="687.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="730" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="770" y="717.131">
+      <tspan x="770" y="717.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="890" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="930" y="687.131">
+      <tspan x="930" y="687.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1050" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1090" y="717.131">
+      <tspan x="1090" y="717.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="827.131">
+      <tspan x="50" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="827.131">
+      <tspan x="450" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="810" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="850" y="827.131">
+      <tspan x="850" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1210" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1250" y="827.131">
+      <tspan x="1250" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1610" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1650" y="827.131">
+      <tspan x="1650" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="2010" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2050" y="827.131">
+      <tspan x="2050" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="2410" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2450" y="827.131">
+      <tspan x="2450" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="2810" y="810" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2850" y="827.131">
+      <tspan x="2850" y="827.131">accumulate</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="10" y="870" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="50" y="887.131">
+      <tspan x="50" y="887.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="90" y="900" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="917.131">
+      <tspan x="130" y="917.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="410" y="870" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="887.131">
+      <tspan x="450" y="887.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="730" y="900" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="770" y="917.131">
+      <tspan x="770" y="917.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1050" y="870" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1090" y="887.131">
+      <tspan x="1090" y="887.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1370" y="900" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1410" y="917.131">
+      <tspan x="1410" y="917.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="1690" y="870" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1730" y="887.131">
+      <tspan x="1730" y="887.131">accumulate 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #91cc75" x="2010" y="900" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2050" y="917.131">
+      <tspan x="2050" y="917.131">accumulate 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="100" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="100" y="117.131">
+      <tspan x="100" y="117.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="100" y="67.1312">
+      <tspan x="100" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="190" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="200" y="67.1312">
+      <tspan x="200" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="290" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="300" y="67.1312">
+      <tspan x="300" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="390" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="400" y="67.1312">
+      <tspan x="400" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="490" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="500" y="67.1312">
+      <tspan x="500" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="590" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="600" y="67.1312">
+      <tspan x="600" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="690" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="700" y="67.1312">
+      <tspan x="700" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="790" y="50" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="800" y="67.1312">
+      <tspan x="800" y="67.1312">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="170" y="130" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="180" y="147.131">
+      <tspan x="180" y="147.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="250" y="100" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="117.131">
+      <tspan x="260" y="117.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="330" y="130" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="340" y="147.131">
+      <tspan x="340" y="147.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="100" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="420" y="117.131">
+      <tspan x="420" y="117.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="490" y="130" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="500" y="147.131">
+      <tspan x="500" y="147.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="100" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="580" y="117.131">
+      <tspan x="580" y="117.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="650" y="130" width="20" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="660" y="147.131">
+      <tspan x="660" y="147.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="110" y="257.131">
+      <tspan x="110" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="210" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="230" y="257.131">
+      <tspan x="230" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="330" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="350" y="257.131">
+      <tspan x="350" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="450" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="470" y="257.131">
+      <tspan x="470" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="590" y="257.131">
+      <tspan x="590" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="690" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="710" y="257.131">
+      <tspan x="710" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="810" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="830" y="257.131">
+      <tspan x="830" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="930" y="240" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="950" y="257.131">
+      <tspan x="950" y="257.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="290" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="110" y="307.131">
+      <tspan x="110" y="307.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="170" y="320" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="190" y="337.131">
+      <tspan x="190" y="337.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="250" y="290" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="270" y="307.131">
+      <tspan x="270" y="307.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="330" y="320" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="350" y="337.131">
+      <tspan x="350" y="337.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="290" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="430" y="307.131">
+      <tspan x="430" y="307.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="490" y="320" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="510" y="337.131">
+      <tspan x="510" y="337.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="290" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="590" y="307.131">
+      <tspan x="590" y="307.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="650" y="320" width="40" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="670" y="337.131">
+      <tspan x="670" y="337.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="447.131">
+      <tspan x="130" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="250" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="447.131">
+      <tspan x="290" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="447.131">
+      <tspan x="450" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="447.131">
+      <tspan x="610" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="730" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="770" y="447.131">
+      <tspan x="770" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="890" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="930" y="447.131">
+      <tspan x="930" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1050" y="430" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1090" y="447.131">
+      <tspan x="1090" y="447.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="130" y="497.131">
+      <tspan x="130" y="497.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="170" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="527.131">
+      <tspan x="210" y="527.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="250" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="497.131">
+      <tspan x="290" y="497.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="330" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="527.131">
+      <tspan x="370" y="527.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="450" y="497.131">
+      <tspan x="450" y="497.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="490" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="527.131">
+      <tspan x="530" y="527.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="480" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="497.131">
+      <tspan x="610" y="497.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="650" y="510" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="690" y="527.131">
+      <tspan x="690" y="527.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="170" y="637.131">
+      <tspan x="170" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="330" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="410" y="637.131">
+      <tspan x="410" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="650" y="637.131">
+      <tspan x="650" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="810" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="890" y="637.131">
+      <tspan x="890" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1050" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1130" y="637.131">
+      <tspan x="1130" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1290" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1370" y="637.131">
+      <tspan x="1370" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1530" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1610" y="637.131">
+      <tspan x="1610" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1770" y="620" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1850" y="637.131">
+      <tspan x="1850" y="637.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="670" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="170" y="687.131">
+      <tspan x="170" y="687.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="250" y="700" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="330" y="717.131">
+      <tspan x="330" y="717.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="670" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="490" y="687.131">
+      <tspan x="490" y="687.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="570" y="700" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="650" y="717.131">
+      <tspan x="650" y="717.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="730" y="670" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="810" y="687.131">
+      <tspan x="810" y="687.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="890" y="700" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="970" y="717.131">
+      <tspan x="970" y="717.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1050" y="670" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1130" y="687.131">
+      <tspan x="1130" y="687.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1210" y="700" width="160" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1290" y="717.131">
+      <tspan x="1290" y="717.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="250" y="827.131">
+      <tspan x="250" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="490" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="650" y="827.131">
+      <tspan x="650" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="890" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1050" y="827.131">
+      <tspan x="1050" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1290" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1450" y="827.131">
+      <tspan x="1450" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1690" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1850" y="827.131">
+      <tspan x="1850" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="2090" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2250" y="827.131">
+      <tspan x="2250" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="2490" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2650" y="827.131">
+      <tspan x="2650" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="2890" y="810" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="3050" y="827.131">
+      <tspan x="3050" y="827.131">send</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="90" y="870" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="250" y="887.131">
+      <tspan x="250" y="887.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="410" y="900" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="570" y="917.131">
+      <tspan x="570" y="917.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="730" y="870" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="890" y="887.131">
+      <tspan x="890" y="887.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1050" y="900" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1210" y="917.131">
+      <tspan x="1210" y="917.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1370" y="870" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1530" y="887.131">
+      <tspan x="1530" y="887.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="1690" y="900" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1850" y="917.131">
+      <tspan x="1850" y="917.131">send 2</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="2010" y="870" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2170" y="887.131">
+      <tspan x="2170" y="887.131">send 1</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #5470c6" x="2330" y="900" width="320" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2490" y="917.131">
+      <tspan x="2490" y="917.131">send 2</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="10" y="970">
+    <tspan x="10" y="970">As a result, double buffering is more effective the closer the time of accumulation and sending of the slice is</tspan>
+  </text>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="170" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="210" y="717.131">
+      <tspan x="210" y="717.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="330" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="370" y="687.131">
+      <tspan x="370" y="687.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="490" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="530" y="717.131">
+      <tspan x="530" y="717.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="650" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="690" y="687.131">
+      <tspan x="690" y="687.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="810" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="850" y="717.131">
+      <tspan x="850" y="717.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="970" y="670" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1010" y="687.131">
+      <tspan x="1010" y="687.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="1130" y="700" width="80" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1170" y="717.131">
+      <tspan x="1170" y="717.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="170" y="900" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="290" y="917.131">
+      <tspan x="290" y="917.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="490" y="870" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="610" y="887.131">
+      <tspan x="610" y="887.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="810" y="900" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="930" y="917.131">
+      <tspan x="930" y="917.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="1130" y="870" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1250" y="887.131">
+      <tspan x="1250" y="887.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="1450" y="900" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1570" y="917.131">
+      <tspan x="1570" y="917.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="1770" y="870" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="1890" y="887.131">
+      <tspan x="1890" y="887.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="2090" y="900" width="240" height="30"/>
+    <text font-size="4.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="2210" y="917.131">
+      <tspan x="2210" y="917.131">waiting for sender goroutine</tspan>
+    </text>
+  </g>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="30">
+    <tspan x="260" y="30">Saving - 17.5% time. Total duration without double buffering is 8*1+8*4 = 40 conventional units, saved duration is 2*1+1*4+1*4/4 = 7 conventional units. One conventional unit is an send duration</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="220">
+    <tspan x="260" y="220">Saving - 29.1% time. Total duration without double buffering is 8*1+8*2 = 24 conventional units, saved duration is 3*1+2*2 = 7 conventional units. One conventional unit is an send duration</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="410">
+    <tspan x="260" y="410">Saving - 43.75% time. Total duration without double buffering is 8*1+8*1 = 16 conventional units, saved duration is 4*1+3*1 = 7 conventional units. One conventional unit is an send duration</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="600">
+    <tspan x="260" y="600">Saving - 29.1% time. Total duration without double buffering is 8*2+8*1 = 24 conventional units, saved duration is 2*2+1*2/2+2*1 = 7 conventional units. One conventional unit is an accumulation duration</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="260" y="790">
+    <tspan x="260" y="790">Saving - 17.5% time. Total duration without double buffering is 8*4+8*1 = 40 conventional units, saved duration is 1*4+1*4/2+1*1 = 7 conventional units. One conventional unit is an accumulation duration</tspan>
+  </text>
+</svg>

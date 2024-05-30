@@ -6,11 +6,30 @@ import (
 	"errors"
 	"slices"
 	"time"
+
+	"github.com/akramarenkov/cqos/v2/join/internal/spinner"
 )
 
 var (
 	ErrInputEmpty   = errors.New("input channel was not specified")
 	ErrJoinSizeZero = errors.New("join size is zero")
+)
+
+const (
+	// The number 2 in indicates the number of goroutines involved in processing
+	// slices. In this case, there are 2 of them - the accumulation and send
+	// goroutines.
+	involvedInProcessing = 2
+
+	// Defines buffers quantity. Cannot be less than number of goroutines involved
+	// in processing slices, but there may be more than this value, although this
+	// does not make sense.
+	buffersQuantity = involvedInProcessing
+
+	// To prevent from using still unsent slices by the accumulation goroutine,
+	// it must be blocked from writing to the interim channel on the last one of
+	// the unsent slices.
+	interimCapacity = buffersQuantity - involvedInProcessing
 )
 
 // Options of the created discipline.
@@ -62,11 +81,13 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
+	id                *spinner.Spinner
+	interim           chan int
 	interruptInterval time.Duration
-	join              []Type
+	joins             [][]Type
 	output            chan []Type
+	passAt            time.Time
 	release           chan struct{}
-	sendAt            time.Time
 }
 
 // Creates and runs discipline.
@@ -88,17 +109,26 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
+		id:                spinner.New(0, buffersQuantity-1),
+		interim:           make(chan int, interimCapacity),
 		interruptInterval: interval,
-		join:              make([]Type, 0, opts.JoinSize),
+		joins:             make([][]Type, buffersQuantity),
 		output:            make(chan []Type, 1),
 		release:           make(chan struct{}),
 	}
 
-	dsc.resetSendAt()
+	dsc.initJoins()
+	dsc.resetPassAt()
 
 	go dsc.main()
 
 	return dsc, nil
+}
+
+func (dsc *Discipline[Type]) initJoins() {
+	for id := range dsc.joins {
+		dsc.joins[id] = make([]Type, 0, dsc.opts.JoinSize)
+	}
 }
 
 // Returns output channel.
@@ -116,8 +146,15 @@ func (dsc *Discipline[Type]) Release() {
 }
 
 func (dsc *Discipline[Type]) main() {
-	defer close(dsc.release)
 	defer close(dsc.output)
+	defer close(dsc.release)
+
+	complete := make(chan struct{})
+	defer func() { <-complete }()
+
+	defer close(dsc.interim)
+
+	go dsc.sender(complete)
 
 	if dsc.interruptInterval == 0 {
 		dsc.loopUntimeouted()
@@ -127,8 +164,48 @@ func (dsc *Discipline[Type]) main() {
 	dsc.loop()
 }
 
+func (dsc *Discipline[Type]) sender(complete chan struct{}) {
+	defer close(complete)
+
+	for id := range dsc.interim {
+		dsc.send(id)
+	}
+}
+
+func (dsc *Discipline[Type]) send(id int) {
+	join := dsc.prepareJoin(id)
+
+	if len(join) == 0 {
+		return
+	}
+
+	dsc.output <- join
+
+	if dsc.opts.NoCopy {
+		<-dsc.release
+	}
+
+	dsc.resetJoin(id)
+}
+
+func (dsc *Discipline[Type]) prepareJoin(id int) []Type {
+	if dsc.opts.NoCopy {
+		return dsc.joins[id]
+	}
+
+	return dsc.copyJoin(id)
+}
+
+func (dsc *Discipline[Type]) copyJoin(id int) []Type {
+	return slices.Clone(dsc.joins[id])
+}
+
+func (dsc *Discipline[Type]) resetJoin(id int) {
+	dsc.joins[id] = dsc.joins[id][:0]
+}
+
 func (dsc *Discipline[Type]) loop() {
-	defer dsc.send()
+	defer dsc.pass()
 
 	ticker := time.NewTicker(dsc.interruptInterval)
 	defer ticker.Stop()
@@ -137,7 +214,7 @@ func (dsc *Discipline[Type]) loop() {
 		select {
 		case <-ticker.C:
 			if dsc.isTimeouted() {
-				dsc.send()
+				dsc.pass()
 			}
 		case item, opened := <-dsc.opts.Input:
 			if !opened {
@@ -150,7 +227,7 @@ func (dsc *Discipline[Type]) loop() {
 }
 
 func (dsc *Discipline[Type]) loopUntimeouted() {
-	defer dsc.send()
+	defer dsc.pass()
 
 	for item := range dsc.opts.Input {
 		dsc.process(item)
@@ -158,53 +235,27 @@ func (dsc *Discipline[Type]) loopUntimeouted() {
 }
 
 func (dsc *Discipline[Type]) process(item Type) {
-	dsc.join = append(dsc.join, item)
+	id := dsc.id.Actual()
 
-	if len(dsc.join) < int(dsc.opts.JoinSize) {
+	dsc.joins[id] = append(dsc.joins[id], item)
+
+	if len(dsc.joins[id]) < int(dsc.opts.JoinSize) {
 		return
 	}
 
-	dsc.send()
+	dsc.pass()
 }
 
-func (dsc *Discipline[Type]) send() {
-	defer dsc.resetSendAt()
-
-	join := dsc.prepareJoin()
-
-	if len(join) == 0 {
-		return
-	}
-
-	dsc.output <- join
-
-	if dsc.opts.NoCopy {
-		<-dsc.release
-	}
-
-	dsc.resetJoin()
+func (dsc *Discipline[Type]) pass() {
+	dsc.interim <- dsc.id.Actual()
+	dsc.id.Spin()
+	dsc.resetPassAt()
 }
 
-func (dsc *Discipline[Type]) resetSendAt() {
-	dsc.sendAt = time.Now()
+func (dsc *Discipline[Type]) resetPassAt() {
+	dsc.passAt = time.Now()
 }
 
 func (dsc *Discipline[Type]) isTimeouted() bool {
-	return time.Since(dsc.sendAt) >= dsc.opts.Timeout
-}
-
-func (dsc *Discipline[Type]) resetJoin() {
-	dsc.join = dsc.join[:0]
-}
-
-func (dsc *Discipline[Type]) copyJoin() []Type {
-	return slices.Clone(dsc.join)
-}
-
-func (dsc *Discipline[Type]) prepareJoin() []Type {
-	if dsc.opts.NoCopy {
-		return dsc.join
-	}
-
-	return dsc.copyJoin()
+	return time.Since(dsc.passAt) >= dsc.opts.Timeout
 }
