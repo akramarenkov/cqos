@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/stressor"
 
 	"github.com/stretchr/testify/require"
 )
@@ -162,35 +163,43 @@ func TestDisciplineTimeout(t *testing.T) {
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, minDefaultTimeout, 0)
+	benchmarkDiscipline(b, false, minDefaultTimeout, 0, false)
 }
 
 func BenchmarkDisciplineRelease(b *testing.B) {
-	benchmarkDiscipline(b, true, minDefaultTimeout, 0)
+	benchmarkDiscipline(b, true, minDefaultTimeout, 0, false)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, false, 0, 0)
+	benchmarkDiscipline(b, false, 0, 0, false)
+}
+
+func BenchmarkDisciplineStress(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 0, true)
+}
+
+func BenchmarkDisciplineNoStress(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 0, false)
 }
 
 func BenchmarkDisciplineOutputDelayIsSame(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 1)
+	benchmarkDiscipline(b, true, 0, 1, false)
 }
 
 func BenchmarkDisciplineOutputDelayIs4TimesLess(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.25)
+	benchmarkDiscipline(b, true, 0, 0.25, false)
 }
 
 func BenchmarkDisciplineOutputDelayIs2TimesLess(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.5)
+	benchmarkDiscipline(b, true, 0, 0.5, false)
 }
 
 func BenchmarkDisciplineOutputDelayIs2TimesLonger(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 2)
+	benchmarkDiscipline(b, true, 0, 2, false)
 }
 
 func BenchmarkDisciplineOutputDelayIs4TimesLonger(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 4)
+	benchmarkDiscipline(b, true, 0, 4, false)
 }
 
 func benchmarkDiscipline(
@@ -198,6 +207,7 @@ func benchmarkDiscipline(
 	noCopy bool,
 	timeout time.Duration,
 	outputDelayFactor float64,
+	stressSystem bool,
 ) {
 	quantity, joinSize := benchmarkCalcQuantityJoinSize(b)
 	inputDelay, outputDelay := benchmarkCalcDelays(joinSize, outputDelayFactor)
@@ -209,6 +219,13 @@ func benchmarkDiscipline(
 		JoinSize: joinSize,
 		NoCopy:   noCopy,
 		Timeout:  timeout,
+	}
+
+	if stressSystem {
+		stress, err := stressor.New(0, 0)
+		require.NoError(b, err)
+
+		defer stress.Stop()
 	}
 
 	discipline, err := New(opts)

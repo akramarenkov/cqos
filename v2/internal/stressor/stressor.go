@@ -7,18 +7,18 @@ import (
 	"sync"
 
 	"github.com/akramarenkov/breaker/breaker"
-	"github.com/akramarenkov/cqos/v2/limit/internal/starter"
+	"github.com/akramarenkov/cqos/v2/internal/launcher"
 )
 
 const (
-	defaultCPUFactor    = 64
-	defaultDataAmount   = 512
-	defaultStartedAfter = 10
+	defaultCPUFactor     = 64
+	defaultDataAmount    = 512
+	defaultLaunchedAfter = 10
 )
 
 type Stressor struct {
-	breaker *breaker.Breaker
-	starter *starter.Starter
+	breaker  *breaker.Breaker
+	launcher *launcher.Launcher
 
 	cpuFactor int
 	data      string
@@ -39,8 +39,8 @@ func New(cpuFactor int, dataAmount int) (*Stressor, error) {
 	}
 
 	str := &Stressor{
-		breaker: breaker.New(),
-		starter: starter.New(defaultStartedAfter),
+		breaker:  breaker.New(),
+		launcher: launcher.New(defaultLaunchedAfter),
 
 		cpuFactor: cpuFactor,
 		data:      string(data),
@@ -48,7 +48,7 @@ func New(cpuFactor int, dataAmount int) (*Stressor, error) {
 
 	go str.main()
 
-	str.starter.Wait()
+	str.launcher.Wait()
 
 	return str, nil
 }
@@ -76,11 +76,11 @@ func (str *Stressor) loop() {
 		wg.Add(1)
 		wg.Add(1)
 
-		go str.runer(str.starter.Add(), wg, strings, runes)
-		go str.stringer(str.starter.Add(), wg, runes, strings)
+		go str.runer(str.launcher.Add(), wg, strings, runes)
+		go str.stringer(str.launcher.Add(), wg, runes, strings)
 	}
 
-	str.starter.Started()
+	str.launcher.Launched()
 }
 
 func (str *Stressor) runer(
@@ -100,7 +100,7 @@ func (str *Stressor) runer(
 			case <-str.breaker.IsBreaked():
 				return
 			case output <- []rune(data):
-				str.starter.Done(id)
+				str.launcher.Done(id)
 			}
 		}
 	}
@@ -123,7 +123,7 @@ func (str *Stressor) stringer(
 			case <-str.breaker.IsBreaked():
 				return
 			case output <- string(data):
-				str.starter.Done(id)
+				str.launcher.Done(id)
 			}
 		}
 	}
