@@ -20,7 +20,7 @@ linters:
     - godox
     - gofmt
     - goheader
-    - gomnd
+    - mnd
     - gosec
     - gosimple
     - govet
