@@ -177,11 +177,19 @@ func BenchmarkDisciplineOutputDelayIsSame(b *testing.B) {
 	benchmarkDiscipline(b, true, 0, 1)
 }
 
-func BenchmarkDisciplineOutputDelayIsLess(b *testing.B) {
+func BenchmarkDisciplineOutputDelayIs4TimesLess(b *testing.B) {
 	benchmarkDiscipline(b, true, 0, 0.25)
 }
 
-func BenchmarkDisciplineOutputDelayIsLonger(b *testing.B) {
+func BenchmarkDisciplineOutputDelayIs2TimesLess(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 0.5)
+}
+
+func BenchmarkDisciplineOutputDelayIs2TimesLonger(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 2)
+}
+
+func BenchmarkDisciplineOutputDelayIs4TimesLonger(b *testing.B) {
 	benchmarkDiscipline(b, true, 0, 4)
 }
 
