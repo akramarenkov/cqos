@@ -162,25 +162,43 @@ func TestDisciplineTimeout(t *testing.T) {
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, minDefaultTimeout)
+	benchmarkDiscipline(b, false, minDefaultTimeout, 0)
 }
 
 func BenchmarkDisciplineRelease(b *testing.B) {
-	benchmarkDiscipline(b, true, minDefaultTimeout)
+	benchmarkDiscipline(b, true, minDefaultTimeout, 0)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, false, 0)
+	benchmarkDiscipline(b, false, 0, 0)
 }
 
-func benchmarkDiscipline(b *testing.B, noCopy bool, timeout time.Duration) {
-	quantity := b.N
+func BenchmarkDisciplineOutputDelayIsSame(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 1)
+}
+
+func BenchmarkDisciplineOutputDelayIsLess(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 0.25)
+}
+
+func BenchmarkDisciplineOutputDelayIsLonger(b *testing.B) {
+	benchmarkDiscipline(b, true, 0, 4)
+}
+
+func benchmarkDiscipline(
+	b *testing.B,
+	noCopy bool,
+	timeout time.Duration,
+	outputDelayFactor float64,
+) {
+	quantity, joinSize := benchmarkCalcQuantityJoinSize(b)
+	inputDelay, outputDelay := benchmarkCalcDelays(joinSize, outputDelayFactor)
 
 	input := make(chan int)
 
 	opts := Opts[int]{
 		Input:    input,
-		JoinSize: 100,
+		JoinSize: joinSize,
 		NoCopy:   noCopy,
 		Timeout:  timeout,
 	}
@@ -192,13 +210,44 @@ func benchmarkDiscipline(b *testing.B, noCopy bool, timeout time.Duration) {
 		defer close(input)
 
 		for stage := 1; stage <= quantity; stage++ {
+			time.Sleep(inputDelay)
+
 			input <- stage
 		}
 	}()
 
 	for range discipline.Output() {
+		time.Sleep(outputDelay)
+
 		if noCopy {
 			discipline.Release()
 		}
 	}
+}
+
+func benchmarkCalcQuantityJoinSize(b *testing.B) (int, uint) {
+	const joinsQuantity = 100
+
+	quantity := b.N
+	joinSize := quantity / joinsQuantity
+
+	if joinSize == 0 {
+		joinSize = 1
+	}
+
+	return quantity, uint(joinSize)
+}
+
+func benchmarkCalcDelays(
+	joinSize uint,
+	outputDelayFactor float64,
+) (time.Duration, time.Duration) {
+	inputDelay := 1 * time.Millisecond
+	outputDelay := time.Duration(outputDelayFactor * float64(inputDelay) * float64(joinSize))
+
+	if outputDelay == 0 {
+		inputDelay = 0
+	}
+
+	return inputDelay, outputDelay
 }
