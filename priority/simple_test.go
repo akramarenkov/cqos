@@ -12,7 +12,7 @@ import (
 
 func TestSimpleOptsValidation(t *testing.T) {
 	opts := SimpleOpts[string]{
-		Handle: func(ctx context.Context, item string) {},
+		Handle: func(context.Context, string) {},
 		Inputs: map[uint]<-chan string{
 			1: make(chan string),
 		},
@@ -33,7 +33,7 @@ func TestSimpleOptsValidation(t *testing.T) {
 
 	opts = SimpleOpts[string]{
 		Divider: RateDivider,
-		Handle:  func(ctx context.Context, item string) {},
+		Handle:  func(context.Context, string) {},
 	}
 
 	_, err = NewSimple(opts)

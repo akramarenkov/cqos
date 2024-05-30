@@ -12,7 +12,7 @@ import (
 
 func TestOptsValidation(t *testing.T) {
 	opts := Opts[string]{
-		Handle: func(item string) {},
+		Handle: func(string) {},
 	}
 
 	_, err := New(opts)

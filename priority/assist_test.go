@@ -11,7 +11,7 @@ func TestRemovePriority(t *testing.T) {
 	priorities := []uint{4, 3, 2, 1}
 
 	priorities = removePriority(priorities, 5)
-	require.Equal(t, priorities, priorities)
+	require.Equal(t, []uint{4, 3, 2, 1}, priorities)
 
 	priorities = removePriority(priorities, 2)
 	require.Equal(t, []uint{4, 3, 1}, priorities)
