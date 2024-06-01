@@ -279,3 +279,54 @@ func TestCalcRelativeDeviationsZeroInput(t *testing.T) {
 	deviations = CalcRelativeDeviations([]time.Duration{}, time.Millisecond)
 	require.Equal(t, map[int]int(nil), deviations)
 }
+
+func TestConvertRelativeDeviationsToBarEcharts(t *testing.T) {
+	deviations := map[int]int{
+		-10: 2,
+		0:   10,
+		10:  3,
+		80:  1,
+	}
+
+	expectedY := []chartsopts.BarData{
+		{
+			Name:  "-10%",
+			Value: 2,
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+		},
+		{
+			Name:  "0%",
+			Value: 10,
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+		},
+		{
+			Name:  "10%",
+			Value: 3,
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+		},
+		{
+			Name:  "80%",
+			Value: 1,
+			Tooltip: &chartsopts.Tooltip{
+				Show: true,
+			},
+		},
+	}
+
+	expectedX := []int{
+		-10,
+		0,
+		10,
+		80,
+	}
+
+	axisY, axisX := ConvertRelativeDeviationsToBarEcharts(deviations)
+	require.Equal(t, expectedY, axisY)
+	require.Equal(t, expectedX, axisX)
+}
