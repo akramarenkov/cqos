@@ -269,3 +269,47 @@ func TestConvertQuantityOverTimeToBarEcharts(t *testing.T) {
 	require.Equal(t, expectedY, axisY)
 	require.Equal(t, expectedX, axisX)
 }
+
+func TestCalcRelativeDeviations(t *testing.T) {
+	relativeTimes := []time.Duration{
+		-100 * time.Microsecond,
+		900 * time.Microsecond,
+		900 * time.Microsecond,
+		2000 * time.Microsecond,
+		2800 * time.Microsecond,
+		3700 * time.Microsecond,
+		4700 * time.Microsecond,
+		5500 * time.Microsecond,
+		6600 * time.Microsecond,
+		7600 * time.Microsecond,
+		8600 * time.Microsecond,
+		9600 * time.Microsecond,
+		10700 * time.Microsecond,
+		12700 * time.Microsecond,
+		14800 * time.Microsecond,
+	}
+
+	expected := make(map[int]int, 201)
+
+	for deviation := -100; deviation <= 100; deviation++ {
+		expected[deviation] = 0
+	}
+
+	expected[-100] = 2
+	expected[-20] = 2
+	expected[-10] = 1
+	expected[0] = 5
+	expected[10] = 3
+	expected[100] = 2
+
+	deviations := CalcRelativeDeviations(relativeTimes, time.Millisecond)
+	require.Equal(t, expected, deviations)
+}
+
+func TestCalcRelativeDeviationsZeroInput(t *testing.T) {
+	deviations := CalcRelativeDeviations(nil, time.Millisecond)
+	require.Equal(t, map[int]int(nil), deviations)
+
+	deviations = CalcRelativeDeviations([]time.Duration{}, time.Millisecond)
+	require.Equal(t, map[int]int(nil), deviations)
+}
