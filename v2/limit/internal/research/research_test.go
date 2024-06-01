@@ -24,7 +24,7 @@ func TestCalcIntervalQuantitiesSplitByInterval(t *testing.T) {
 
 	interval := 10 * time.Millisecond
 
-	expectedQuantities := []qot.QuantityOverTime{
+	expected := []qot.QuantityOverTime{
 		{
 			Quantity:     5,
 			RelativeTime: 0,
@@ -35,7 +35,7 @@ func TestCalcIntervalQuantitiesSplitByInterval(t *testing.T) {
 		},
 	}
 
-	expectedBarData := []chartsopts.BarData{
+	expectedY := []chartsopts.BarData{
 		{
 			Name:  "0s",
 			Value: uint(5),
@@ -52,17 +52,22 @@ func TestCalcIntervalQuantitiesSplitByInterval(t *testing.T) {
 		},
 	}
 
+	expectedX := []int{
+		0,
+		1,
+	}
+
 	quantities, calcInterval := CalcIntervalQuantities(
 		relativeTimes,
 		0,
 		interval,
 	)
-	require.Equal(t, expectedQuantities, quantities)
+	require.Equal(t, expected, quantities)
 	require.Equal(t, interval, calcInterval)
 
 	axisY, axisX := ConvertQuantityOverTimeToBarEcharts(quantities)
-	require.Equal(t, expectedBarData, axisY)
-	require.Equal(t, []int{0, 1}, axisX)
+	require.Equal(t, expectedY, axisY)
+	require.Equal(t, expectedX, axisX)
 }
 
 func TestCalcIntervalQuantitiesSplitByIntervalEntirely(t *testing.T) {
@@ -229,45 +234,6 @@ func TestCalcIntervalQuantitiesSmallRatio(t *testing.T) {
 	)
 	require.Equal(t, expected, quantities)
 	require.Equal(t, expectedCalcInterval, calcInterval)
-}
-
-func TestConvertQuantityOverTimeToBarEcharts(t *testing.T) {
-	quantities := []qot.QuantityOverTime{
-		{
-			Quantity:     5,
-			RelativeTime: 0,
-		},
-		{
-			Quantity:     3,
-			RelativeTime: 10 * time.Millisecond,
-		},
-	}
-
-	expectedY := []chartsopts.BarData{
-		{
-			Name:  "0s",
-			Value: uint(5),
-			Tooltip: &chartsopts.Tooltip{
-				Show: true,
-			},
-		},
-		{
-			Name:  "10ms",
-			Value: uint(3),
-			Tooltip: &chartsopts.Tooltip{
-				Show: true,
-			},
-		},
-	}
-
-	expectedX := []int{
-		0,
-		1,
-	}
-
-	axisY, axisX := ConvertQuantityOverTimeToBarEcharts(quantities)
-	require.Equal(t, expectedY, axisY)
-	require.Equal(t, expectedX, axisX)
 }
 
 func TestCalcRelativeDeviations(t *testing.T) {
