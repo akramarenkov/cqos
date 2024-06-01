@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/akramarenkov/breaker/breaker"
+	"github.com/akramarenkov/breaker"
 	"github.com/akramarenkov/cqos/v2/internal/launcher"
 )
 
