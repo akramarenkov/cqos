@@ -330,3 +330,21 @@ func TestConvertRelativeDeviationsToBarEcharts(t *testing.T) {
 	require.Equal(t, expectedY, axisY)
 	require.Equal(t, expectedX, axisX)
 }
+
+func TestCalcTotalDuration(t *testing.T) {
+	durations := []time.Duration{
+		17 * time.Millisecond,
+		time.Millisecond,
+		2 * time.Millisecond,
+		9 * time.Millisecond,
+		5 * time.Millisecond,
+		11 * time.Millisecond,
+		13 * time.Millisecond,
+		0,
+	}
+
+	require.Equal(t, 17*time.Millisecond, CalcTotalDuration(durations))
+
+	require.Equal(t, time.Duration(0), CalcTotalDuration(nil))
+	require.Equal(t, time.Duration(0), CalcTotalDuration([]time.Duration{}))
+}
