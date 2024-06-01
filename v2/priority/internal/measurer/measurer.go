@@ -129,6 +129,7 @@ func (msr *Measurer) SetProcessDelay(priority uint, delay time.Duration) {
 	msr.delays[priority] = delay
 }
 
+// Number of data elements that must be sent to input channels.
 func (msr *Measurer) GetExpectedItemsQuantity() uint {
 	quantity := uint(0)
 
@@ -144,7 +145,12 @@ func (msr *Measurer) GetExpectedItemsQuantity() uint {
 	return quantity
 }
 
+// Number of measure elements to be obtained.
 func (msr *Measurer) GetExpectedMeasuresQuantity() uint {
+	if msr.opts.DisableMeasures {
+		return 0
+	}
+
 	return measuresFactor * msr.GetExpectedItemsQuantity()
 }
 

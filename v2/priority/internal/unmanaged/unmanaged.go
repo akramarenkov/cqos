@@ -3,6 +3,7 @@
 package unmanaged
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/akramarenkov/cqos/v2/internal/general"
@@ -10,7 +11,12 @@ import (
 	"github.com/akramarenkov/cqos/v2/priority/types"
 )
 
+var (
+	ErrFalseError = errors.New("false error")
+)
+
 type Opts[Type any] struct {
+	FailAt           uint
 	HandlersQuantity uint
 	Inputs           map[uint]<-chan Type
 }
@@ -61,6 +67,13 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 	return dsc.err
 }
 
+func (dsc *Discipline[Type]) fail(err error) {
+	select {
+	case dsc.err <- err:
+	default:
+	}
+}
+
 func (dsc *Discipline[Type]) updateInputs(inputs map[uint]<-chan Type) {
 	for priority, channel := range inputs {
 		input := common.Input[Type]{
@@ -92,7 +105,16 @@ func (dsc *Discipline[Type]) loop() {
 func (dsc *Discipline[Type]) io(wg *sync.WaitGroup, priority uint) {
 	defer wg.Done()
 
+	count := uint(0)
+
 	for item := range dsc.inputs[priority].Channel {
+		count++
+
+		if count == dsc.opts.FailAt {
+			dsc.fail(ErrFalseError)
+			return
+		}
+
 		dsc.send(item, priority)
 	}
 }
