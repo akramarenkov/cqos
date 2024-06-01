@@ -2,6 +2,7 @@
 package research
 
 import (
+	"math"
 	"slices"
 	"sort"
 	"strconv"
@@ -24,27 +25,36 @@ func CalcIntervalQuantities(
 
 	slices.Sort(relativeTimes)
 
-	maxRelativeTimes := relativeTimes[len(relativeTimes)-1]
+	maxRelativeTime := relativeTimes[len(relativeTimes)-1]
 
 	if interval == 0 {
 		if intervalsQuantity == 0 {
 			return nil, 0
 		}
 
-		interval = maxRelativeTimes / time.Duration(intervalsQuantity)
+		// It is necessary that max relative time falls into the last span,
+		// so the interval is rounded up
+		interval = time.Duration(math.Ceil(float64(maxRelativeTime) / float64(intervalsQuantity)))
+
+		maxRelativeTimesRecalculated := interval * time.Duration(intervalsQuantity)
+
+		// If max relative time is divided entirely, then add one nanosecond
+		// so that it falls into the last span
+		if maxRelativeTimesRecalculated == maxRelativeTime {
+			interval += time.Nanosecond
+		}
 	} else {
-		intervalsQuantity = int(maxRelativeTimes / interval)
+		// Intervals quantity always turns out to be more by one
+		intervalsQuantity = int(maxRelativeTime/interval) + 1
 	}
 
-	if interval == 0 {
-		interval = time.Nanosecond
-	}
-
-	quantities := make([]qot.QuantityOverTime, 0, intervalsQuantity+1)
+	quantities := make([]qot.QuantityOverTime, 0, intervalsQuantity)
 
 	edge := 0
 
-	for span := interval; span <= maxRelativeTimes+interval; span += interval {
+	// Interval is added to max span value to be sure that max relative time falls
+	// into the last span
+	for span := interval; span <= maxRelativeTime+interval; span += interval {
 		spanQuantities := uint(0)
 
 		for id, relativeTime := range relativeTimes[edge:] {
@@ -63,6 +73,17 @@ func CalcIntervalQuantities(
 		item := qot.QuantityOverTime{
 			Quantity:     spanQuantities,
 			RelativeTime: span - interval,
+		}
+
+		quantities = append(quantities, item)
+	}
+
+	// Padding with zero values ​​in case intervals quantity multiplied by
+	// interval is greater than max relative time
+	for addition := range intervalsQuantity - len(quantities) {
+		item := qot.QuantityOverTime{
+			Quantity:     0,
+			RelativeTime: maxRelativeTime + interval*time.Duration(addition+1),
 		}
 
 		quantities = append(quantities, item)

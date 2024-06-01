@@ -1,0 +1,209 @@
+package research
+
+import (
+	"testing"
+	"time"
+
+	"github.com/akramarenkov/cqos/v2/internal/qot"
+	"github.com/stretchr/testify/require"
+)
+
+func TestCalcIntervalQuantitiesSplitByInterval(t *testing.T) {
+	relativeTimes := []time.Duration{
+		0,
+		time.Millisecond,
+		2 * time.Millisecond,
+		5 * time.Millisecond,
+		9 * time.Millisecond,
+		11 * time.Millisecond,
+		13 * time.Millisecond,
+		17 * time.Millisecond,
+	}
+
+	interval := 10 * time.Millisecond
+
+	expected := []qot.QuantityOverTime{
+		{
+			Quantity:     5,
+			RelativeTime: 0,
+		},
+		{
+			Quantity:     3,
+			RelativeTime: 10 * time.Millisecond,
+		},
+	}
+
+	quantities, calcInterval := CalcIntervalQuantities(
+		relativeTimes,
+		0,
+		interval,
+	)
+	require.Equal(t, expected, quantities)
+	require.Equal(t, interval, calcInterval)
+}
+
+func TestCalcIntervalQuantitiesSplitByIntervalEntirely(t *testing.T) {
+	relativeTimes := []time.Duration{
+		0,
+		time.Millisecond,
+		2 * time.Millisecond,
+		5 * time.Millisecond,
+		9 * time.Millisecond,
+		11 * time.Millisecond,
+		13 * time.Millisecond,
+		20 * time.Millisecond,
+	}
+
+	interval := 10 * time.Millisecond
+
+	expected := []qot.QuantityOverTime{
+		{
+			Quantity:     5,
+			RelativeTime: 0,
+		},
+		{
+			Quantity:     2,
+			RelativeTime: 10 * time.Millisecond,
+		},
+		{
+			Quantity:     1,
+			RelativeTime: 20 * time.Millisecond,
+		},
+	}
+
+	quantities, calcInterval := CalcIntervalQuantities(
+		relativeTimes,
+		0,
+		interval,
+	)
+	require.Equal(t, expected, quantities)
+	require.Equal(t, interval, calcInterval)
+}
+
+func TestCalcIntervalQuantitiesSplitByIntervalsQuantity(t *testing.T) {
+	relativeTimes := []time.Duration{
+		0,
+		time.Millisecond,
+		2 * time.Millisecond,
+		5 * time.Millisecond,
+		9 * time.Millisecond,
+		11 * time.Millisecond,
+		13 * time.Millisecond,
+		17 * time.Millisecond,
+	}
+
+	intervalsQuantity := 2
+
+	expectedCalcInterval := 8*time.Millisecond + 500*time.Microsecond + time.Nanosecond
+
+	expected := []qot.QuantityOverTime{
+		{
+			Quantity:     4,
+			RelativeTime: 0,
+		},
+		{
+			Quantity:     4,
+			RelativeTime: expectedCalcInterval,
+		},
+	}
+
+	quantities, calcInterval := CalcIntervalQuantities(
+		relativeTimes,
+		intervalsQuantity,
+		0,
+	)
+	require.Equal(t, expected, quantities)
+	require.Equal(t, expectedCalcInterval, calcInterval)
+}
+
+func TestCalcIntervalQuantitiesZeroInput(t *testing.T) {
+	quantities, calcInterval := CalcIntervalQuantities(
+		nil,
+		0,
+		time.Second,
+	)
+	require.Equal(t, []qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, time.Duration(0), calcInterval)
+
+	quantities, calcInterval = CalcIntervalQuantities(
+		[]time.Duration{},
+		0,
+		time.Second,
+	)
+	require.Equal(t, []qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, time.Duration(0), calcInterval)
+}
+
+func TestCalcIntervalQuantitiesZeroSplit(t *testing.T) {
+	quantities, calcInterval := CalcIntervalQuantities(
+		[]time.Duration{1, 2},
+		0,
+		0,
+	)
+	require.Equal(t, []qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, time.Duration(0), calcInterval)
+}
+
+func TestCalcIntervalQuantitiesSmallRatio(t *testing.T) {
+	relativeTimes := []time.Duration{
+		0,
+		time.Nanosecond,
+		2 * time.Nanosecond,
+		5 * time.Nanosecond,
+	}
+
+	intervalsQuantity := 10
+
+	expectedCalcInterval := time.Nanosecond
+
+	expected := []qot.QuantityOverTime{
+		{
+			Quantity:     1,
+			RelativeTime: 0,
+		},
+		{
+			Quantity:     1,
+			RelativeTime: 1,
+		},
+		{
+			Quantity:     1,
+			RelativeTime: 2,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 3,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 4,
+		},
+		{
+			Quantity:     1,
+			RelativeTime: 5,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 6,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 7,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 8,
+		},
+		{
+			Quantity:     0,
+			RelativeTime: 9,
+		},
+	}
+
+	quantities, calcInterval := CalcIntervalQuantities(
+		relativeTimes,
+		intervalsQuantity,
+		0,
+	)
+	require.Equal(t, expected, quantities)
+	require.Equal(t, expectedCalcInterval, calcInterval)
+}
