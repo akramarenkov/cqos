@@ -56,7 +56,8 @@ func CalcDataQuantity(
 	min := -resolution
 	// Two resolutions is added to max span value to see the final zero values
 	// ​​on the graph
-	max := measures[len(measures)-1].RelativeTime + 2*resolution
+	expansion := 2
+	max := measures[len(measures)-1].RelativeTime + time.Duration(expansion)*resolution
 
 	capacity := (max - min) / resolution
 
@@ -83,6 +84,8 @@ func CalcDataQuantity(
 
 			intervalQuantities[measure.Priority]++
 
+			// Prevent use of data from the last slice for spans
+			// greater than max relative time + resolution
 			if id == len(measures[measuresEdge:])-1 {
 				measuresEdge += id + 1
 			}
@@ -124,8 +127,12 @@ func CalcInProcessing(
 
 	sortByRelativeTime(measures)
 
+	// To see the initial zero values ​​on the graph
 	min := -resolution
-	max := measures[len(measures)-1].RelativeTime
+	// Two resolutions is added to max span value to see the final zero values
+	// ​​on the graph
+	expansion := 2
+	max := measures[len(measures)-1].RelativeTime + time.Duration(expansion)*resolution
 
 	capacity := (max - min) / resolution
 
@@ -141,17 +148,15 @@ func CalcInProcessing(
 
 	measuresEdge := 0
 
-	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
-		receivedQuantities := make(map[uint]map[uint]uint)
-		completedQuantities := make(map[uint]map[uint]uint)
+	receivedQuantities := make(map[uint]map[uint]uint)
 
-		for priority := range quantities {
-			receivedQuantities[priority] = make(map[uint]uint)
-			completedQuantities[priority] = make(map[uint]uint)
-		}
+	for priority := range quantities {
+		receivedQuantities[priority] = make(map[uint]uint)
+	}
 
+	for span := min + resolution; span <= max; span += resolution {
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime >= relativeTime {
+			if measure.RelativeTime >= span {
 				measuresEdge += id
 				break
 			}
@@ -160,9 +165,11 @@ func CalcInProcessing(
 			case measurer.MeasureKindReceived:
 				receivedQuantities[measure.Priority][measure.Data]++
 			case measurer.MeasureKindCompleted:
-				completedQuantities[measure.Priority][measure.Data]++
+				receivedQuantities[measure.Priority][measure.Data]--
 			}
 
+			// Prevent use of data from the last slice for spans
+			// greater than max relative time + resolution
 			if id == len(measures[measuresEdge:])-1 {
 				measuresEdge += id + 1
 			}
@@ -171,30 +178,13 @@ func CalcInProcessing(
 		for priority, subset := range receivedQuantities {
 			quantity := uint(0)
 
-			for data, amount := range subset {
-				if _, exists := completedQuantities[priority][data]; exists {
-					continue
-				}
-
+			for _, amount := range subset {
 				quantity += amount
 			}
 
 			item := qot.QuantityOverTime{
 				Quantity:     quantity,
-				RelativeTime: relativeTime - resolution,
-			}
-
-			quantities[priority] = append(quantities[priority], item)
-		}
-
-		for priority := range quantities {
-			if _, exists := receivedQuantities[priority]; exists {
-				continue
-			}
-
-			item := qot.QuantityOverTime{
-				Quantity:     0,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
