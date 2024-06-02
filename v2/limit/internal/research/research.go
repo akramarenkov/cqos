@@ -45,6 +45,9 @@ func CalcIntervalQuantities(
 		}
 	} else {
 		// Intervals quantity always turns out to be more by one
+		// Due to rounding down during integer division and, if max relative
+		// time is divided entirely, due to the fact that the span takes
+		// into account elements strictly smaller than it
 		intervalsQuantity = int(maxRelativeTime/interval) + 1
 	}
 
