@@ -177,19 +177,19 @@ func TestCalcWriteToFeedbackLatency(t *testing.T) {
 			RelativeTime: 0,
 		},
 		{
-			Data:         4,
+			Data:         5,
 			Kind:         measurer.MeasureKindProcessed,
 			Priority:     3,
 			RelativeTime: 3 * time.Microsecond,
 		},
 		{
-			Data:         4,
+			Data:         5,
 			Kind:         measurer.MeasureKindCompleted,
 			Priority:     3,
 			RelativeTime: 19 * time.Microsecond,
 		},
 		{
-			Data:         4,
+			Data:         5,
 			Kind:         measurer.MeasureKindReceived,
 			Priority:     3,
 			RelativeTime: 0,
@@ -247,6 +247,88 @@ func TestCalcWriteToFeedbackLatencyInput(t *testing.T) {
 
 	quantities = CalcWriteToFeedbackLatency([]measurer.Measure{}, 5*time.Microsecond)
 	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+}
+
+func TestProcessLatencies(t *testing.T) {
+	latencies := map[uint][]time.Duration{
+		1: {
+			time.Microsecond,
+			8 * time.Microsecond,
+			3 * time.Microsecond,
+			5 * time.Microsecond,
+		},
+		2: {},
+		3: {
+			1 * time.Microsecond,
+			2 * time.Microsecond,
+			4 * time.Microsecond,
+			5 * time.Microsecond,
+			6 * time.Microsecond,
+			16 * time.Microsecond,
+		},
+	}
+
+	interval := 5 * time.Microsecond
+
+	expected := map[uint][]qot.QuantityOverTime{
+		1: {
+			{
+				RelativeTime: 0,
+				Quantity:     2,
+			},
+			{
+				RelativeTime: interval,
+				Quantity:     2,
+			},
+			{
+				RelativeTime: 2 * interval,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 3 * interval,
+				Quantity:     0,
+			},
+		},
+		2: {
+			{
+				RelativeTime: 0,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: interval,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 2 * interval,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 3 * interval,
+				Quantity:     0,
+			},
+		},
+		3: {
+			{
+				RelativeTime: 0,
+				Quantity:     3,
+			},
+			{
+				RelativeTime: interval,
+				Quantity:     2,
+			},
+			{
+				RelativeTime: 2 * interval,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 3 * interval,
+				Quantity:     1,
+			},
+		},
+	}
+
+	quantities := processLatencies(latencies, interval)
+	require.Equal(t, expected, quantities)
 }
 
 func TestConvertToBarEcharts(t *testing.T) {
