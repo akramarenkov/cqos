@@ -52,8 +52,11 @@ func CalcDataQuantity(
 
 	sortByRelativeTime(measures)
 
+	// To see the initial zero values ​​on the graph
 	min := -resolution
-	max := measures[len(measures)-1].RelativeTime
+	// Two resolutions is added to max span value to see the final zero values
+	// ​​on the graph
+	max := measures[len(measures)-1].RelativeTime + 2*resolution
 
 	capacity := (max - min) / resolution
 
@@ -69,11 +72,11 @@ func CalcDataQuantity(
 
 	measuresEdge := 0
 
-	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
+	for span := min + resolution; span <= max; span += resolution {
 		intervalQuantities := make(map[uint]uint)
 
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime >= relativeTime {
+			if measure.RelativeTime >= span {
 				measuresEdge += id
 				break
 			}
@@ -88,7 +91,7 @@ func CalcDataQuantity(
 		for priority, quantity := range intervalQuantities {
 			item := qot.QuantityOverTime{
 				Quantity:     quantity,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -101,7 +104,7 @@ func CalcDataQuantity(
 
 			item := qot.QuantityOverTime{
 				Quantity:     0,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
