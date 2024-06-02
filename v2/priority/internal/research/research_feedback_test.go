@@ -6,6 +6,7 @@ import (
 
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
+	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -246,4 +247,131 @@ func TestCalcWriteToFeedbackLatencyInput(t *testing.T) {
 
 	quantities = CalcWriteToFeedbackLatency([]measurer.Measure{}, 5*time.Microsecond)
 	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+}
+
+func TestConvertToBarEcharts(t *testing.T) {
+	resolution := 5 * time.Microsecond
+
+	quantities := map[uint][]qot.QuantityOverTime{
+		1: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     1,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+		2: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     2,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+		3: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     3,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+	}
+
+	expectedY := map[uint][]chartsopts.BarData{
+		1: {
+			{
+				Name: "-5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+			{
+				Name: "0s",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(1),
+			},
+			{
+				Name: "5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+		},
+		2: {
+			{
+				Name: "-5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+			{
+				Name: "0s",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(2),
+			},
+			{
+				Name: "5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+		},
+		3: {
+			{
+				Name: "-5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+			{
+				Name: "0s",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(3),
+			},
+			{
+				Name: "5µs",
+				Tooltip: &chartsopts.Tooltip{
+					Show: true,
+				},
+				Value: uint(0),
+			},
+		},
+	}
+
+	expectedX := []int{0, 1, 2}
+
+	axisY, axisX := ConvertToBarEcharts(quantities)
+	require.Equal(t, expectedY, axisY)
+	require.Equal(t, expectedX, axisX)
 }

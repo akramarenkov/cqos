@@ -6,6 +6,7 @@ import (
 
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
+	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -196,4 +197,104 @@ func TestCalcDataQuantityZeroInput(t *testing.T) {
 
 	quantities = CalcDataQuantity([]measurer.Measure{}, 5*time.Microsecond)
 	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+}
+
+func TestConvertToLineEcharts(t *testing.T) {
+	resolution := 5 * time.Microsecond
+
+	quantities := map[uint][]qot.QuantityOverTime{
+		1: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     1,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+		2: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     2,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+		3: {
+			{
+				RelativeTime: -resolution,
+				Quantity:     0,
+			},
+			{
+				RelativeTime: 0,
+				Quantity:     3,
+			},
+			{
+				RelativeTime: resolution,
+				Quantity:     0,
+			},
+		},
+	}
+
+	expectedY := map[uint][]chartsopts.LineData{
+		1: {
+			{
+				Name:  "-5µs",
+				Value: uint(0),
+			},
+			{
+				Name:  "0s",
+				Value: uint(1),
+			},
+			{
+				Name:  "5µs",
+				Value: uint(0),
+			},
+		},
+		2: {
+			{
+				Name:  "-5µs",
+				Value: uint(0),
+			},
+			{
+				Name:  "0s",
+				Value: uint(2),
+			},
+			{
+				Name:  "5µs",
+				Value: uint(0),
+			},
+		},
+		3: {
+			{
+				Name:  "-5µs",
+				Value: uint(0),
+			},
+			{
+				Name:  "0s",
+				Value: uint(3),
+			},
+			{
+				Name:  "5µs",
+				Value: uint(0),
+			},
+		},
+	}
+
+	expectedX := []int{-5, 0, 5}
+
+	axisY, axisX := ConvertToLineEcharts(quantities, time.Microsecond)
+	require.Equal(t, expectedY, axisY)
+	require.Equal(t, expectedX, axisX)
 }
