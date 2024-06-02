@@ -68,6 +68,8 @@ func CalcIntervalQuantities(
 
 			spanQuantities++
 
+			// Prevent use of data from the last slice for spans
+			// greater than max relative time + interval
 			if id == len(relativeTimes[edge:])-1 {
 				edge += id + 1
 			}
