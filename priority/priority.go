@@ -417,6 +417,10 @@ func (dsc *Discipline[Type]) prioritize() uint {
 	processed := uint(0)
 
 	for _, priority := range dsc.priorities {
+		if dsc.inputs[priority].Drained {
+			continue
+		}
+
 		if cap(dsc.inputs[priority].Channel) != 0 {
 			processed += dsc.io(priority)
 		} else {
