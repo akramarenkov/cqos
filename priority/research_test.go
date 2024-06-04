@@ -50,8 +50,14 @@ func calcDataQuantity(
 
 	sortByRelativeTime(measures)
 
+	// To see the initial zero values ​​on the graph
 	min := -resolution
-	max := measures[len(measures)-1].RelativeTime
+	// One resolution added to max span value to get max relative time into
+	// the last span
+	// And one more resolution added to max span value to see the final zero values ​on
+	// ​the graph
+	expansion := 2
+	max := measures[len(measures)-1].RelativeTime + time.Duration(expansion)*resolution
 
 	capacity := (max - min) / resolution
 
@@ -67,17 +73,19 @@ func calcDataQuantity(
 
 	measuresEdge := 0
 
-	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
+	for span := min + resolution; span <= max; span += resolution {
 		intervalQuantities := make(map[uint]uint)
 
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime >= relativeTime {
+			if measure.RelativeTime >= span {
 				measuresEdge += id
 				break
 			}
 
 			intervalQuantities[measure.Priority]++
 
+			// Prevent use of data from the last slice for spans
+			// greater than max relative time + resolution
 			if id == len(measures[measuresEdge:])-1 {
 				measuresEdge += id + 1
 			}
@@ -86,7 +94,7 @@ func calcDataQuantity(
 		for priority, quantity := range intervalQuantities {
 			item := qot.QuantityOverTime{
 				Quantity:     quantity,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -99,7 +107,7 @@ func calcDataQuantity(
 
 			item := qot.QuantityOverTime{
 				Quantity:     0,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -119,8 +127,14 @@ func calcInProcessing(
 
 	sortByRelativeTime(measures)
 
+	// To see the initial zero values ​​on the graph
 	min := -resolution
-	max := measures[len(measures)-1].RelativeTime
+	// One resolution added to max span value to get max relative time into
+	// the last span
+	// And one more resolution added to max span value to see the final zero values ​on
+	// ​the graph
+	expansion := 2
+	max := measures[len(measures)-1].RelativeTime + time.Duration(expansion)*resolution
 
 	capacity := (max - min) / resolution
 
@@ -136,17 +150,15 @@ func calcInProcessing(
 
 	measuresEdge := 0
 
-	for relativeTime := min + resolution; relativeTime <= max+resolution; relativeTime += resolution {
-		receivedQuantities := make(map[uint]map[uint]uint)
-		completedQuantities := make(map[uint]map[uint]uint)
+	receivedQuantities := make(map[uint]map[uint]uint)
 
-		for priority := range quantities {
-			receivedQuantities[priority] = make(map[uint]uint)
-			completedQuantities[priority] = make(map[uint]uint)
-		}
+	for priority := range quantities {
+		receivedQuantities[priority] = make(map[uint]uint)
+	}
 
+	for span := min + resolution; span <= max; span += resolution {
 		for id, measure := range measures[measuresEdge:] {
-			if measure.RelativeTime >= relativeTime {
+			if measure.RelativeTime >= span {
 				measuresEdge += id
 				break
 			}
@@ -155,9 +167,11 @@ func calcInProcessing(
 			case measureKindReceived:
 				receivedQuantities[measure.Priority][measure.Data]++
 			case measureKindCompleted:
-				completedQuantities[measure.Priority][measure.Data]++
+				receivedQuantities[measure.Priority][measure.Data]--
 			}
 
+			// Prevent use of data from the last slice for spans
+			// greater than max relative time + resolution
 			if id == len(measures[measuresEdge:])-1 {
 				measuresEdge += id + 1
 			}
@@ -166,30 +180,13 @@ func calcInProcessing(
 		for priority, subset := range receivedQuantities {
 			quantity := uint(0)
 
-			for data, amount := range subset {
-				if _, exists := completedQuantities[priority][data]; exists {
-					continue
-				}
-
+			for _, amount := range subset {
 				quantity += amount
 			}
 
 			item := qot.QuantityOverTime{
 				Quantity:     quantity,
-				RelativeTime: relativeTime - resolution,
-			}
-
-			quantities[priority] = append(quantities[priority], item)
-		}
-
-		for priority := range quantities {
-			if _, exists := receivedQuantities[priority]; exists {
-				continue
-			}
-
-			item := qot.QuantityOverTime{
-				Quantity:     0,
-				RelativeTime: relativeTime - resolution,
+				RelativeTime: span - resolution,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
@@ -250,7 +247,7 @@ func processLatencies(
 		slices.Sort(latencies[priority])
 	}
 
-	min := -interval
+	min := time.Duration(0)
 	max := time.Duration(0)
 
 	for priority := range latencies {
@@ -265,6 +262,9 @@ func processLatencies(
 		}
 	}
 
+	// One resolution added to max span value to get max latency into the last span
+	max += interval
+
 	capacity := (max - min) / interval
 
 	quantities := make(map[uint][]qot.QuantityOverTime)
@@ -277,43 +277,45 @@ func processLatencies(
 		quantities[priority] = make([]qot.QuantityOverTime, 0, capacity)
 	}
 
-	latenciesEdge := make(map[uint]int)
+	edges := make(map[uint]int)
 
-	for intervalLatency := min + interval; intervalLatency <= max+interval; intervalLatency += interval {
-		intervalQuantities := make(map[uint]uint)
+	for span := min + interval; span <= max; span += interval {
+		spanQuantities := make(map[uint]uint)
 
 		for priority := range latencies {
-			for id, latency := range latencies[priority][latenciesEdge[priority]:] {
-				if latency >= intervalLatency {
-					latenciesEdge[priority] += id
+			for id, latency := range latencies[priority][edges[priority]:] {
+				if latency >= span {
+					edges[priority] += id
 					break
 				}
 
-				intervalQuantities[priority]++
+				spanQuantities[priority]++
 
-				if id == len(latencies[priority][latenciesEdge[priority]:])-1 {
-					latenciesEdge[priority] += id + 1
+				// Prevent use of data from the last slice for spans
+				// greater than max latency + interval
+				if id == len(latencies[priority][edges[priority]:])-1 {
+					edges[priority] += id + 1
 				}
 			}
 		}
 
-		for priority, quantity := range intervalQuantities {
+		for priority, quantity := range spanQuantities {
 			item := qot.QuantityOverTime{
 				Quantity:     quantity,
-				RelativeTime: intervalLatency - interval,
+				RelativeTime: span - interval,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
 		}
 
 		for priority := range quantities {
-			if _, exists := intervalQuantities[priority]; exists {
+			if _, exists := spanQuantities[priority]; exists {
 				continue
 			}
 
 			item := qot.QuantityOverTime{
 				Quantity:     0,
-				RelativeTime: intervalLatency - interval,
+				RelativeTime: span - interval,
 			}
 
 			quantities[priority] = append(quantities[priority], item)
