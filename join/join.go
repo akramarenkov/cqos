@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akramarenkov/breaker/breaker"
+	"github.com/akramarenkov/breaker"
 )
 
 var (

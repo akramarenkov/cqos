@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/akramarenkov/breaker/breaker"
+	"github.com/akramarenkov/breaker"
 	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 )

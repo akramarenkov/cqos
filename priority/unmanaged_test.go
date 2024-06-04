@@ -3,7 +3,7 @@ package priority
 import (
 	"sync"
 
-	"github.com/akramarenkov/breaker/breaker"
+	"github.com/akramarenkov/breaker"
 )
 
 type unmanagedOpts[Type any] struct {
