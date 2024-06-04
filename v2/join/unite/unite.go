@@ -1,7 +1,9 @@
-// Discipline that is used to accumulates elements from the input channel into a
-// slice and writes it to the output channel when the maximum size or timeout is
-// reached.
-package join
+// Discipline that is used to accumulates slices elements from the input channel into a
+// one slice and writes it to the output channel when the maximum size or timeout is
+// reached. It works like a join discipline but accepts slices as input and unite
+// their elements into one slice. Moreover, the input slices are not divided between
+// the output slices.
+package unite
 
 import (
 	"errors"
@@ -21,9 +23,12 @@ var (
 type Opts[Type any] struct {
 	// Input data channel. For terminate discipline it is necessary and sufficient to
 	// close the input channel
-	Input <-chan Type
+	Input <-chan []Type
 	// Maximum size of the output slice. Actual size of the output slice may be
-	// smaller due to the timeout or closure of the input channel
+	// smaller due to the timeout or closure of the input channel and the fact
+	// that the input slices accumulate entirely. Also, the actual size of the output
+	// slice may be larger if an slice larger than the maximum size is received at
+	// the input
 	JoinSize uint
 	// By default, to the output channel is written a copy of the accumulated slice
 	// If the NoCopy is set to true, then to the output channel will be directly
@@ -66,7 +71,7 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 	return opts
 }
 
-// Join discipline.
+// Unite discipline.
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
@@ -218,10 +223,24 @@ func (dsc *Discipline[Type]) accumulatorUntimeouted() {
 	}
 }
 
-func (dsc *Discipline[Type]) process(item Type) {
+func (dsc *Discipline[Type]) process(item []Type) {
+	if uint(len(item)) >= dsc.opts.JoinSize {
+		dsc.passActual()
+		dsc.forward(item)
+
+		return
+	}
+
 	id := dsc.id.Actual()
 
-	dsc.joins[id] = append(dsc.joins[id], item)
+	if uint(len(item)+len(dsc.joins[id])) > dsc.opts.JoinSize {
+		dsc.passActual()
+	}
+
+	// Actual id may be changed after call of passActual() located above
+	id = dsc.id.Actual()
+
+	dsc.joins[id] = append(dsc.joins[id], item...)
 
 	if len(dsc.joins[id]) < int(dsc.opts.JoinSize) {
 		return
@@ -243,6 +262,12 @@ func (dsc *Discipline[Type]) passActual() {
 
 	dsc.resetActual()
 	dsc.id.Spin()
+}
+
+func (dsc *Discipline[Type]) forward(item []Type) {
+	dsc.interim <- item
+
+	dsc.resetPassAt()
 }
 
 func (dsc *Discipline[Type]) resetActual() {

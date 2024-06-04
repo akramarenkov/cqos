@@ -1,24 +1,32 @@
-package join_test
+package unite_test
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/join"
+	"github.com/akramarenkov/cqos/v2/join/unite"
 )
 
 func ExampleDiscipline() {
-	quantity := 27
+	slices := [][]int{
+		{1, 2, 3, 4},
+		{5, 6, 7, 8},
+		{9, 10, 11, 12},
+		{13, 14, 15, 16},
+		{17, 18, 19, 20},
+		{21, 22, 23, 24},
+		{25, 26, 27},
+	}
 
-	input := make(chan int)
+	input := make(chan []int)
 
-	opts := join.Opts[int]{
+	opts := unite.Opts[int]{
 		Input:    input,
 		JoinSize: 10,
 		Timeout:  10 * time.Second,
 	}
 
-	discipline, err := join.New(opts)
+	discipline, err := unite.New(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -26,12 +34,12 @@ func ExampleDiscipline() {
 	go func() {
 		defer close(input)
 
-		for item := 1; item <= quantity; item++ {
-			input <- item
+		for _, slice := range slices {
+			input <- slice
 		}
 	}()
 
-	outSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0)
 
 	for slice := range discipline.Output() {
 		outSequence = append(outSequence, slice...)
@@ -42,18 +50,26 @@ func ExampleDiscipline() {
 }
 
 func ExampleDiscipline_Release() {
-	quantity := 27
+	slices := [][]int{
+		{1, 2, 3, 4},
+		{5, 6, 7, 8},
+		{9, 10, 11, 12},
+		{13, 14, 15, 16},
+		{17, 18, 19, 20},
+		{21, 22, 23, 24},
+		{25, 26, 27},
+	}
 
-	input := make(chan int)
+	input := make(chan []int)
 
-	opts := join.Opts[int]{
+	opts := unite.Opts[int]{
 		Input:    input,
 		JoinSize: 10,
 		NoCopy:   true,
 		Timeout:  10 * time.Second,
 	}
 
-	discipline, err := join.New(opts)
+	discipline, err := unite.New(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -61,12 +77,12 @@ func ExampleDiscipline_Release() {
 	go func() {
 		defer close(input)
 
-		for item := 1; item <= quantity; item++ {
-			input <- item
+		for _, slice := range slices {
+			input <- slice
 		}
 	}()
 
-	outSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0)
 
 	for slice := range discipline.Output() {
 		outSequence = append(outSequence, slice...)

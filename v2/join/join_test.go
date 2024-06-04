@@ -1,12 +1,13 @@
 package join
 
 import (
-	"math"
 	"testing"
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/stressor"
+	"github.com/akramarenkov/cqos/v2/join/internal/blocks"
+	"github.com/akramarenkov/cqos/v2/join/internal/common"
 
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +39,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  minDefaultTimeout,
+		Timeout:  common.DefaultMinTimeout,
 	}
 
 	_, err = New(opts)
@@ -54,25 +55,35 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	testDiscipline(t, false, minDefaultTimeout)
+	for quantity := 100; quantity <= 125; quantity++ {
+		testDiscipline(t, quantity, 10, false, common.DefaultTestTimeout)
+	}
 }
 
 func TestDisciplineNoCopy(t *testing.T) {
-	testDiscipline(t, true, minDefaultTimeout)
+	for quantity := 100; quantity <= 125; quantity++ {
+		testDiscipline(t, quantity, 10, true, common.DefaultTestTimeout)
+	}
 }
 
 func TestDisciplineUntimeouted(t *testing.T) {
-	testDiscipline(t, false, 0)
+	for quantity := 100; quantity <= 125; quantity++ {
+		testDiscipline(t, quantity, 10, false, 0)
+	}
 }
 
-func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
-	quantity := 105
-
+func testDiscipline(
+	t *testing.T,
+	quantity int,
+	joinSize uint,
+	noCopy bool,
+	timeout time.Duration,
+) {
 	input := make(chan int)
 
 	opts := Opts[int]{
 		Input:    input,
-		JoinSize: 10,
+		JoinSize: joinSize,
 		NoCopy:   noCopy,
 		Timeout:  timeout,
 	}
@@ -88,10 +99,12 @@ func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 	go func() {
 		defer close(input)
 
-		for stage := 1; stage <= quantity; stage++ {
-			inSequence = append(inSequence, stage)
+		for _, slice := range blocks.DivideSequence(quantity, 1) {
+			for _, item := range slice {
+				inSequence = append(inSequence, item)
 
-			input <- stage
+				input <- item
+			}
 		}
 	}()
 
@@ -107,23 +120,34 @@ func testDiscipline(t *testing.T, noCopy bool, timeout time.Duration) {
 		}
 	}
 
-	expectedJoins := int(math.Ceil(float64(quantity) / float64(opts.JoinSize)))
+	expectedJoins := blocks.CalcExpectedJoins(quantity, 1, opts.JoinSize)
 
 	require.Equal(t, inSequence, outSequence)
 	require.Equal(t, expectedJoins, joins)
 }
 
 func TestDisciplineTimeout(t *testing.T) {
-	quantity := 105
-	pauseAt := 52
+	for quantity := 100; quantity <= 125; quantity++ {
+		testDisciplineTimeout(t, quantity, 10, 53)
+	}
+}
 
+func testDisciplineTimeout(
+	t *testing.T,
+	quantity int,
+	joinSize uint,
+	pauseAt int,
+) {
 	input := make(chan int)
 
 	opts := Opts[int]{
 		Input:    input,
-		JoinSize: 10,
+		JoinSize: joinSize,
 		Timeout:  100 * time.Millisecond,
 	}
+
+	pauseAt = blocks.PickUpPauseAt(quantity, pauseAt, 1, opts.JoinSize)
+	require.NotEqual(t, 0, pauseAt)
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
@@ -136,14 +160,16 @@ func TestDisciplineTimeout(t *testing.T) {
 	go func() {
 		defer close(input)
 
-		for stage := 1; stage <= quantity; stage++ {
-			if stage == pauseAt {
-				time.Sleep(5 * opts.Timeout)
+		for _, slice := range blocks.DivideSequence(quantity, 1) {
+			for _, item := range slice {
+				if item == pauseAt {
+					time.Sleep(5 * opts.Timeout)
+				}
+
+				inSequence = append(inSequence, item)
+
+				input <- item
 			}
-
-			inSequence = append(inSequence, stage)
-
-			input <- stage
 		}
 	}()
 
@@ -155,23 +181,27 @@ func TestDisciplineTimeout(t *testing.T) {
 		outSequence = append(outSequence, slice...)
 	}
 
-	// plus one slice with incomplete size due to pause on write to input
-	expectedJoins := int(math.Ceil(float64(quantity)/float64(opts.JoinSize))) + 1
+	expectedJoins := blocks.CalcExpectedJoinsWithTimeout(
+		quantity,
+		pauseAt,
+		1,
+		opts.JoinSize,
+	)
 
 	require.Equal(t, inSequence, outSequence)
 	require.Equal(t, expectedJoins, joins)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, minDefaultTimeout, 0, false)
+	benchmarkDiscipline(b, false, common.DefaultTestTimeout, 0, false)
 }
 
-func BenchmarkDisciplineRelease(b *testing.B) {
-	benchmarkDiscipline(b, true, minDefaultTimeout, 0, false)
+func BenchmarkDisciplineNoCopy(b *testing.B) {
+	benchmarkDiscipline(b, true, common.DefaultTestTimeout, 0, false)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, false, 0, 0, false)
+	benchmarkDiscipline(b, true, 0, 0, false)
 }
 
 func BenchmarkDisciplineStress(b *testing.B) {
@@ -209,8 +239,20 @@ func benchmarkDiscipline(
 	outputDelayFactor float64,
 	stressSystem bool,
 ) {
-	quantity, joinSize := benchmarkCalcQuantityJoinSize(b)
-	inputDelay, outputDelay := benchmarkCalcDelays(joinSize, outputDelayFactor)
+	joinsQuantity := b.N
+	joinSize := uint(10)
+	// Accuracy of this delay is sufficient for the benchmark and
+	// consts.ReliablyMeasurableDuration is too large to perform a representative
+	// number of iterations
+	inputDelayBase := 1 * time.Millisecond
+
+	quantity := joinsQuantity * int(joinSize)
+
+	inputDelay, outputDelay := calcBenchmarkDelays(
+		inputDelayBase,
+		joinSize,
+		outputDelayFactor,
+	)
 
 	input := make(chan int)
 
@@ -221,6 +263,9 @@ func benchmarkDiscipline(
 		Timeout:  timeout,
 	}
 
+	discipline, err := New(opts)
+	require.NoError(b, err)
+
 	if stressSystem {
 		stress, err := stressor.New(0, 0)
 		require.NoError(b, err)
@@ -228,16 +273,15 @@ func benchmarkDiscipline(
 		defer stress.Stop()
 	}
 
-	discipline, err := New(opts)
-	require.NoError(b, err)
+	b.ResetTimer()
 
 	go func() {
 		defer close(input)
 
-		for stage := 1; stage <= quantity; stage++ {
+		for item := 1; item <= quantity; item++ {
 			time.Sleep(inputDelay)
 
-			input <- stage
+			input <- item
 		}
 	}()
 
@@ -250,25 +294,16 @@ func benchmarkDiscipline(
 	}
 }
 
-func benchmarkCalcQuantityJoinSize(b *testing.B) (int, uint) {
-	const joinsQuantity = 100
-
-	quantity := b.N
-	joinSize := quantity / joinsQuantity
-
-	if joinSize == 0 {
-		joinSize = 1
-	}
-
-	return quantity, uint(joinSize)
-}
-
-func benchmarkCalcDelays(
+func calcBenchmarkDelays(
+	inputDelay time.Duration,
 	joinSize uint,
 	outputDelayFactor float64,
 ) (time.Duration, time.Duration) {
-	inputDelay := 1 * time.Millisecond
-	outputDelay := time.Duration(outputDelayFactor * float64(inputDelay) * float64(joinSize))
+	outputDelay := time.Duration(
+		outputDelayFactor *
+			float64(inputDelay) *
+			float64(joinSize),
+	)
 
 	if outputDelay == 0 {
 		inputDelay = 0
