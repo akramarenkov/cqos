@@ -88,7 +88,7 @@ func (dsc *Discipline[Type]) Err() <-chan error {
 }
 
 func (dsc *Discipline[Type]) main() {
-	for id := uint(0); id < dsc.opts.HandlersQuantity; id++ {
+	for range dsc.opts.HandlersQuantity {
 		go dsc.handler()
 	}
 }

@@ -67,7 +67,7 @@ func (str *Stressor) loop() {
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	for actors := 0; actors < str.cpuFactor*runtime.NumCPU(); actors++ {
+	for range str.cpuFactor * runtime.NumCPU() {
 		strings := make(chan string, 1)
 		runes := make(chan []rune)
 

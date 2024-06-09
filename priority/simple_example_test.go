@@ -69,7 +69,7 @@ func ExampleSimple() {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				channel <- item
@@ -150,7 +150,7 @@ func ExampleSimple_GracefulStop() {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				channel <- item

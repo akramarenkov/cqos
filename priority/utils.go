@@ -27,7 +27,7 @@ func createPriorities(quantity int) []uint {
 func calcCombinationsQuantitySlow(priorities []uint) int {
 	quantity := 0
 
-	for length := 0; length < len(priorities); length++ {
+	for range priorities {
 		quantity += quantity + 1
 	}
 

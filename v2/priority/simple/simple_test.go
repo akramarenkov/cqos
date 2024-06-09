@@ -100,7 +100,7 @@ func testDiscipline(t *testing.T, useBadDivider bool) {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				select {

@@ -68,7 +68,7 @@ func ExampleDiscipline() {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				channel <- item
@@ -77,7 +77,7 @@ func ExampleDiscipline() {
 	}
 
 	// Run handlers, that process data
-	for handler := 0; handler < handlersQuantity; handler++ {
+	for range handlersQuantity {
 		wg.Add(1)
 
 		go func() {
@@ -170,7 +170,7 @@ func ExampleDiscipline_GracefulStop() {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				channel <- item
@@ -179,7 +179,7 @@ func ExampleDiscipline_GracefulStop() {
 	}
 
 	// Run handlers, that process data
-	for handler := 0; handler < handlersQuantity; handler++ {
+	for range handlersQuantity {
 		wg.Add(1)
 
 		go func() {

@@ -137,7 +137,7 @@ func (dsc *Discipline[Type]) process() (time.Duration, bool) {
 }
 
 func (dsc *Discipline[Type]) pass() bool {
-	for quantity := uint64(0); quantity < dsc.opts.Limit.Quantity; quantity++ {
+	for range dsc.opts.Limit.Quantity {
 		item, opened := <-dsc.opts.Input
 		if !opened {
 			return true

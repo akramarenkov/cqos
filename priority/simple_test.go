@@ -111,7 +111,7 @@ func testSimple(t *testing.T, useBadDivider bool) {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				select {
@@ -205,7 +205,7 @@ func TestSimpleStop(t *testing.T) {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				select {
@@ -287,7 +287,7 @@ func TestSimpleGracefulStop(t *testing.T) {
 
 			base := strconv.Itoa(int(precedency))
 
-			for id := 0; id < itemsQuantity; id++ {
+			for id := range itemsQuantity {
 				item := base + ":" + strconv.Itoa(id)
 
 				channel <- item

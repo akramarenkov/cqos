@@ -117,7 +117,7 @@ func testGraphSleep(
 
 	startedAt := time.Now()
 
-	for id := 0; id < quantity; id++ {
+	for id := range quantity {
 		time.Sleep(duration)
 
 		relativeTimes[id] = time.Since(startedAt)
@@ -355,7 +355,7 @@ func testGraphDiscipline(
 	go func() {
 		defer close(input)
 
-		for stage := 0; stage < quantity; stage++ {
+		for stage := range quantity {
 			input <- stage
 		}
 	}()

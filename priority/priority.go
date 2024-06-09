@@ -328,7 +328,7 @@ func (dsc *Discipline[Type]) getOneFeedback() {
 }
 
 func (dsc *Discipline[Type]) getLimitedFeedback() {
-	for collected := 0; collected < dsc.feedbackLimit; collected++ {
+	for range dsc.feedbackLimit {
 		select {
 		case <-dsc.breaker.IsBreaked():
 			return

@@ -228,7 +228,7 @@ func write(
 	channel chan uint,
 	sequence uint,
 ) (uint, bool) {
-	for id := uint(0); id < action.quantity; id++ {
+	for range action.quantity {
 		select {
 		case <-ctx.Done():
 			return sequence, false
@@ -269,7 +269,7 @@ func (msr *measurer) runHandlers(
 	starter := starter.New()
 	defer starter.Go()
 
-	for id := uint(0); id < msr.opts.HandlersQuantity; id++ {
+	for range msr.opts.HandlersQuantity {
 		wg.Add(1)
 		starter.Ready(1)
 

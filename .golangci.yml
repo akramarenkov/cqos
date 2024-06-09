@@ -3,16 +3,19 @@ linters:
     - bidichk
     - bodyclose
     - decorder
+    - err113
     - errcheck
     - errname
     - errorlint
     - exportloopref
+    - fatcontext
     - forbidigo
     - forcetypeassert
     - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
     - gochecksumtype
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
@@ -20,13 +23,18 @@ linters:
     - godox
     - gofmt
     - goheader
-    - mnd
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
     - ineffassign
+    - intrange
     - lll
+    - maintidx
+    - makezero
     - misspell
+    - mnd
+    - nakedret
     - nestif
     - nilerr
     - nilnil
@@ -39,6 +47,7 @@ linters:
     - sqlclosecheck
     - staticcheck
     - stylecheck
+    - tagliatelle
     - tenv
     - testableexamples
     - testifylint
@@ -47,5 +56,6 @@ linters:
     - unused
     - usestdlibvars
     - wastedassign
+    - whitespace
     - wsl
     - zerologlint

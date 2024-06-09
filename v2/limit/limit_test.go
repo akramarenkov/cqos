@@ -159,7 +159,7 @@ func testDiscipline(
 	go func() {
 		defer close(input)
 
-		for stage := 0; stage < quantity; stage++ {
+		for stage := range quantity {
 			inSequence = append(inSequence, stage)
 
 			input <- stage
@@ -213,7 +213,7 @@ func testUndisciplined(t *testing.T, quantity int) time.Duration {
 	go func() {
 		defer close(input)
 
-		for stage := 0; stage < quantity; stage++ {
+		for stage := range quantity {
 			inSequence = append(inSequence, stage)
 
 			input <- stage
@@ -267,7 +267,7 @@ func benchmarkDiscipline(
 	go func() {
 		defer close(input)
 
-		for stage := 0; stage < quantity; stage++ {
+		for stage := range quantity {
 			input <- stage
 		}
 	}()

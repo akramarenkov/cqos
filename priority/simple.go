@@ -173,7 +173,7 @@ func (smpl *Simple[Type]) main() {
 
 	defer smpl.priority.Stop()
 
-	for id := uint(0); id < smpl.opts.HandlersQuantity; id++ {
+	for range smpl.opts.HandlersQuantity {
 		smpl.wg.Add(1)
 
 		go smpl.handler(ctx)
