@@ -107,7 +107,7 @@ func main() {
 
             base := strconv.Itoa(int(precedency))
 
-            for id := 0; id < itemsQuantity; id++ {
+            for id := range itemsQuantity {
                 item := base + ":" + strconv.Itoa(id)
 
                 channel <- item
@@ -116,7 +116,7 @@ func main() {
     }
 
     // Run handlers, that process data
-    for handler := 0; handler < handlersQuantity; handler++ {
+    for range handlersQuantity {
         wg.Add(1)
 
         go func() {
