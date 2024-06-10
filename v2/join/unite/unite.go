@@ -36,6 +36,17 @@ type Opts[Type any] struct {
 	// no longer used it is necessary to inform the discipline about it by calling
 	// Release() method
 	NoCopy bool
+	// Disables double buffering. Double buffering is implemented through two
+	// accumulation buffers, an additional goroutine of sending the accumulated
+	// buffer and an intermediate channel between the goroutines of accumulation and
+	// sending. Double buffering allows you to reduce processing time (increase
+	// performance) by 15-80% if the data accumulation and sending times are
+	// comparable, i.e. they correspond in the range from about 1:4 to 4:1 and these
+	// times are longer than the time spent on transferring the buffer between the
+	// accumulation and sending goroutines. Disabling double buffering can reduce
+	// processing time (increase performance) in other cases by 5-15% at low
+	// system load, and up to 70% at high system load
+	NoDoubleBuffering bool
 	// Timeout for slice accumulation. If the slice has not been filled completely
 	// in the allotted time, the data accumulated during this time is written to
 	// the output channel. A zero or negative value means that discipline will wait
@@ -103,7 +114,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		id:                spinner.New(0, common.BuffersQuantity-1),
+		id:                prepareSpinner(opts),
 		interim:           make(chan []Type, common.InterimCapacity),
 		interruptInterval: interval,
 		joins:             make([][]Type, common.BuffersQuantity),
@@ -117,6 +128,14 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	go dsc.main()
 
 	return dsc, nil
+}
+
+func prepareSpinner[Type any](opts Opts[Type]) *spinner.Spinner {
+	if opts.NoDoubleBuffering {
+		return spinner.New(0, 0)
+	}
+
+	return spinner.New(0, common.BuffersQuantity-1)
 }
 
 func (dsc *Discipline[Type]) initJoins() {
@@ -155,6 +174,10 @@ func (dsc *Discipline[Type]) main() {
 }
 
 func (dsc *Discipline[Type]) runSender() func() {
+	if dsc.opts.NoDoubleBuffering {
+		return func() {}
+	}
+
 	complete := make(chan struct{})
 
 	closing := func() {
@@ -258,14 +281,22 @@ func (dsc *Discipline[Type]) passActual() {
 		return
 	}
 
-	dsc.interim <- dsc.joins[id]
+	if dsc.opts.NoDoubleBuffering {
+		dsc.send(dsc.joins[id])
+	} else {
+		dsc.interim <- dsc.joins[id]
+	}
 
 	dsc.resetActual()
 	dsc.id.Spin()
 }
 
 func (dsc *Discipline[Type]) forward(item []Type) {
-	dsc.interim <- item
+	if dsc.opts.NoDoubleBuffering {
+		dsc.send(item)
+	} else {
+		dsc.interim <- item
+	}
 
 	dsc.resetPassAt()
 }
