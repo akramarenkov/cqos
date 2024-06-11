@@ -14,7 +14,7 @@ func ExampleDiscipline() {
 
 	opts := join.Opts[int]{
 		Input:    input,
-		JoinSize: 5,
+		JoinSize: 10,
 		Timeout:  10 * time.Second,
 	}
 
@@ -26,8 +26,8 @@ func ExampleDiscipline() {
 	go func() {
 		defer close(input)
 
-		for stage := 1; stage <= quantity; stage++ {
-			input <- stage
+		for item := 1; item <= quantity; item++ {
+			input <- item
 		}
 	}()
 

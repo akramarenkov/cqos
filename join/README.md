@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Accumulates elements from the input channel into a slice and writes it to the output channel when the size or timeout is reached
+Accumulates elements from the input channel into a slice and writes it to the output channel when the maximum size or timeout is reached
 
 Works in two modes:
 
@@ -31,7 +31,7 @@ func main() {
 
     opts := join.Opts[int]{
         Input:    input,
-        JoinSize: 5,
+        JoinSize: 10,
         Timeout:  10 * time.Second,
     }
 
@@ -43,8 +43,8 @@ func main() {
     go func() {
         defer close(input)
 
-        for stage := 1; stage <= quantity; stage++ {
-            input <- stage
+        for item := 1; item <= quantity; item++ {
+            input <- item
         }
     }()
 
