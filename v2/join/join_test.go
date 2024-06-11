@@ -114,7 +114,7 @@ func testDiscipline(
 	}()
 
 	for slice := range discipline.Output() {
-		require.NotEqual(t, 0, slice)
+		require.NotEmpty(t, slice)
 
 		joins++
 
@@ -179,7 +179,7 @@ func testDisciplineTimeout(
 	}()
 
 	for slice := range discipline.Output() {
-		require.NotEqual(t, 0, slice)
+		require.NotEmpty(t, slice)
 
 		joins++
 
