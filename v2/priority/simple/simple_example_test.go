@@ -2,87 +2,81 @@ package simple_test
 
 import (
 	"fmt"
-	"strconv"
-	"sync"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/simple"
 )
 
 func ExampleDiscipline() {
-	handlersQuantity := 100
-	// Preferably input channels should be buffered
+	handlersQuantity := uint(100)
+	itemsQuantity := 10000
+	// Preferably, input channels should be buffered for performance reasons
 	inputCapacity := 10
-	itemsQuantity := 100
 
-	inputs := map[uint]chan string{
-		3: make(chan string, inputCapacity),
-		2: make(chan string, inputCapacity),
-		1: make(chan string, inputCapacity),
+	inputs := map[uint]chan int{
+		70: make(chan int, inputCapacity),
+		20: make(chan int, inputCapacity),
+		10: make(chan int, inputCapacity),
 	}
 
 	// Map key is a value of priority
-	inputsOpts := map[uint]<-chan string{
-		3: inputs[3],
-		2: inputs[2],
-		1: inputs[1],
+	inputsOpts := make(map[uint]<-chan int, len(inputs))
+
+	for priority, channel := range inputs {
+		inputsOpts[priority] = channel
 	}
 
-	// Used only in this example for detect that all written data are processed
-	measures := make(chan string)
-	defer close(measures)
+	// Used only in this example for measuring input data
+	measurements := make(chan int)
 
-	handle := func(item string) {
+	handle := func(item int) {
 		// Data processing
-		measures <- item
+		measurements <- item
 	}
 
 	// For equaling use divider.Fair divider, for prioritization use
 	// divider.Rate divider or custom divider
-	opts := simple.Opts[string]{
+	opts := simple.Opts[int]{
 		Divider:          divider.Rate,
 		Handle:           handle,
-		HandlersQuantity: uint(handlersQuantity),
+		HandlersQuantity: handlersQuantity,
 		Inputs:           inputsOpts,
 	}
 
-	_, err := simple.New(opts)
+	discipline, err := simple.New(opts)
 	if err != nil {
 		panic(err)
 	}
 
-	wg := &sync.WaitGroup{}
-	defer wg.Wait()
-
-	// Run writers, that write data to input channels
-	for priority, input := range inputs {
-		wg.Add(1)
-
-		go func(precedency uint, channel chan string) {
-			defer wg.Done()
+	// Running writers, that write data to input channels
+	for _, input := range inputs {
+		go func(channel chan int) {
 			defer close(channel)
 
-			base := strconv.Itoa(int(precedency))
-
 			for id := range itemsQuantity {
-				item := base + ":" + strconv.Itoa(id)
-
-				channel <- item
+				channel <- id
 			}
-		}(priority, input)
+		}(input)
 	}
+
+	// Waiting for the completion of the discipline
+	go func() {
+		defer close(measurements)
+
+		for err := range discipline.Err() {
+			if err != nil {
+				fmt.Println("An error was received: ", err)
+			}
+		}
+	}()
 
 	received := 0
 
-	// Wait for process all written data
-	for range measures {
+	// Receiving the measurements data
+	for range measurements {
 		received++
-
-		if received == itemsQuantity*len(inputs) {
-			break
-		}
 	}
 
-	fmt.Println("Processed items quantity:", received)
-	// Output: Processed items quantity: 300
+	fmt.Println("Processed data items quantity:", received)
+	// Output: Processed data items quantity: 30000
 }
