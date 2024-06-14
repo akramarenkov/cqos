@@ -41,6 +41,101 @@ package main
 
 import (
     "fmt"
+
+    "github.com/akramarenkov/cqos/v2/priority"
+    "github.com/akramarenkov/cqos/v2/priority/divider"
+)
+
+func main() {
+    handlersQuantity := uint(100)
+    itemsQuantity := 10000
+    // Preferably, input channels should be buffered for performance reasons
+    inputCapacity := 10
+
+    inputs := map[uint]chan int{
+        70: make(chan int, inputCapacity),
+        20: make(chan int, inputCapacity),
+        10: make(chan int, inputCapacity),
+    }
+
+    // Map key is a value of priority
+    inputsOpts := make(map[uint]<-chan int, len(inputs))
+
+    for priority, channel := range inputs {
+        inputsOpts[priority] = channel
+    }
+
+    // Used only in this example for measuring input data
+    measurements := make(chan int)
+
+    // For equaling use divider.Fair divider, for prioritization use
+    // divider.Rate divider or custom divider
+    opts := priority.Opts[int]{
+        Divider:          divider.Rate,
+        HandlersQuantity: handlersQuantity,
+        Inputs:           inputsOpts,
+    }
+
+    discipline, err := priority.New(opts)
+    if err != nil {
+        panic(err)
+    }
+
+    // Running writers, that write data to input channels
+    for _, input := range inputs {
+        go func(channel chan int) {
+            defer close(channel)
+
+            for id := range itemsQuantity {
+                channel <- id
+            }
+        }(input)
+    }
+
+    // Running handlers, that process data
+    for range handlersQuantity {
+        go func() {
+            for prioritized := range discipline.Output() {
+                // Data processing
+                measurements <- prioritized.Item
+
+                // Handler must indicate that current data has been processed and
+                // handler is ready to receive new data
+                discipline.Release(prioritized.Priority)
+            }
+        }()
+    }
+
+    // Waiting for the completion of the discipline
+    go func() {
+        defer close(measurements)
+
+        for err := range discipline.Err() {
+            if err != nil {
+                fmt.Println("An error was received: ", err)
+            }
+        }
+    }()
+
+    received := 0
+
+    // Receiving the measurements data
+    for range measurements {
+        received++
+    }
+
+    fmt.Println("Processed data items quantity:", received)
+    // Output: Processed data items quantity: 30000
+}
+```
+
+Example with graph:
+
+```go
+package main
+
+import (
+    "fmt"
     "os"
     "slices"
     "sort"

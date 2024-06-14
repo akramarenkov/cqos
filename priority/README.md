@@ -41,6 +41,128 @@ package main
 
 import (
     "fmt"
+    "sync"
+
+    "github.com/akramarenkov/cqos/priority"
+)
+
+func main() {
+    handlersQuantity := uint(100)
+    itemsQuantity := 10000
+    // Preferably, input channels should be buffered for performance reasons
+    inputCapacity := 10
+
+    inputs := map[uint]chan int{
+        70: make(chan int, inputCapacity),
+        20: make(chan int, inputCapacity),
+        10: make(chan int, inputCapacity),
+    }
+
+    // Map key is a value of priority
+    inputsOpts := make(map[uint]<-chan int, len(inputs))
+
+    for priority, channel := range inputs {
+        inputsOpts[priority] = channel
+    }
+
+    // Data from input channels passed to handlers by output channel
+    output := make(chan priority.Prioritized[int])
+
+    // Handlers must write priority of processed data to feedback channel after it
+    // has been processed
+    feedback := make(chan uint)
+    defer close(feedback)
+
+    // Used only in this example for measuring input data
+    measurements := make(chan int)
+
+    // For equaling use FairDivider, for prioritization use
+    // RateDivider or custom divider
+    opts := priority.Opts[int]{
+        Divider:          priority.RateDivider,
+        Feedback:         feedback,
+        HandlersQuantity: handlersQuantity,
+        Inputs:           inputsOpts,
+        Output:           output,
+    }
+
+    discipline, err := priority.New(opts)
+    if err != nil {
+        panic(err)
+    }
+
+    wg := &sync.WaitGroup{}
+    defer wg.Wait()
+
+    // Running writers, that write data to input channels
+    for _, input := range inputs {
+        wg.Add(1)
+
+        go func(channel chan int) {
+            defer wg.Done()
+            defer close(channel)
+
+            for id := range itemsQuantity {
+                channel <- id
+            }
+        }(input)
+    }
+
+    // Running handlers, that process data
+    for range handlersQuantity {
+        wg.Add(1)
+
+        go func() {
+            defer wg.Done()
+
+            for prioritized := range output {
+                // Data processing
+                measurements <- prioritized.Item
+
+                // Handler must indicate that current data has been processed and
+                // handler is ready to receive new data
+                feedback <- prioritized.Priority
+            }
+        }()
+    }
+
+    // Terminate handlers
+    defer close(output)
+
+    // For simplicity, the process of graceful termination of the discipline is
+    // starts immediately
+    go discipline.GracefulStop()
+
+    // Waiting for the completion of the discipline
+    go func() {
+        defer close(measurements)
+
+        for err := range discipline.Err() {
+            if err != nil {
+                fmt.Println("An error was received: ", err)
+            }
+        }
+    }()
+
+    received := 0
+
+    // Receiving the measurements data
+    for range measurements {
+        received++
+    }
+
+    fmt.Println("Processed data items quantity:", received)
+    // Output: Processed data items quantity: 30000
+}
+```
+
+Example with graph:
+
+```go
+package main
+
+import (
+    "fmt"
     "os"
     "slices"
     "sort"
