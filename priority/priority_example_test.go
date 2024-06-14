@@ -98,9 +98,7 @@ func ExampleDiscipline() {
 
 	// For simplicity, the process of graceful termination of the discipline is
 	// starts immediately
-	go func() {
-		discipline.GracefulStop()
-	}()
+	go discipline.GracefulStop()
 
 	// Waiting for the completion of the discipline
 	go func() {
@@ -229,9 +227,7 @@ func ExampleDiscipline_graph() { //nolint:gocognit
 
 	// For simplicity, the process of graceful termination of the discipline is
 	// starts immediately
-	go func() {
-		discipline.GracefulStop()
-	}()
+	go discipline.GracefulStop()
 
 	// Waiting for the completion of the discipline
 	go func() {

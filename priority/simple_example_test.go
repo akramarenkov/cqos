@@ -71,9 +71,7 @@ func ExampleSimple() {
 
 	// For simplicity, the process of graceful termination of the discipline is
 	// starts immediately
-	go func() {
-		simple.GracefulStop()
-	}()
+	go simple.GracefulStop()
 
 	// Waiting for the completion of the discipline
 	go func() {
