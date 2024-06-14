@@ -31,6 +31,10 @@ func testReadmeGraph(t *testing.T, equaling bool) {
 		HandlersQuantity: 6,
 	}
 
+	if !equaling {
+		measurerOpts.NoFeedback = true
+	}
+
 	msr := newMeasurer(measurerOpts)
 
 	msr.AddWrite(1, 500)
@@ -48,12 +52,16 @@ func testReadmeGraph(t *testing.T, equaling bool) {
 	if equaling {
 		opts := Opts[uint]{
 			Divider:          FairDivider,
+			Feedback:         msr.GetFeedback(),
 			HandlersQuantity: measurerOpts.HandlersQuantity,
 			Inputs:           msr.GetInputs(),
+			Output:           msr.GetOutput(),
 		}
 
 		discipline, err := New(opts)
 		require.NoError(t, err)
+
+		defer discipline.Stop()
 
 		createReadmeGraph(
 			t,
@@ -71,10 +79,13 @@ func testReadmeGraph(t *testing.T, equaling bool) {
 
 	unmanagedOpts := unmanagedOpts[uint]{
 		Inputs: msr.GetInputs(),
+		Output: msr.GetOutput(),
 	}
 
 	unmanaged, err := newUnmanaged(unmanagedOpts)
 	require.NoError(t, err)
+
+	defer unmanaged.Stop()
 
 	createReadmeGraph(
 		t,
