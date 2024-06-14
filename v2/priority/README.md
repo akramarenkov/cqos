@@ -24,11 +24,11 @@ For example, suppose that data from channel of priority 3 is processed in time *
 
 * equaling by priority discipline:
 
-  ![Equaling by priority discipline](./doc/different-processing-time-equaling.png)
+  ![Equaling by priority discipline](./doc/different-processing-time-equaling.svg)
 
 * unmanaged distribution:
 
-  ![Unmanaged distribution](./doc/different-processing-time-unmanagement.png)
+  ![Unmanaged distribution](./doc/different-processing-time-unmanagement.svg)
 
 It can be seen that with unmanaged distribution, the processing speed of data with priority 3 is limited by the slowest processed data (with priority 1 and 2), but at with equaling by priority discipline the processing speed of data with priority 3 is no limited by others priorities. Similarly, with unmanaged distribution, the processing speed of data with priority 2 is limited by slower processed data with priority 1, but there is no such limitation with equaling by priority discipline
 
