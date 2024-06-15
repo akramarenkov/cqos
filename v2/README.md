@@ -12,6 +12,6 @@ Library that allows you to control passage of data between Go channels
 
 * **priority** - distributes data among handlers according to priority. See [README](./priority/README.md)
 
-* **join** - accumulates elements from the input channel into a slice and writes it to the output channel when the size or timeout is reached. See [README](./join/README.md)
+* **join** - accumulates elements from the input channel into a slice and writes it to the output channel when the maximum size or timeout is reached. See [README](./join/README.md)
 
 * **limit** - limits the speed of passing data elements from the input channel to the output channel. See [README](./limit/README.md)
