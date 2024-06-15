@@ -15,7 +15,7 @@ var (
 )
 
 const (
-	defaultCapacityFactor = 0.1
+	defaultCapacityDivider = 10
 )
 
 // Options of the created discipline.
@@ -48,14 +48,11 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity, err := general.CalcByFactor(
-		int(opts.Limit.Quantity),
-		defaultCapacityFactor,
+	capacity := general.DivideWithMin(
+		opts.Limit.Quantity,
+		defaultCapacityDivider,
 		1,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	dsc := &Discipline[Type]{
 		opts: opts,

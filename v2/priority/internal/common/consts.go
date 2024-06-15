@@ -1,5 +1,5 @@
 package common
 
 const (
-	DefaultCapacityFactor = 0.1
+	DefaultCapacityDivider = 10
 )

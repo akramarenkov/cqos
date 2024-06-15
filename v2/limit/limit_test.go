@@ -134,12 +134,11 @@ func testDiscipline(
 		limit = optimized
 	}
 
-	capacity, err := general.CalcByFactor(
+	capacity := general.DivideWithMin(
 		quantity,
-		defaultCapacityFactor,
+		defaultCapacityDivider,
 		1,
 	)
-	require.NoError(t, err)
 
 	input := make(chan int, capacity)
 
@@ -196,12 +195,11 @@ func calcExpectedDuration(
 }
 
 func testUndisciplined(t *testing.T, quantity int) time.Duration {
-	capacity, err := general.CalcByFactor(
+	capacity := general.DivideWithMin(
 		quantity,
-		defaultCapacityFactor,
+		defaultCapacityDivider,
 		1,
 	)
-	require.NoError(t, err)
 
 	input := make(chan int, capacity)
 
@@ -245,12 +243,11 @@ func benchmarkDiscipline(
 		limit = optimized
 	}
 
-	capacity, err := general.CalcByFactor(
+	capacity := general.DivideWithMin(
 		quantity,
-		defaultCapacityFactor,
+		defaultCapacityDivider,
 		1,
 	)
-	require.NoError(b, err)
 
 	input := make(chan int, capacity)
 

@@ -19,9 +19,9 @@ var (
 )
 
 const (
-	defaultFeedbackLimitFactor = 0.1
-	defaultIdleDelay           = 1 * time.Nanosecond
-	defaultInterruptTimeout    = 1 * time.Nanosecond
+	defaultFeedbackLimitDivider = 10
+	defaultIdleDelay            = 1 * time.Nanosecond
+	defaultInterruptTimeout     = 1 * time.Nanosecond
 )
 
 // Options of the created discipline.
@@ -62,7 +62,7 @@ type Discipline[Type any] struct {
 	uncrowded []uint
 	useful    []uint
 
-	feedbackLimit int
+	feedbackLimit uint
 
 	interrupter *time.Ticker
 
@@ -91,23 +91,17 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	capacity, err := general.CalcByFactor(
-		int(opts.HandlersQuantity),
-		common.DefaultCapacityFactor,
-		len(opts.Inputs),
+	capacity := general.DivideWithMin(
+		opts.HandlersQuantity,
+		common.DefaultCapacityDivider,
+		uint(len(opts.Inputs)),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	feedbackLimit, err := general.CalcByFactor(
-		int(opts.HandlersQuantity),
-		defaultFeedbackLimitFactor,
-		len(opts.Inputs),
+	feedbackLimit := general.DivideWithMin(
+		opts.HandlersQuantity,
+		defaultFeedbackLimitDivider,
+		uint(len(opts.Inputs)),
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	inputs, priorities, strategic, err := prepare(opts)
 	if err != nil {

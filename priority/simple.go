@@ -87,14 +87,11 @@ func NewSimple[Type any](opts SimpleOpts[Type]) (*Simple[Type], error) {
 
 	opts = opts.normalize()
 
-	capacity, err := general.CalcByFactor(
-		int(opts.HandlersQuantity),
-		common.DefaultCapacityFactor,
-		len(opts.Inputs),
+	capacity := general.DivideWithMin(
+		opts.HandlersQuantity,
+		common.DefaultCapacityDivider,
+		uint(len(opts.Inputs)),
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	output := make(chan Prioritized[Type], capacity)
 	feedback := make(chan uint, capacity)

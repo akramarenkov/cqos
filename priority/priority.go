@@ -20,9 +20,9 @@ var (
 )
 
 const (
-	defaultFeedbackLimitFactor = 0.1
-	defaultIdleDelay           = 1 * time.Nanosecond
-	defaultInterruptTimeout    = 1 * time.Nanosecond
+	defaultFeedbackLimitDivider = 10
+	defaultIdleDelay            = 1 * time.Nanosecond
+	defaultInterruptTimeout     = 1 * time.Nanosecond
 )
 
 type inputAdd[Type any] struct {
@@ -83,7 +83,7 @@ type Discipline[Type any] struct {
 	uncrowded []uint
 	useful    []uint
 
-	feedbackLimit int
+	feedbackLimit uint
 
 	interrupter *time.Ticker
 
@@ -124,14 +124,11 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 		return nil, err
 	}
 
-	feedbackLimit, err := general.CalcByFactor(
-		int(opts.HandlersQuantity),
-		defaultFeedbackLimitFactor,
+	feedbackLimit := general.DivideWithMin(
+		opts.HandlersQuantity,
+		defaultFeedbackLimitDivider,
 		1,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	dsc := &Discipline[Type]{
 		opts: opts.normalize(),
