@@ -27,7 +27,7 @@ func TestReadmeGraph(t *testing.T) {
 func testReadmeGraph(t *testing.T, equaling bool) {
 	t.Parallel()
 
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 

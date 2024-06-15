@@ -9,7 +9,7 @@ const (
 	// Minimum timeout, specifying which will not lead to an error when creating
 	// disciplines with using the value from DefaultTimeoutInaccuracy as
 	// TimeoutInaccuracy option.
-	DefaultMinTimeout = (consts.OneHundredPercent *
+	DefaultMinTimeout = (consts.HundredPercent *
 		consts.ReliablyMeasurableDuration) / DefaultTimeoutInaccuracy
 
 	// Default timeout used in tests.

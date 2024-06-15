@@ -183,7 +183,7 @@ func createGraphs(
 }
 
 func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -248,7 +248,7 @@ func TestGraphFairEven(t *testing.T) {
 }
 
 func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -313,7 +313,7 @@ func TestGraphFairUneven(t *testing.T) {
 }
 
 func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -378,7 +378,7 @@ func TestGraphRateEven(t *testing.T) {
 }
 
 func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -443,7 +443,7 @@ func TestGraphRateUneven(t *testing.T) {
 }
 
 func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -506,7 +506,7 @@ func TestGraphUnmanagedEven(t *testing.T) {
 }
 
 func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -569,7 +569,7 @@ func TestGraphUnmanagedUneven(t *testing.T) {
 }
 
 func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 

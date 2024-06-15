@@ -145,14 +145,14 @@ func CalcRelativeDeviations(
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
 
-		deviation := ((diff - expected) * consts.OneHundredPercent) / expected
+		deviation := ((diff - expected) * consts.HundredPercent) / expected
 
-		if deviation > consts.OneHundredPercent {
-			deviation = consts.OneHundredPercent
+		if deviation > consts.HundredPercent {
+			deviation = consts.HundredPercent
 		}
 
-		if deviation < -consts.OneHundredPercent {
-			deviation = -consts.OneHundredPercent
+		if deviation < -consts.HundredPercent {
+			deviation = -consts.HundredPercent
 		}
 
 		deviations[int(deviation)]++

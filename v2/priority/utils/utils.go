@@ -180,7 +180,7 @@ func isDistributionSuitable(
 
 		diff := 1.0 - (ratio*float64(distribution[priority]))/float64(referenceQuantity)
 
-		diff = consts.OneHundredPercent * math.Abs(diff)
+		diff = consts.HundredPercent * math.Abs(diff)
 
 		if diff > diffLimit {
 			return false

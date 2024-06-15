@@ -44,7 +44,7 @@ func testGraphTicker(
 	duration time.Duration,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -102,7 +102,7 @@ func testGraphSleep(
 	duration time.Duration,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -327,7 +327,7 @@ func testGraphDiscipline(
 	limit Rate,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnableGraphsEnv) == "" {
+	if os.Getenv(consts.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 

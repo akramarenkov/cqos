@@ -4,11 +4,11 @@ package consts
 import "time"
 
 const (
-	OneHundredPercent = 100
+	HundredPercent = 100
 )
 
 const (
-	EnableGraphsEnv = "CQOS_ENABLE_GRAPHS"
+	EnvEnableGraphs = "CQOS_ENABLE_GRAPHS"
 )
 
 const (

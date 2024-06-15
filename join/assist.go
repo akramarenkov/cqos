@@ -24,7 +24,7 @@ func calcInterruptInterval(
 		return 0, ErrTimeoutInaccuracyZero
 	}
 
-	divider := consts.OneHundredPercent / inaccuracy
+	divider := consts.HundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrTimeoutInaccuracyTooBig
