@@ -96,7 +96,7 @@ func TestUnlaunchedAtTwo(t *testing.T) {
 	}
 }
 
-func TestDoneExcess(*testing.T) {
+func TestExcess(*testing.T) {
 	launcher := New(2)
 
 	id := launcher.Add()
@@ -107,14 +107,17 @@ func TestDoneExcess(*testing.T) {
 	launcher.Done(id)
 
 	launcher.Created()
+	launcher.Created()
+	launcher.Wait()
 	launcher.Wait()
 }
 
 func TestLauncher(*testing.T) {
-	launchedAt := uint(10)
-	goroutinesQuantity := 20
-	iterationsNumber := 2 * launchedAt
+	testLauncher(10, 10, 20)
+	testLauncher(10, 15, 20)
+}
 
+func testLauncher(launchedAt uint, iterationsNumber int, goroutinesQuantity int) {
 	launcher := New(launchedAt)
 
 	wg := &sync.WaitGroup{}
@@ -142,10 +145,16 @@ func TestLauncher(*testing.T) {
 }
 
 func TestUnlaunched(t *testing.T) {
-	launchedAt := uint(10)
-	goroutinesQuantity := 20
-	iterationsNumber := 2 * launchedAt
+	testUnlaunched(t, 10, 15, 20, 0)
+}
 
+func testUnlaunched(
+	t *testing.T,
+	launchedAt uint,
+	iterationsNumber int,
+	goroutinesQuantity int,
+	skipAtID ...int,
+) {
 	launcher := New(launchedAt)
 
 	wg := &sync.WaitGroup{}
@@ -161,8 +170,10 @@ func TestUnlaunched(t *testing.T) {
 				defer wg.Done()
 
 				for range iterationsNumber {
-					if id != goroutinesQuantity/2 {
-						launcher.Done(id)
+					for skipID := range skipAtID {
+						if skipID != id {
+							launcher.Done(id)
+						}
 					}
 				}
 			}()
@@ -191,4 +202,8 @@ func TestUnlaunched(t *testing.T) {
 		require.FailNow(t, "must not be launched")
 	case <-timer.C:
 	}
+}
+
+func BenchmarkRace(b *testing.B) {
+	testLauncher(10, 10+b.N, b.N)
 }
