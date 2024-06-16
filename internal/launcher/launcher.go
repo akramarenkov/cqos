@@ -1,6 +1,6 @@
 // Internal package with implementation of the Launcher that is used to wait for
-// the launch of several goroutines. They will be considered launched if they report
-// this several times each.
+// the launch of several goroutines. They will be considered running if each
+// of them reports this several times.
 package launcher
 
 import (
@@ -14,7 +14,7 @@ const (
 )
 
 // Launcher is used to wait for the launch of several goroutines. They will be
-// considered launched if they report this launchedAt times each.
+// considered running if each of them reports this several times.
 type Launcher struct {
 	launchedAt uint
 
@@ -25,8 +25,10 @@ type Launcher struct {
 	wg      *sync.WaitGroup
 }
 
-// Creates Launcher instance. If the launchedAt value is zero, the default value
-// of 1 will be used.
+// Creates Launcher instance.
+//
+// Goroutines will be considered running if each of them reports this launchedAt times.
+// If the launchedAt is zero, then value 1 will be used.
 func New(launchedAt uint) *Launcher {
 	if launchedAt == 0 {
 		launchedAt = defaultLaunchedAt
@@ -87,9 +89,10 @@ func (lnc *Launcher) Done(id int) {
 // Indicates to the Launcher that the goroutines creation process is complete. This
 // method must be called after the goroutines creation process is completed.
 func (lnc *Launcher) Created() {
-	// Because it is impossible to call the WaitGroup.Wait method in parallel with the
-	// WaitGroup.Add methods, then an additional channel is used to notify the "main"
-	// goroutine that "child" goroutines have finished launched
+	// Because it is impossible to call the sync.WaitGroup.Wait method in parallel
+	// with the sync.WaitGroup.Add methods, then to notify the goroutine that called
+	// the Launcher.Wait method about the created goroutines have finished launched
+	// an additional channel is used
 	lnc.wg.Wait()
 	lnc.closing.Close()
 }
