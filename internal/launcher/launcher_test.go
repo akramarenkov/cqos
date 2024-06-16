@@ -11,51 +11,50 @@ import (
 func TestIdle(*testing.T) {
 	launcher := New(0)
 
-	launcher.Launched()
-
+	launcher.Created()
 	launcher.Wait()
 }
 
-func TestDoneAfterOne(*testing.T) {
+func TestLaunchedAtOne(*testing.T) {
 	launcher := New(0)
 
 	id := launcher.Add()
 
 	launcher.Done(id)
 
-	launcher.Launched()
-
+	launcher.Created()
 	launcher.Wait()
 }
 
-func TestUndoneAfterOne(t *testing.T) {
+func TestUnlaunchedAtOne(t *testing.T) {
 	launcher := New(0)
 
 	_ = launcher.Add()
 
-	done := make(chan bool)
+	isLaunched := make(chan bool)
 
 	go func() {
-		launcher.Launched()
+		launcher.Created()
 		launcher.Wait()
 
-		close(done)
+		close(isLaunched)
 	}()
 
-	// We don't wait for the goroutine to start for simplicity
-	// We hope that during the timeout all actions will be completed
+	// We don't wait for the located above goroutine to start for simplicity
+	// We hope that during the timeout all actions to launch the located above goroutine
+	// will be completed and the Created method will be called
 
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
 
 	select {
-	case <-done:
+	case <-isLaunched:
 		require.FailNow(t, "must not be launched")
-	case <-timeout.C:
+	case <-timer.C:
 	}
 }
 
-func TestDoneAfterTwo(*testing.T) {
+func TestLaunchedAtTwo(*testing.T) {
 	launcher := New(2)
 
 	id := launcher.Add()
@@ -63,37 +62,37 @@ func TestDoneAfterTwo(*testing.T) {
 	launcher.Done(id)
 	launcher.Done(id)
 
-	launcher.Launched()
-
+	launcher.Created()
 	launcher.Wait()
 }
 
-func TestUndoneAfterTwo(t *testing.T) {
+func TestUnlaunchedAtTwo(t *testing.T) {
 	launcher := New(2)
 
 	id := launcher.Add()
 
 	launcher.Done(id)
 
-	done := make(chan bool)
+	isLaunched := make(chan bool)
 
 	go func() {
-		launcher.Launched()
+		launcher.Created()
 		launcher.Wait()
 
-		close(done)
+		close(isLaunched)
 	}()
 
-	// We don't wait for the goroutine to start for simplicity
-	// We hope that during the timeout all actions will be completed
+	// We don't wait for the located above goroutine to start for simplicity
+	// We hope that during the timeout all actions to launch the located above goroutine
+	// will be completed and the Created method will be called
 
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
 
 	select {
-	case <-done:
+	case <-isLaunched:
 		require.FailNow(t, "must not be launched")
-	case <-timeout.C:
+	case <-timer.C:
 	}
 }
 
@@ -105,24 +104,24 @@ func TestDoneExcess(*testing.T) {
 	launcher.Done(id)
 	launcher.Done(id)
 	launcher.Done(id)
+	launcher.Done(id)
 
-	launcher.Launched()
-
+	launcher.Created()
 	launcher.Wait()
 }
 
-func TestGeneral(*testing.T) {
-	doneAfter := uint(10)
+func TestLauncher(*testing.T) {
+	launchedAt := uint(10)
+	goroutinesQuantity := 20
+	iterationsNumber := 2 * launchedAt
 
-	launcher := New(doneAfter)
+	launcher := New(launchedAt)
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	handlersQuantity := 20
-
 	go func() {
-		for range handlersQuantity {
+		for range goroutinesQuantity {
 			id := launcher.Add()
 
 			wg.Add(1)
@@ -130,30 +129,30 @@ func TestGeneral(*testing.T) {
 			go func() {
 				defer wg.Done()
 
-				for range 2 * doneAfter {
+				for range iterationsNumber {
 					launcher.Done(id)
 				}
 			}()
 		}
 
-		launcher.Launched()
+		launcher.Created()
 	}()
 
 	launcher.Wait()
 }
 
-func TestGeneralUndone(t *testing.T) {
-	doneAfter := uint(10)
+func TestUnlaunched(t *testing.T) {
+	launchedAt := uint(10)
+	goroutinesQuantity := 20
+	iterationsNumber := 2 * launchedAt
 
-	launcher := New(doneAfter)
+	launcher := New(launchedAt)
 
 	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	handlersQuantity := 20
-
 	go func() {
-		for range handlersQuantity {
+		for range goroutinesQuantity {
 			id := launcher.Add()
 
 			wg.Add(1)
@@ -161,34 +160,35 @@ func TestGeneralUndone(t *testing.T) {
 			go func() {
 				defer wg.Done()
 
-				for range 2 * doneAfter {
-					if id != handlersQuantity/2 {
+				for range iterationsNumber {
+					if id != goroutinesQuantity/2 {
 						launcher.Done(id)
 					}
 				}
 			}()
 		}
 
-		launcher.Launched()
+		launcher.Created()
 	}()
 
-	done := make(chan bool)
+	isLaunched := make(chan bool)
 
 	go func() {
 		launcher.Wait()
 
-		close(done)
+		close(isLaunched)
 	}()
 
-	// We don't wait for the goroutines to start for simplicity
-	// We hope that during the timeout all actions will be completed
+	// We don't wait for the located above goroutine to start for simplicity
+	// We hope that during the timeout all actions to launch the located above goroutine
+	// will be completed and the Created method will be called
 
-	timeout := time.NewTimer(5 * time.Second)
-	defer timeout.Stop()
+	timer := time.NewTimer(5 * time.Second)
+	defer timer.Stop()
 
 	select {
-	case <-done:
+	case <-isLaunched:
 		require.FailNow(t, "must not be launched")
-	case <-timeout.C:
+	case <-timer.C:
 	}
 }

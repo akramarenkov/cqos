@@ -80,7 +80,7 @@ func (str *Stressor) loop() {
 		go str.stringer(str.launcher.Add(), wg, runes, strings)
 	}
 
-	str.launcher.Launched()
+	str.launcher.Created()
 }
 
 func (str *Stressor) runer(
