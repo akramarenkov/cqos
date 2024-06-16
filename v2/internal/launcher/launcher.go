@@ -86,11 +86,10 @@ func (lnc *Launcher) Done(id int) {
 
 // Indicates to the Launcher that the goroutines creation process is complete. This
 // method must be called after the goroutines creation process is completed.
-//
-// Because it is impossible to call the WaitGroup.Wait method in parallel with the
-// WaitGroup.Add methods, then an additional channel is used to notify the "main"
-// goroutine that "child" goroutines have finished launched.
 func (lnc *Launcher) Created() {
+	// Because it is impossible to call the WaitGroup.Wait method in parallel with the
+	// WaitGroup.Add methods, then an additional channel is used to notify the "main"
+	// goroutine that "child" goroutines have finished launched
 	lnc.wg.Wait()
 	lnc.closing.Close()
 }
