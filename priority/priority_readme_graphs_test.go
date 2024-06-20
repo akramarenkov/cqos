@@ -174,6 +174,8 @@ func createReadmeGraph(
 	file, err := os.Create(fileName)
 	require.NoError(t, err)
 
+	defer file.Close()
+
 	err = graph.Render(chart.SVG, file)
 	require.NoError(t, err)
 }

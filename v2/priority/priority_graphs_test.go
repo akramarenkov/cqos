@@ -75,6 +75,8 @@ func createLineGraph(
 	file, err := os.Create(fileName)
 	require.NoError(t, err)
 
+	defer file.Close()
+
 	err = chart.Render(file)
 	require.NoError(t, err)
 }
@@ -106,6 +108,8 @@ func createBarGraph(
 
 	file, err := os.Create(fileName)
 	require.NoError(t, err)
+
+	defer file.Close()
 
 	err = chart.Render(file)
 	require.NoError(t, err)
