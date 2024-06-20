@@ -1,10 +1,11 @@
 module github.com/akramarenkov/cqos/v2
 
-go 1.22
+go 1.22.4
 
 require (
 	github.com/akramarenkov/breaker v0.0.3
 	github.com/akramarenkov/safe v0.2.3
+	github.com/akramarenkov/starter v0.0.6
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/go-echarts/go-echarts/v2 v2.3.3
 	github.com/guptarohit/asciigraph v0.7.1

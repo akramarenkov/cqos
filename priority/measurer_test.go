@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akramarenkov/cqos/priority/internal/starter"
+	"github.com/akramarenkov/starter"
 )
 
 const (
@@ -271,7 +271,7 @@ func (msr *measurer) runHandlers(
 
 	for range msr.opts.HandlersQuantity {
 		wg.Add(1)
-		starter.Ready(1)
+		starter.Ready()
 
 		go msr.handler(ctx, wg, channel, starter)
 	}
@@ -319,7 +319,7 @@ func (msr *measurer) handle(
 	}
 
 	received := measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         measureKindReceived,
 		Data:         item.Item,
@@ -330,7 +330,7 @@ func (msr *measurer) handle(
 	time.Sleep(msr.delays[item.Priority])
 
 	processed := measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         measureKindProcessed,
 		Data:         item.Item,
@@ -343,7 +343,7 @@ func (msr *measurer) handle(
 	}
 
 	completed := measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         measureKindCompleted,
 		Data:         item.Item,

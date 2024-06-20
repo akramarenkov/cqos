@@ -2,6 +2,8 @@ github.com/akramarenkov/breaker v0.0.3 h1:Vv2qm7Mf6h91Y52EDJtDtKZ581/NUkaFU6kA4O
 github.com/akramarenkov/breaker v0.0.3/go.mod h1:tJ7DkgyIqv99O02LeQtrUWLnKr9cQ8U0OgJXMZT2zrw=
 github.com/akramarenkov/safe v0.2.3 h1:FJDddJ78LYPGUi9EGYvsf3Sb8o3vLf/62A1K1Q3RMwA=
 github.com/akramarenkov/safe v0.2.3/go.mod h1:alYWCTILH55zQL3iW/vVpmo/Z4s5EoBLg1tl8ikvAaE=
+github.com/akramarenkov/starter v0.0.6 h1:rZ6lA1P0/PUfV6JPOVtDLDzp27/MTjThyjq/SVInfmY=
+github.com/akramarenkov/starter v0.0.6/go.mod h1:Nq5w6VILJubbCrGm8pZUCiQcGW92icN6iYW6cLV00u8=
 github.com/blend/go-sdk v1.20220411.3 h1:GFV4/FQX5UzXLPwWV03gP811pj7B8J2sbuq+GJQofXc=
 github.com/blend/go-sdk v1.20220411.3/go.mod h1:7lnH8fTi6U4i1fArEXRyOIY2E1X4MALg09qsQqY1+ak=
 github.com/caarlos0/env/v10 v10.0.0 h1:yIHUBZGsyqCnpTkbjk8asUlx6RFhhEs+h7TOBdgdzXA=

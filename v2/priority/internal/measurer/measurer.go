@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/priority/internal/starter"
 	"github.com/akramarenkov/cqos/v2/priority/types"
+	"github.com/akramarenkov/starter"
 )
 
 const (
@@ -247,7 +247,7 @@ func (msr *Measurer) runHandlers(
 
 	for range msr.opts.HandlersQuantity {
 		wg.Add(1)
-		starter.Ready(1)
+		starter.Ready()
 
 		go msr.handler(ctx, wg, channel, starter, discipline)
 	}
@@ -290,7 +290,7 @@ func (msr *Measurer) handle(
 	}
 
 	received := Measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         MeasureKindReceived,
 		Data:         item.Item,
@@ -301,7 +301,7 @@ func (msr *Measurer) handle(
 	time.Sleep(msr.delays[item.Priority])
 
 	processed := Measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         MeasureKindProcessed,
 		Data:         item.Item,
@@ -312,7 +312,7 @@ func (msr *Measurer) handle(
 	discipline.Release(item.Priority)
 
 	completed := Measure{
-		RelativeTime: time.Since(starter.StartedAt),
+		RelativeTime: time.Since(starter.StartedAt()),
 		Priority:     item.Priority,
 		Kind:         MeasureKindCompleted,
 		Data:         item.Item,
