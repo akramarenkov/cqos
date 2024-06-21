@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/internal/stressor"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 
+	"github.com/akramarenkov/stressor"
 	"github.com/go-echarts/go-echarts/v2/charts"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
@@ -49,9 +49,7 @@ func testGraphTicker(
 	}
 
 	if stressSystem {
-		stress, err := stressor.New(0, 0)
-		require.NoError(t, err)
-
+		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
 	}
 
@@ -107,9 +105,7 @@ func testGraphSleep(
 	}
 
 	if stressSystem {
-		stress, err := stressor.New(0, 0)
-		require.NoError(t, err)
-
+		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
 	}
 
@@ -332,9 +328,7 @@ func testGraphDiscipline(
 	}
 
 	if stressSystem {
-		stress, err := stressor.New(0, 0)
-		require.NoError(t, err)
-
+		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
 	}
 

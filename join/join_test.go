@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/internal/consts"
-	"github.com/akramarenkov/cqos/internal/stressor"
 	"github.com/akramarenkov/cqos/join/internal/blocks"
 	"github.com/akramarenkov/cqos/join/internal/common"
 
 	"github.com/akramarenkov/breaker/closing"
-
+	"github.com/akramarenkov/stressor"
 	"github.com/stretchr/testify/require"
 )
 
@@ -450,9 +449,7 @@ func benchmarkDiscipline(
 	require.NoError(b, err)
 
 	if stressSystem {
-		stress, err := stressor.New(0, 0)
-		require.NoError(b, err)
-
+		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
 	}
 

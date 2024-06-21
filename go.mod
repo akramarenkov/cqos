@@ -3,15 +3,15 @@ module github.com/akramarenkov/cqos
 go 1.22.4
 
 require (
-	github.com/akramarenkov/breaker v0.0.3
+	github.com/akramarenkov/breaker v0.1.0
 	github.com/akramarenkov/safe v0.2.3
-	github.com/akramarenkov/starter v0.0.6
-	github.com/caarlos0/env/v10 v10.0.0
+	github.com/akramarenkov/starter v0.1.0
+	github.com/akramarenkov/stressor v0.0.3
 	github.com/go-echarts/go-echarts/v2 v2.3.3
 	github.com/guptarohit/asciigraph v0.7.1
 	github.com/stretchr/testify v1.9.0
 	github.com/wcharczuk/go-chart/v2 v2.1.1
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
 )
 
 require (
