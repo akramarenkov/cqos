@@ -3,7 +3,7 @@ package priority
 import (
 	"math"
 
-	"github.com/akramarenkov/cqos/internal/consts"
+	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 )
 
@@ -175,7 +175,7 @@ func isDistributionSuitable(
 
 		diff := 1.0 - (ratio*float64(distribution[priority]))/float64(referenceQuantity)
 
-		diff = consts.HundredPercent * math.Abs(diff)
+		diff = general.HundredPercent * math.Abs(diff)
 
 		if diff > diffLimit {
 			return false

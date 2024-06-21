@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/priority"
+
 	"github.com/guptarohit/asciigraph"
 )
 

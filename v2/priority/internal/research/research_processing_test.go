@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/qot"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,7 +70,7 @@ func TestCalcInProcessing(t *testing.T) {
 
 	resolution := 5 * time.Microsecond
 
-	expected := map[uint][]qot.QuantityOverTime{
+	expected := map[uint][]general.QOT{
 		1: {
 			{
 				RelativeTime: -resolution,
@@ -192,8 +193,8 @@ func TestCalcInProcessing(t *testing.T) {
 
 func TestCalcInProcessingZeroInput(t *testing.T) {
 	quantities := CalcInProcessing(nil, 5*time.Microsecond)
-	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, map[uint][]general.QOT(nil), quantities)
 
 	quantities = CalcInProcessing([]measurer.Measure{}, 5*time.Microsecond)
-	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, map[uint][]general.QOT(nil), quantities)
 }

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/general"
 )
 
@@ -97,7 +96,7 @@ func (dsc *Discipline[Type]) delay(
 ) time.Duration {
 	delay = increaseDelay(delay, dsc.opts.Limit.Interval-duration)
 
-	if delay < consts.ReliablyMeasurableDuration {
+	if delay < general.ReliablyMeasurableDuration {
 		return delay
 	}
 

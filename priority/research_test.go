@@ -5,8 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/internal/qot"
-
+	"github.com/akramarenkov/cqos/internal/general"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
 
@@ -43,7 +42,7 @@ func sortByRelativeTime(measures []measure) {
 func calcDataQuantity(
 	measures []measure,
 	resolution time.Duration,
-) map[uint][]qot.QuantityOverTime {
+) map[uint][]general.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -61,14 +60,14 @@ func calcDataQuantity(
 
 	capacity := (max - min) / resolution
 
-	quantities := make(map[uint][]qot.QuantityOverTime)
+	quantities := make(map[uint][]general.QOT)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, capacity)
+		quantities[measure.Priority] = make([]general.QOT, 0, capacity)
 	}
 
 	measuresEdge := 0
@@ -92,7 +91,7 @@ func calcDataQuantity(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := qot.QuantityOverTime{
+			item := general.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - resolution,
 			}
@@ -105,7 +104,7 @@ func calcDataQuantity(
 				continue
 			}
 
-			item := qot.QuantityOverTime{
+			item := general.QOT{
 				Quantity:     0,
 				RelativeTime: span - resolution,
 			}
@@ -120,7 +119,7 @@ func calcDataQuantity(
 func calcInProcessing(
 	measures []measure,
 	resolution time.Duration,
-) map[uint][]qot.QuantityOverTime {
+) map[uint][]general.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -138,14 +137,14 @@ func calcInProcessing(
 
 	capacity := (max - min) / resolution
 
-	quantities := make(map[uint][]qot.QuantityOverTime)
+	quantities := make(map[uint][]general.QOT)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]qot.QuantityOverTime, 0, capacity)
+		quantities[measure.Priority] = make([]general.QOT, 0, capacity)
 	}
 
 	measuresEdge := 0
@@ -184,7 +183,7 @@ func calcInProcessing(
 				quantity += amount
 			}
 
-			item := qot.QuantityOverTime{
+			item := general.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - resolution,
 			}
@@ -199,7 +198,7 @@ func calcInProcessing(
 func calcWriteToFeedbackLatency(
 	measures []measure,
 	interval time.Duration,
-) map[uint][]qot.QuantityOverTime {
+) map[uint][]general.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -242,7 +241,7 @@ func calcWriteToFeedbackLatency(
 func processLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
-) map[uint][]qot.QuantityOverTime {
+) map[uint][]general.QOT {
 	for priority := range latencies {
 		slices.Sort(latencies[priority])
 	}
@@ -267,14 +266,14 @@ func processLatencies(
 
 	capacity := (max - min) / interval
 
-	quantities := make(map[uint][]qot.QuantityOverTime)
+	quantities := make(map[uint][]general.QOT)
 
 	for priority := range latencies {
 		if _, exists := quantities[priority]; exists {
 			continue
 		}
 
-		quantities[priority] = make([]qot.QuantityOverTime, 0, capacity)
+		quantities[priority] = make([]general.QOT, 0, capacity)
 	}
 
 	edges := make(map[uint]int)
@@ -300,7 +299,7 @@ func processLatencies(
 		}
 
 		for priority, quantity := range spanQuantities {
-			item := qot.QuantityOverTime{
+			item := general.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - interval,
 			}
@@ -313,7 +312,7 @@ func processLatencies(
 				continue
 			}
 
-			item := qot.QuantityOverTime{
+			item := general.QOT{
 				Quantity:     0,
 				RelativeTime: span - interval,
 			}
@@ -326,7 +325,7 @@ func processLatencies(
 }
 
 func convertToLineEcharts(
-	quantities map[uint][]qot.QuantityOverTime,
+	quantities map[uint][]general.QOT,
 	relativeTimeUnit time.Duration,
 ) (map[uint][]chartsopts.LineData, []int) {
 	serieses := make(map[uint][]chartsopts.LineData)
@@ -359,7 +358,7 @@ func convertToLineEcharts(
 }
 
 func convertToBarEcharts(
-	quantities map[uint][]qot.QuantityOverTime,
+	quantities map[uint][]general.QOT,
 ) (map[uint][]chartsopts.BarData, []int) {
 	serieses := make(map[uint][]chartsopts.BarData)
 	xaxis := []int(nil)

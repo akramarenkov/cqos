@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/akramarenkov/cqos/v2/priority/divider"
+
 	"github.com/akramarenkov/safe"
 )
 

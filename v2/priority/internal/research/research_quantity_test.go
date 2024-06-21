@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/qot"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
+
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
@@ -70,7 +71,7 @@ func TestCalcDataQuantity(t *testing.T) {
 
 	resolution := 5 * time.Microsecond
 
-	expected := map[uint][]qot.QuantityOverTime{
+	expected := map[uint][]general.QOT{
 		1: {
 			{
 				RelativeTime: -resolution,
@@ -193,16 +194,16 @@ func TestCalcDataQuantity(t *testing.T) {
 
 func TestCalcDataQuantityZeroInput(t *testing.T) {
 	quantities := CalcDataQuantity(nil, 5*time.Microsecond)
-	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, map[uint][]general.QOT(nil), quantities)
 
 	quantities = CalcDataQuantity([]measurer.Measure{}, 5*time.Microsecond)
-	require.Equal(t, map[uint][]qot.QuantityOverTime(nil), quantities)
+	require.Equal(t, map[uint][]general.QOT(nil), quantities)
 }
 
 func TestConvertToLineEcharts(t *testing.T) {
 	resolution := 5 * time.Microsecond
 
-	quantities := map[uint][]qot.QuantityOverTime{
+	quantities := map[uint][]general.QOT{
 		1: {
 			{
 				RelativeTime: -resolution,

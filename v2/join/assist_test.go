@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/join/internal/common"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,17 +16,17 @@ func TestCalcInterruptInterval(t *testing.T) {
 		common.DefaultTimeoutInaccuracy,
 	)
 	require.NoError(t, err)
-	require.Equal(t, 10*consts.ReliablyMeasurableDuration, interval)
+	require.Equal(t, 10*general.ReliablyMeasurableDuration, interval)
 
 	interval, err = calcInterruptInterval(
 		common.DefaultMinTimeout,
 		common.DefaultTimeoutInaccuracy,
 	)
 	require.NoError(t, err)
-	require.Equal(t, consts.ReliablyMeasurableDuration, interval)
+	require.Equal(t, general.ReliablyMeasurableDuration, interval)
 
 	interval, err = calcInterruptInterval(
-		consts.ReliablyMeasurableDuration,
+		general.ReliablyMeasurableDuration,
 		common.DefaultTimeoutInaccuracy,
 	)
 	require.Error(t, err)

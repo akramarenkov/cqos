@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/internal/consts"
+	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +23,7 @@ func TestReadmeGraph(t *testing.T) {
 func testReadmeGraph(t *testing.T, equaling bool) {
 	t.Parallel()
 
-	if os.Getenv(consts.EnvEnableGraphs) == "" {
+	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 

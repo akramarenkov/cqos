@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/internal/qot"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
@@ -18,7 +17,7 @@ func CalcIntervalQuantities(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) ([]qot.QuantityOverTime, time.Duration) {
+) ([]general.QOT, time.Duration) {
 	if len(relativeTimes) == 0 {
 		return nil, 0
 	}
@@ -51,7 +50,7 @@ func CalcIntervalQuantities(
 		intervalsQuantity = int(maxRelativeTime/interval) + 1
 	}
 
-	quantities := make([]qot.QuantityOverTime, 0, intervalsQuantity)
+	quantities := make([]general.QOT, 0, intervalsQuantity)
 
 	edge := 0
 
@@ -75,7 +74,7 @@ func CalcIntervalQuantities(
 			}
 		}
 
-		item := qot.QuantityOverTime{
+		item := general.QOT{
 			Quantity:     spanQuantities,
 			RelativeTime: span - interval,
 		}
@@ -86,7 +85,7 @@ func CalcIntervalQuantities(
 	// Padding with zero values ​​in case intervals quantity multiplied by
 	// interval is greater than max relative time
 	for addition := range intervalsQuantity - len(quantities) {
-		item := qot.QuantityOverTime{
+		item := general.QOT{
 			Quantity:     0,
 			RelativeTime: maxRelativeTime + interval*time.Duration(addition+1),
 		}
@@ -98,7 +97,7 @@ func CalcIntervalQuantities(
 }
 
 func ConvertQuantityOverTimeToBarEcharts(
-	quantities []qot.QuantityOverTime,
+	quantities []general.QOT,
 ) ([]chartsopts.BarData, []int) {
 	serieses := make([]chartsopts.BarData, 0, len(quantities))
 	xaxis := make([]int, 0, len(quantities))
@@ -145,14 +144,14 @@ func CalcRelativeDeviations(
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
 
-		deviation := ((diff - expected) * consts.HundredPercent) / expected
+		deviation := ((diff - expected) * general.HundredPercent) / expected
 
-		if deviation > consts.HundredPercent {
-			deviation = consts.HundredPercent
+		if deviation > general.HundredPercent {
+			deviation = general.HundredPercent
 		}
 
-		if deviation < -consts.HundredPercent {
-			deviation = -consts.HundredPercent
+		if deviation < -general.HundredPercent {
+			deviation = -general.HundredPercent
 		}
 
 		deviations[int(deviation)]++

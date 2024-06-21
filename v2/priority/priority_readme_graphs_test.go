@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 	"github.com/akramarenkov/cqos/v2/priority/internal/research"
 	"github.com/akramarenkov/cqos/v2/priority/internal/unmanaged"
-	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/require"
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 )
@@ -27,7 +27,7 @@ func TestReadmeGraph(t *testing.T) {
 func testReadmeGraph(t *testing.T, equaling bool) {
 	t.Parallel()
 
-	if os.Getenv(consts.EnvEnableGraphs) == "" {
+	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 

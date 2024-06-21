@@ -1,5 +1,4 @@
-// Internal package with common constants.
-package consts
+package general
 
 import "time"
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
+
 	"github.com/stretchr/testify/require"
 )
 

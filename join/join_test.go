@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/internal/consts"
+	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/join/internal/blocks"
 	"github.com/akramarenkov/cqos/join/internal/common"
 
@@ -33,7 +33,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  consts.ReliablyMeasurableDuration,
+		Timeout:  general.ReliablyMeasurableDuration,
 	}
 
 	_, err = New(opts)
@@ -417,7 +417,7 @@ func benchmarkDiscipline(
 	joinsQuantity := b.N
 	joinSize := uint(10)
 	// Accuracy of this delay is sufficient for the benchmark and
-	// consts.ReliablyMeasurableDuration is too large to perform a representative
+	// general.ReliablyMeasurableDuration is too large to perform a representative
 	// number of iterations
 	inputDelayBase := 1 * time.Millisecond
 

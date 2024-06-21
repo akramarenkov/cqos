@@ -6,9 +6,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/breaker"
 	"github.com/akramarenkov/cqos/internal/general"
 	"github.com/akramarenkov/cqos/priority/internal/common"
+
+	"github.com/akramarenkov/breaker"
 )
 
 var (

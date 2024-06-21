@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
+	"github.com/akramarenkov/cqos/v2/internal/general"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 
 	"github.com/akramarenkov/stressor"
@@ -44,7 +44,7 @@ func testGraphTicker(
 	duration time.Duration,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnvEnableGraphs) == "" {
+	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -100,7 +100,7 @@ func testGraphSleep(
 	duration time.Duration,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnvEnableGraphs) == "" {
+	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -323,7 +323,7 @@ func testGraphDiscipline(
 	limit Rate,
 	stressSystem bool,
 ) {
-	if os.Getenv(consts.EnvEnableGraphs) == "" {
+	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
 
