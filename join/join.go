@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/join/internal/common"
-	"github.com/akramarenkov/cqos/join/internal/spinner"
 
 	"github.com/akramarenkov/breaker"
+	"github.com/akramarenkov/spinner"
 )
 
 var (

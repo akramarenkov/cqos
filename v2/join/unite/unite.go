@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/join/internal/common"
-	"github.com/akramarenkov/cqos/v2/join/internal/spinner"
+
+	"github.com/akramarenkov/spinner"
 )
 
 var (

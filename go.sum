@@ -2,6 +2,8 @@ github.com/akramarenkov/breaker v0.1.0 h1:juMtX7qRtQEYopHUES81qQ53L4zXfNvt+LwcXm
 github.com/akramarenkov/breaker v0.1.0/go.mod h1:tJ7DkgyIqv99O02LeQtrUWLnKr9cQ8U0OgJXMZT2zrw=
 github.com/akramarenkov/safe v0.2.3 h1:FJDddJ78LYPGUi9EGYvsf3Sb8o3vLf/62A1K1Q3RMwA=
 github.com/akramarenkov/safe v0.2.3/go.mod h1:alYWCTILH55zQL3iW/vVpmo/Z4s5EoBLg1tl8ikvAaE=
+github.com/akramarenkov/spinner v0.0.1 h1:ehKHNTz0x6f9VuO49Dzl58pNj4ZRdk6E0QxFK8fyXoI=
+github.com/akramarenkov/spinner v0.0.1/go.mod h1:gT/04dV0Sdu7GCPMtvNADGeaXOGcMtRsEJB7kSI7ncw=
 github.com/akramarenkov/starter v0.1.0 h1:AYTQaeMtTPsoZDF9xaA0iTzlbAY/XEf496KcY4IkmA4=
 github.com/akramarenkov/starter v0.1.0/go.mod h1:Nq5w6VILJubbCrGm8pZUCiQcGW92icN6iYW6cLV00u8=
 github.com/akramarenkov/stressor v0.0.3 h1:RE4gEngLQ48WqMc78VVsRp3V7I1zqjQvCy3pKVwE1mA=
