@@ -127,8 +127,24 @@ func testDiscipline(
 
 	expectedJoins := blocks.CalcExpectedJoins(quantity, 1, opts.JoinSize)
 
-	require.Equal(t, inSequence, outSequence)
-	require.Equal(t, expectedJoins, joins)
+	require.Equal(t, inSequence, outSequence,
+		"quantity: %v, join size: %v, no copy: %v, "+
+			"timeout: %v, no double buffering: %v",
+		quantity,
+		joinSize,
+		noCopy,
+		timeout,
+		noDoubleBuffering,
+	)
+	require.Equal(t, expectedJoins, joins,
+		"quantity: %v, join size: %v, no copy: %v, "+
+			"timeout: %v, no double buffering: %v",
+		quantity,
+		joinSize,
+		noCopy,
+		timeout,
+		noDoubleBuffering,
+	)
 }
 
 func TestDisciplineTimeout(t *testing.T) {
@@ -151,6 +167,8 @@ func testDisciplineTimeout(
 		Timeout:  100 * time.Millisecond,
 	}
 
+	pausetAtDuration := common.CalcPauseAtDuration(opts.Timeout)
+
 	pauseAt = blocks.PickUpPauseAt(quantity, pauseAt, 1, opts.JoinSize)
 	require.NotEqual(t, 0, pauseAt)
 
@@ -168,7 +186,7 @@ func testDisciplineTimeout(
 		for _, slice := range blocks.DivideSequence(quantity, 1) {
 			for _, item := range slice {
 				if item == pauseAt {
-					time.Sleep(5 * opts.Timeout)
+					time.Sleep(pausetAtDuration)
 				}
 
 				inSequence = append(inSequence, item)
@@ -193,8 +211,18 @@ func testDisciplineTimeout(
 		opts.JoinSize,
 	)
 
-	require.Equal(t, inSequence, outSequence)
-	require.Equal(t, expectedJoins, joins)
+	require.Equal(t, inSequence, outSequence,
+		"quantity: %v, join size: %v, pause at: %v",
+		quantity,
+		joinSize,
+		pauseAt,
+	)
+	require.Equal(t, expectedJoins, joins,
+		"quantity: %v, join size: %v, pause at: %v",
+		quantity,
+		joinSize,
+		pauseAt,
+	)
 }
 
 func BenchmarkDiscipline(b *testing.B) {
