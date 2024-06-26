@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/internal/general"
-	"github.com/akramarenkov/cqos/join/internal/blocks"
 	"github.com/akramarenkov/cqos/join/internal/common"
+	"github.com/akramarenkov/cqos/join/internal/inspect"
 
 	"github.com/akramarenkov/breaker/closing"
 	"github.com/akramarenkov/stressor"
@@ -105,15 +105,16 @@ func testDiscipline(
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	joins := 0
-
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
+
+	expectedOutput := inspect.Expected(quantity, 1, opts.JoinSize)
+	output := make([][]int, 0, len(expectedOutput))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range blocks.DivideSequence(quantity, 1) {
+		for _, slice := range inspect.Input(quantity, 1) {
 			for _, item := range slice {
 				inSequence = append(inSequence, item)
 
@@ -125,16 +126,14 @@ func testDiscipline(
 	for slice := range discipline.Output() {
 		require.NotEmpty(t, slice)
 
-		joins++
-
 		outSequence = append(outSequence, slice...)
+
+		output = append(output, append([]int(nil), slice...))
 
 		if useReleased {
 			released <- struct{}{}
 		}
 	}
-
-	expectedJoins := blocks.CalcExpectedJoins(quantity, 1, opts.JoinSize)
 
 	require.Equal(t, inSequence, outSequence,
 		"quantity: %v, join size: %v, use released: %v, "+
@@ -145,7 +144,7 @@ func testDiscipline(
 		timeout,
 		noDoubleBuffering,
 	)
-	require.Equal(t, expectedJoins, joins,
+	require.Equal(t, expectedOutput, output,
 		"quantity: %v, join size: %v, use released: %v, "+
 			"timeout: %v, no double buffering: %v",
 		quantity,
@@ -176,23 +175,30 @@ func testDisciplineTimeout(
 		Timeout:  100 * time.Millisecond,
 	}
 
-	pausetAtDuration := common.CalcPauseAtDuration(opts.Timeout)
-
-	pauseAt = blocks.PickUpPauseAt(quantity, pauseAt, 1, opts.JoinSize)
+	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, 1, opts.JoinSize)
 	require.NotEqual(t, 0, pauseAt)
+
+	pausetAtDuration := inspect.CalcPauseAtDuration(opts.Timeout)
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	joins := 0
-
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
+
+	expectedOutput := inspect.ExpectedWithTimeout(
+		quantity,
+		pauseAt,
+		1,
+		opts.JoinSize,
+	)
+
+	output := make([][]int, 0, len(expectedOutput))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range blocks.DivideSequence(quantity, 1) {
+		for _, slice := range inspect.Input(quantity, 1) {
 			for _, item := range slice {
 				if item == pauseAt {
 					time.Sleep(pausetAtDuration)
@@ -208,17 +214,10 @@ func testDisciplineTimeout(
 	for slice := range discipline.Output() {
 		require.NotEmpty(t, slice)
 
-		joins++
-
 		outSequence = append(outSequence, slice...)
-	}
 
-	expectedJoins := blocks.CalcExpectedJoinsWithTimeout(
-		quantity,
-		pauseAt,
-		1,
-		opts.JoinSize,
-	)
+		output = append(output, append([]int(nil), slice...))
+	}
 
 	require.Equal(t, inSequence, outSequence,
 		"quantity: %v, join size: %v, pause at: %v",
@@ -226,7 +225,7 @@ func testDisciplineTimeout(
 		joinSize,
 		pauseAt,
 	)
-	require.Equal(t, expectedJoins, joins,
+	require.Equal(t, expectedOutput, output,
 		"quantity: %v, join size: %v, pause at: %v",
 		quantity,
 		joinSize,
@@ -305,7 +304,7 @@ func testDisciplineStop(
 		defer wg.Done()
 		defer close(input)
 
-		for _, slice := range blocks.DivideSequence(quantity, 1) {
+		for _, slice := range inspect.Input(quantity, 1) {
 			for _, item := range slice {
 				if item == stopAt {
 					stop()
@@ -339,7 +338,14 @@ func testDisciplineStop(
 	if useReleased {
 		require.Len(t, outSequence, int(opts.JoinSize))
 	} else {
-		require.Less(t, len(inSequence)-len(outSequence), 2*int(opts.JoinSize), "in: %v, out: %v", inSequence, outSequence)
+		require.Less(
+			t,
+			len(inSequence)-len(outSequence),
+			2*int(opts.JoinSize),
+			"in: %v, out: %v",
+			inSequence, outSequence,
+		)
+
 		require.GreaterOrEqual(t, len(inSequence)-len(outSequence), 0)
 	}
 

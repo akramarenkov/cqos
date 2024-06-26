@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="49cm" height="21cm" viewBox="12 5 970 418" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="49cm" height="21cm" viewBox="12 6 970 418" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="380" y="120" width="20" height="40"/>
   <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ff0000" x="460" y="180" width="20" height="40"/>
   <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="420" y="120" width="20" height="40"/>
@@ -115,9 +115,9 @@
   </g>
   <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ff0000" x="780" y="180" width="100" height="40"/>
   <g>
-    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="380" y1="360" x2="930.264" y2="360"/>
-    <polygon style="fill: #000000" points="937.764,360 927.764,365 930.264,360 927.764,355 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="937.764,360 927.764,365 930.264,360 927.764,355 "/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="380" y1="360" x2="970.264" y2="360"/>
+    <polygon style="fill: #000000" points="977.764,360 967.764,365 970.264,360 967.764,355 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="977.764,360 967.764,365 970.264,360 967.764,355 "/>
   </g>
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="880" y="380">
     <tspan x="880" y="380">Time</tspan>
@@ -226,7 +226,9 @@
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="620" y="340">
     <tspan x="620" y="340">- 2.75 timeout</tspan>
   </text>
-  <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="20" y="20">
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="20" y="20">
     <tspan x="20" y="20">Timeout inaccuracy equal to 25 is used</tspan>
   </text>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="940" y="120" width="20" height="40"/>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #fac858" x="960" y="120" width="20" height="40"/>
 </svg>

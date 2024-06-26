@@ -13,5 +13,5 @@ const (
 		general.ReliablyMeasurableDuration) / DefaultTimeoutInaccuracy
 
 	// Default timeout used in tests.
-	DefaultTestTimeout = 10 * DefaultMinTimeout
+	DefaultTestTimeout = 100 * DefaultMinTimeout
 )

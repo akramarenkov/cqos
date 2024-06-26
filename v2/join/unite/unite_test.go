@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/general"
-	"github.com/akramarenkov/cqos/v2/join/internal/blocks"
 	"github.com/akramarenkov/cqos/v2/join/internal/common"
+	"github.com/akramarenkov/cqos/v2/join/internal/inspect"
 
 	"github.com/akramarenkov/stressor"
 	"github.com/stretchr/testify/require"
@@ -56,97 +56,62 @@ func TestOptsValidation(t *testing.T) {
 
 func TestDiscipline(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 1, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 2, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 3, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 4, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 5, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 6, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 7, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 8, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 9, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 10, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 11, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 12, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 13, 10, false, common.DefaultTestTimeout, false)
+		for blockSize := 1; blockSize <= 21; blockSize++ {
+			testDiscipline(
+				t,
+				quantity,
+				blockSize,
+				10,
+				false,
+				common.DefaultTestTimeout,
+				false,
+			)
 
-		testDiscipline(t, quantity, 1, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 2, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 3, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 4, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 5, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 6, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 7, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 8, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 9, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 10, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 11, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 12, 10, false, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 13, 10, false, common.DefaultTestTimeout, true)
+			testDiscipline(
+				t,
+				quantity,
+				blockSize,
+				10,
+				false,
+				common.DefaultTestTimeout,
+				true,
+			)
+		}
 	}
 }
 
 func TestDisciplineNoCopy(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 1, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 2, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 3, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 4, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 5, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 6, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 7, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 8, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 9, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 10, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 11, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 12, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 13, 10, true, common.DefaultTestTimeout, false)
+		for blockSize := 1; blockSize <= 21; blockSize++ {
+			testDiscipline(
+				t,
+				quantity,
+				blockSize,
+				10,
+				true,
+				common.DefaultTestTimeout,
+				false,
+			)
 
-		testDiscipline(t, quantity, 1, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 2, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 3, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 4, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 5, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 6, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 7, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 8, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 9, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 10, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 11, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 12, 10, true, common.DefaultTestTimeout, true)
-		testDiscipline(t, quantity, 13, 10, true, common.DefaultTestTimeout, true)
+			testDiscipline(
+				t,
+				quantity,
+				blockSize,
+				10,
+				true,
+				common.DefaultTestTimeout,
+				true,
+			)
+		}
 	}
 }
 
 func TestDisciplineUntimeouted(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 1, 10, false, 0, false)
-		testDiscipline(t, quantity, 2, 10, false, 0, false)
-		testDiscipline(t, quantity, 3, 10, false, 0, false)
-		testDiscipline(t, quantity, 4, 10, false, 0, false)
-		testDiscipline(t, quantity, 5, 10, false, 0, false)
-		testDiscipline(t, quantity, 6, 10, false, 0, false)
-		testDiscipline(t, quantity, 7, 10, false, 0, false)
-		testDiscipline(t, quantity, 8, 10, false, 0, false)
-		testDiscipline(t, quantity, 9, 10, false, 0, false)
-		testDiscipline(t, quantity, 10, 10, false, 0, false)
-		testDiscipline(t, quantity, 11, 10, false, 0, false)
-		testDiscipline(t, quantity, 12, 10, false, 0, false)
-		testDiscipline(t, quantity, 13, 10, false, 0, false)
-
-		testDiscipline(t, quantity, 1, 10, false, 0, true)
-		testDiscipline(t, quantity, 2, 10, false, 0, true)
-		testDiscipline(t, quantity, 3, 10, false, 0, true)
-		testDiscipline(t, quantity, 4, 10, false, 0, true)
-		testDiscipline(t, quantity, 5, 10, false, 0, true)
-		testDiscipline(t, quantity, 6, 10, false, 0, true)
-		testDiscipline(t, quantity, 7, 10, false, 0, true)
-		testDiscipline(t, quantity, 8, 10, false, 0, true)
-		testDiscipline(t, quantity, 9, 10, false, 0, true)
-		testDiscipline(t, quantity, 10, 10, false, 0, true)
-		testDiscipline(t, quantity, 11, 10, false, 0, true)
-		testDiscipline(t, quantity, 12, 10, false, 0, true)
-		testDiscipline(t, quantity, 13, 10, false, 0, true)
+		for blockSize := 1; blockSize <= 21; blockSize++ {
+			testDiscipline(t, quantity, blockSize, 10, false, 0, false)
+			testDiscipline(t, quantity, blockSize, 10, false, 0, true)
+		}
 	}
 }
 
@@ -172,15 +137,16 @@ func testDiscipline(
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	joins := 0
-
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
+
+	expectedOutput := inspect.Expected(quantity, blockSize, opts.JoinSize)
+	output := make([][]int, 0, len(expectedOutput))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range blocks.DivideSequence(quantity, blockSize) {
+		for _, slice := range inspect.Input(quantity, blockSize) {
 			inSequence = append(inSequence, slice...)
 
 			input <- slice
@@ -190,16 +156,14 @@ func testDiscipline(
 	for slice := range discipline.Output() {
 		require.NotEmpty(t, slice)
 
-		joins++
-
 		outSequence = append(outSequence, slice...)
+
+		output = append(output, append([]int(nil), slice...))
 
 		if noCopy {
 			discipline.Release()
 		}
 	}
-
-	expectedJoins := blocks.CalcExpectedJoins(quantity, blockSize, opts.JoinSize)
 
 	require.Equal(t, inSequence, outSequence,
 		"quantity: %v, block size: %v, join size: %v, "+
@@ -211,7 +175,7 @@ func testDiscipline(
 		timeout,
 		noDoubleBuffering,
 	)
-	require.Equal(t, expectedJoins, joins,
+	require.Equal(t, expectedOutput, output,
 		"quantity: %v, block size: %v, join size: %v, "+
 			"no copy: %v, timeout: %v, no double buffering: %v",
 		quantity,
@@ -244,23 +208,30 @@ func testDisciplineTimeout(
 		Timeout:  100 * time.Millisecond,
 	}
 
-	pausetAtDuration := common.CalcPauseAtDuration(opts.Timeout)
-
-	pauseAt = blocks.PickUpPauseAt(quantity, pauseAt, blockSize, opts.JoinSize)
+	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, blockSize, opts.JoinSize)
 	require.NotEqual(t, 0, pauseAt)
+
+	pausetAtDuration := inspect.CalcPauseAtDuration(opts.Timeout)
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	joins := 0
-
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
+
+	expectedOutput := inspect.ExpectedWithTimeout(
+		quantity,
+		pauseAt,
+		blockSize,
+		opts.JoinSize,
+	)
+
+	output := make([][]int, 0, len(expectedOutput))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range blocks.DivideSequence(quantity, blockSize) {
+		for _, slice := range inspect.Input(quantity, blockSize) {
 			for _, item := range slice {
 				if item == pauseAt {
 					time.Sleep(pausetAtDuration)
@@ -276,17 +247,10 @@ func testDisciplineTimeout(
 	for slice := range discipline.Output() {
 		require.NotEmpty(t, slice)
 
-		joins++
-
 		outSequence = append(outSequence, slice...)
-	}
 
-	expectedJoins := blocks.CalcExpectedJoinsWithTimeout(
-		quantity,
-		pauseAt,
-		blockSize,
-		opts.JoinSize,
-	)
+		output = append(output, append([]int(nil), slice...))
+	}
 
 	require.Equal(t, inSequence, outSequence,
 		"quantity: %v, block size: %v, join size: %v, pause at: %v",
@@ -295,7 +259,7 @@ func testDisciplineTimeout(
 		joinSize,
 		pauseAt,
 	)
-	require.Equal(t, expectedJoins, joins,
+	require.Equal(t, expectedOutput, output,
 		"quantity: %v, block size: %v, join size: %v, pause at: %v",
 		quantity,
 		blockSize,
@@ -319,15 +283,26 @@ func TestDisciplineManually(t *testing.T) {
 		{28, 29, 30},             // add this slice into join and pass join at close input (1)
 	}
 
-	testDisciplineByDataSet(t, nil, 5, 0, true, common.DefaultTestTimeout)
-	testDisciplineByDataSet(t, dataSet, 5, 2+2+1+1+1+1, true, common.DefaultTestTimeout)
+	expected := [][]int{
+		{1, 2},
+		{3, 4, 5, 6, 7},
+		{8, 9, 10},
+		{11, 12, 13, 14, 15, 16},
+		{17, 18, 19},
+		{20, 21, 22},
+		{23, 24, 25, 26, 27},
+		{28, 29, 30},
+	}
+
+	testDisciplineByDataSet(t, nil, 5, [][]int{}, true, common.DefaultTestTimeout)
+	testDisciplineByDataSet(t, dataSet, 5, expected, true, common.DefaultTestTimeout)
 }
 
 func testDisciplineByDataSet(
 	t *testing.T,
 	dataSet [][]int,
 	joinSize uint,
-	expectedJoins int,
+	expectedOutput [][]int,
 	noCopy bool,
 	timeout time.Duration,
 ) {
@@ -343,10 +318,10 @@ func testDisciplineByDataSet(
 	discipline, err := New(opts)
 	require.NoError(t, err)
 
-	joins := 0
-
 	inSequence := make([]int, 0)
 	outSequence := make([]int, 0)
+
+	output := make([][]int, 0)
 
 	go func() {
 		defer close(input)
@@ -361,9 +336,9 @@ func testDisciplineByDataSet(
 	for slice := range discipline.Output() {
 		require.NotEmpty(t, slice)
 
-		joins++
-
 		outSequence = append(outSequence, slice...)
+
+		output = append(output, append([]int(nil), slice...))
 
 		if noCopy {
 			discipline.Release()
@@ -377,7 +352,7 @@ func testDisciplineByDataSet(
 		noCopy,
 		timeout,
 	)
-	require.Equal(t, expectedJoins, joins,
+	require.Equal(t, expectedOutput, output,
 		"data set: %v, join size: %v, no copy: %v, timeout: %v",
 		dataSet,
 		joinSize,
@@ -486,7 +461,7 @@ func benchmarkDiscipline(
 	joinSize := uint(10)
 	blockSize := 4
 	// Accuracy of this delay is sufficient for the benchmark and
-	// consts.ReliablyMeasurableDuration is too large to perform a representative
+	// general.ReliablyMeasurableDuration is too large to perform a representative
 	// number of iterations
 	inputDelayBase := 1 * time.Millisecond
 
@@ -500,7 +475,7 @@ func benchmarkDiscipline(
 		outputDelayFactor,
 	)
 
-	blocks := blocks.DivideSequence(quantity, blockSize)
+	blocks := inspect.Input(quantity, blockSize)
 
 	input := make(chan []int)
 
