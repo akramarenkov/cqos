@@ -339,40 +339,70 @@ func testDisciplineStop(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, common.DefaultTestTimeout, 0, false)
+	benchmarkDiscipline(b, 10, false, common.DefaultTestTimeout, 0, false)
 }
 
-func BenchmarkDisciplineRelease(b *testing.B) {
-	benchmarkDiscipline(b, true, common.DefaultTestTimeout, 0, false)
+func BenchmarkDisciplineInputCapIsFullJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, false, common.DefaultTestTimeout, 1, false)
 }
 
-func BenchmarkDisciplineUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, false)
+func BenchmarkDisciplineNoCopy(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, common.DefaultTestTimeout, 0, false)
+}
+
+func BenchmarkDisciplineNoCopyInputCapIsFullJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, common.DefaultTestTimeout, 1, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeouted(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 0, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsHalfJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 0.5, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsFullJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 1, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsTwiceJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 2, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsTripleJoinSize(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 3, false)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedStress(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 0, true)
+}
+
+func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsFullJoinSizeStress(b *testing.B) {
+	benchmarkDiscipline(b, 10, true, 0, 1, true)
+}
+
+func BenchmarkDisciplineUntimeoutedStress(b *testing.B) {
+	benchmarkDiscipline(b, 10, false, 0, 0, true)
+}
+
+func BenchmarkDisciplineUntimeoutedInputCapIsFullJoinSizeStress(b *testing.B) {
+	benchmarkDiscipline(b, 10, false, 0, 1, true)
 }
 
 func benchmarkDiscipline(
 	b *testing.B,
+	joinSize uint,
 	useReleased bool,
 	timeout time.Duration,
-	outputDelayFactor float64,
+	inputCapFactor float64,
 	stressSystem bool,
 ) {
 	joinsQuantity := b.N
-	joinSize := uint(10)
-	// Accuracy of this delay is sufficient for the benchmark and
-	// general.ReliablyMeasurableDuration is too large to perform a representative
-	// number of iterations
-	inputDelayBase := 1 * time.Millisecond
-
 	quantity := joinsQuantity * int(joinSize)
+	inputCap := int(inputCapFactor * float64(joinSize))
 
-	inputDelay, outputDelay := calcBenchmarkDelays(
-		inputDelayBase,
-		joinSize,
-		outputDelayFactor,
-	)
-
-	input := make(chan int)
+	input := make(chan int, inputCap)
 
 	released := make(chan struct{})
 	defer close(released)
@@ -403,35 +433,13 @@ func benchmarkDiscipline(
 		defer close(input)
 
 		for item := 1; item <= quantity; item++ {
-			time.Sleep(inputDelay)
-
 			input <- item
 		}
 	}()
 
 	for range discipline.Output() {
-		time.Sleep(outputDelay)
-
 		if useReleased {
 			released <- struct{}{}
 		}
 	}
-}
-
-func calcBenchmarkDelays(
-	inputDelay time.Duration,
-	joinSize uint,
-	outputDelayFactor float64,
-) (time.Duration, time.Duration) {
-	outputDelay := time.Duration(
-		outputDelayFactor *
-			float64(inputDelay) *
-			float64(joinSize),
-	)
-
-	if outputDelay == 0 {
-		inputDelay = 0
-	}
-
-	return inputDelay, outputDelay
 }
