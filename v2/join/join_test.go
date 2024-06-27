@@ -55,20 +55,13 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, false, common.DefaultTestTimeout)
-	}
-}
-
-func TestDisciplineNoCopy(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, true, common.DefaultTestTimeout)
-	}
-}
-
-func TestDisciplineUntimeouted(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, false, 0)
+	for quantity := 100; quantity <= 200; quantity++ {
+		for joinSize := uint(1); joinSize <= 20; joinSize++ {
+			testDiscipline(t, quantity, joinSize, false, common.DefaultTestTimeout)
+			testDiscipline(t, quantity, joinSize, true, common.DefaultTestTimeout)
+			testDiscipline(t, quantity, joinSize, false, 0)
+			testDiscipline(t, quantity, joinSize, true, 0)
+		}
 	}
 }
 
@@ -79,7 +72,7 @@ func testDiscipline(
 	noCopy bool,
 	timeout time.Duration,
 ) {
-	input := make(chan int)
+	input := make(chan int, joinSize)
 
 	opts := Opts[int]{
 		Input:    input,
@@ -94,14 +87,14 @@ func testDiscipline(
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
 
-	expectedOutput := inspect.Expected(quantity, 1, opts.JoinSize)
-	output := make([][]int, 0, len(expectedOutput))
+	expected := inspect.Expected(quantity, 1, joinSize)
+	output := make([][]int, 0, len(expected))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range inspect.Input(quantity, 1) {
-			for _, item := range slice {
+		for _, block := range inspect.Input(quantity, 1) {
+			for _, item := range block {
 				inSequence = append(inSequence, item)
 
 				input <- item
@@ -109,26 +102,31 @@ func testDiscipline(
 		}
 	}()
 
-	for slice := range discipline.Output() {
-		require.NotEmpty(t, slice)
+	for join := range discipline.Output() {
+		require.NotEmpty(t, join)
 
-		outSequence = append(outSequence, slice...)
-
-		output = append(output, append([]int(nil), slice...))
+		output = append(output, append([]int(nil), join...))
+		outSequence = append(outSequence, join...)
 
 		if noCopy {
 			discipline.Release()
 		}
 	}
 
-	require.Equal(t, inSequence, outSequence,
+	require.Equal(
+		t,
+		inSequence,
+		outSequence,
 		"quantity: %v, join size: %v, no copy: %v, timeout: %v",
 		quantity,
 		joinSize,
 		noCopy,
 		timeout,
 	)
-	require.Equal(t, expectedOutput, output,
+	require.Equal(
+		t,
+		expected,
+		output,
 		"quantity: %v, join size: %v, no copy: %v, timeout: %v",
 		quantity,
 		joinSize,
@@ -138,8 +136,9 @@ func testDiscipline(
 }
 
 func TestDisciplineTimeout(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		testDisciplineTimeout(t, quantity, 10, 53)
+	for pauseAt := 50; pauseAt <= 70; pauseAt++ {
+		testDisciplineTimeout(t, 100, 10, false, 200*time.Millisecond, pauseAt)
+		testDisciplineTimeout(t, 100, 10, true, 200*time.Millisecond, pauseAt)
 	}
 }
 
@@ -147,20 +146,25 @@ func testDisciplineTimeout(
 	t *testing.T,
 	quantity int,
 	joinSize uint,
+	noCopy bool,
+	timeout time.Duration,
 	pauseAt int,
 ) {
-	input := make(chan int)
+	input := make(chan int, joinSize)
 
 	opts := Opts[int]{
 		Input:    input,
 		JoinSize: joinSize,
-		Timeout:  100 * time.Millisecond,
+		NoCopy:   noCopy,
+		Timeout:  timeout,
 	}
 
-	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, 1, opts.JoinSize)
+	require.NotZero(t, timeout)
+
+	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, 1, joinSize)
 	require.NotEqual(t, 0, pauseAt)
 
-	pausetAtDuration := inspect.CalcPauseAtDuration(opts.Timeout)
+	pausetAtDuration := inspect.CalcPauseAtDuration(timeout)
 
 	discipline, err := New(opts)
 	require.NoError(t, err)
@@ -168,20 +172,14 @@ func testDisciplineTimeout(
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
 
-	expectedOutput := inspect.ExpectedWithTimeout(
-		quantity,
-		pauseAt,
-		1,
-		opts.JoinSize,
-	)
-
-	output := make([][]int, 0, len(expectedOutput))
+	expected := inspect.ExpectedWithTimeout(quantity, pauseAt, 1, joinSize)
+	output := make([][]int, 0, len(expected))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range inspect.Input(quantity, 1) {
-			for _, item := range slice {
+		for _, block := range inspect.Input(quantity, 1) {
+			for _, item := range block {
 				if item == pauseAt {
 					time.Sleep(pausetAtDuration)
 				}
@@ -193,24 +191,37 @@ func testDisciplineTimeout(
 		}
 	}()
 
-	for slice := range discipline.Output() {
-		require.NotEmpty(t, slice)
+	for join := range discipline.Output() {
+		require.NotEmpty(t, join)
 
-		outSequence = append(outSequence, slice...)
+		output = append(output, append([]int(nil), join...))
+		outSequence = append(outSequence, join...)
 
-		output = append(output, append([]int(nil), slice...))
+		if noCopy {
+			discipline.Release()
+		}
 	}
 
-	require.Equal(t, inSequence, outSequence,
-		"quantity: %v, join size: %v, pause at: %v",
+	require.Equal(
+		t,
+		inSequence,
+		outSequence,
+		"quantity: %v, join size: %v, no copy: %v, timeout: %v, pause at: %v",
 		quantity,
 		joinSize,
+		noCopy,
+		timeout,
 		pauseAt,
 	)
-	require.Equal(t, expectedOutput, output,
-		"quantity: %v, join size: %v, pause at: %v",
+	require.Equal(
+		t,
+		expected,
+		output,
+		"quantity: %v, join size: %v, no copy: %v, timeout: %v, pause at: %v",
 		quantity,
 		joinSize,
+		noCopy,
+		timeout,
 		pauseAt,
 	)
 }
