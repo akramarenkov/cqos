@@ -24,8 +24,8 @@ type Opts[Type any] struct {
 	// Roughly terminates (cancels) work of the discipline
 	Ctx context.Context
 	// Input data channel. For graceful termination it is enough to close the input
-	// channel. Should be buffered for performance reasons. Optimal capacity is in the
-	// range of one to two JoinSize
+	// channel. Preferably input channel should be buffered for performance reasons.
+	// Optimal capacity is in the range of one to two JoinSize
 	Input <-chan Type
 	// Maximum size of the output slice. Actual size of the output slice may be
 	// smaller due to the timeout or closure of the input channel

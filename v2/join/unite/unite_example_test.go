@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleDiscipline() {
-	slices := [][]int{
+	data := [][]int{
 		{1, 2, 3, 4},
 		{5, 6, 7, 8},
 		{9, 10, 11, 12},
@@ -18,12 +18,14 @@ func ExampleDiscipline() {
 		{25, 26, 27},
 	}
 
-	input := make(chan []int)
+	// Preferably input channel should be buffered for performance reasons.
+	// Optimal capacity is in the range of one to two JoinSize
+	input := make(chan []int, 10)
 
 	opts := unite.Opts[int]{
 		Input:    input,
 		JoinSize: 10,
-		Timeout:  10 * time.Second,
+		Timeout:  time.Second,
 	}
 
 	discipline, err := unite.New(opts)
@@ -34,23 +36,24 @@ func ExampleDiscipline() {
 	go func() {
 		defer close(input)
 
-		for _, slice := range slices {
-			input <- slice
+		for _, item := range data {
+			input <- item
 		}
 	}()
 
-	outSequence := make([]int, 0)
-
-	for slice := range discipline.Output() {
-		outSequence = append(outSequence, slice...)
+	for join := range discipline.Output() {
+		fmt.Println(join)
 	}
 
-	fmt.Println(outSequence)
-	// Output:[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27]
+	// Output:
+	// [1 2 3 4 5 6 7 8]
+	// [9 10 11 12 13 14 15 16]
+	// [17 18 19 20 21 22 23 24]
+	// [25 26 27]
 }
 
 func ExampleDiscipline_Release() {
-	slices := [][]int{
+	data := [][]int{
 		{1, 2, 3, 4},
 		{5, 6, 7, 8},
 		{9, 10, 11, 12},
@@ -60,13 +63,15 @@ func ExampleDiscipline_Release() {
 		{25, 26, 27},
 	}
 
-	input := make(chan []int)
+	// Preferably input channel should be buffered for performance reasons.
+	// Optimal capacity is in the range of one to two JoinSize
+	input := make(chan []int, 10)
 
 	opts := unite.Opts[int]{
 		Input:    input,
 		JoinSize: 10,
 		NoCopy:   true,
-		Timeout:  10 * time.Second,
+		Timeout:  time.Second,
 	}
 
 	discipline, err := unite.New(opts)
@@ -77,19 +82,20 @@ func ExampleDiscipline_Release() {
 	go func() {
 		defer close(input)
 
-		for _, slice := range slices {
-			input <- slice
+		for _, item := range data {
+			input <- item
 		}
 	}()
 
-	outSequence := make([]int, 0)
-
-	for slice := range discipline.Output() {
-		outSequence = append(outSequence, slice...)
+	for join := range discipline.Output() {
+		fmt.Println(join)
 
 		discipline.Release()
 	}
 
-	fmt.Println(outSequence)
-	// Output:[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27]
+	// Output:
+	// [1 2 3 4 5 6 7 8]
+	// [9 10 11 12 13 14 15 16]
+	// [17 18 19 20 21 22 23 24]
+	// [25 26 27]
 }
