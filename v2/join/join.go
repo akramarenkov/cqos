@@ -35,12 +35,12 @@ type Opts[Type any] struct {
 	// in the allotted time, the data accumulated during this time is written to
 	// the output channel. A zero or negative value means that discipline will wait
 	// for the missing data until they appear or the channel is closed (in this case,
-	// the data will be accumulated data will be written to the output channel)
+	// the accumulated data will be written to the output channel)
 	Timeout time.Duration
 	// Due to the fact that it is not possible to reliably reset the timer/ticker
 	// (without false ticks), a ticker with a duration several times shorter than
 	// the timeout is used and to determine the expiration of the timeout,
-	// the current time is compared with the time of the last recording to
+	// the current time is compared with the time of the last writing to
 	// the output channel. This method has an inaccuracy that can be set by
 	// this parameter in percents
 	TimeoutInaccuracy uint
