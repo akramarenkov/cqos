@@ -498,3 +498,9 @@ func TestExpectedBlockSize11(t *testing.T) {
 		)
 	}
 }
+
+func BenchmarkExpected(b *testing.B) {
+	for range b.N {
+		_ = Expected(b.N, 4, 10)
+	}
+}

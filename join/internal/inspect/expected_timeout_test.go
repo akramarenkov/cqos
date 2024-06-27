@@ -741,3 +741,9 @@ func TestExpectedWithTimeoutBlockSize11(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkExpectedWithTimeout(b *testing.B) {
+	for range b.N {
+		_ = ExpectedWithTimeout(b.N, 13, 4, 10)
+	}
+}
