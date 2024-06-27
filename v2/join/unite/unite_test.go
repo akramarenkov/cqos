@@ -493,6 +493,8 @@ func benchmarkDiscipline(
 	if stressSystem {
 		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
+
+		time.Sleep(time.Second)
 	}
 
 	b.ResetTimer()

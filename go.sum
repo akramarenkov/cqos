@@ -6,8 +6,8 @@ github.com/akramarenkov/spinner v0.0.1 h1:ehKHNTz0x6f9VuO49Dzl58pNj4ZRdk6E0QxFK8
 github.com/akramarenkov/spinner v0.0.1/go.mod h1:gT/04dV0Sdu7GCPMtvNADGeaXOGcMtRsEJB7kSI7ncw=
 github.com/akramarenkov/starter v0.1.0 h1:AYTQaeMtTPsoZDF9xaA0iTzlbAY/XEf496KcY4IkmA4=
 github.com/akramarenkov/starter v0.1.0/go.mod h1:Nq5w6VILJubbCrGm8pZUCiQcGW92icN6iYW6cLV00u8=
-github.com/akramarenkov/stressor v0.0.3 h1:RE4gEngLQ48WqMc78VVsRp3V7I1zqjQvCy3pKVwE1mA=
-github.com/akramarenkov/stressor v0.0.3/go.mod h1:oDvUZSYHYY636fiYYAXwffLJrNmznVD7r4iB3t43A4Q=
+github.com/akramarenkov/stressor v0.0.6 h1:SAIaaXGgiehOuSe7x1WkScfB9QwOMjn0fyjMOrQx8j8=
+github.com/akramarenkov/stressor v0.0.6/go.mod h1:oDvUZSYHYY636fiYYAXwffLJrNmznVD7r4iB3t43A4Q=
 github.com/blend/go-sdk v1.20220411.3 h1:GFV4/FQX5UzXLPwWV03gP811pj7B8J2sbuq+GJQofXc=
 github.com/blend/go-sdk v1.20220411.3/go.mod h1:7lnH8fTi6U4i1fArEXRyOIY2E1X4MALg09qsQqY1+ak=
 github.com/caarlos0/env/v10 v10.0.0 h1:yIHUBZGsyqCnpTkbjk8asUlx6RFhhEs+h7TOBdgdzXA=

@@ -51,6 +51,8 @@ func testGraphTicker(
 	if stressSystem {
 		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
+
+		time.Sleep(time.Second)
 	}
 
 	relativeTimes := make([]time.Duration, 0, quantity)
@@ -107,6 +109,8 @@ func testGraphSleep(
 	if stressSystem {
 		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
+
+		time.Sleep(time.Second)
 	}
 
 	relativeTimes := make([]time.Duration, quantity)
@@ -330,6 +334,8 @@ func testGraphDiscipline(
 	if stressSystem {
 		stress := stressor.New(stressor.Opts{})
 		defer stress.Stop()
+
+		time.Sleep(time.Second)
 	}
 
 	input := make(chan int)

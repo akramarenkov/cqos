@@ -7,7 +7,7 @@ require (
 	github.com/akramarenkov/safe v0.2.3
 	github.com/akramarenkov/spinner v0.0.1
 	github.com/akramarenkov/starter v0.1.0
-	github.com/akramarenkov/stressor v0.0.3
+	github.com/akramarenkov/stressor v0.0.6
 	github.com/go-echarts/go-echarts/v2 v2.3.3
 	github.com/guptarohit/asciigraph v0.7.1
 	github.com/stretchr/testify v1.9.0
