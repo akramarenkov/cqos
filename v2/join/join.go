@@ -1,6 +1,6 @@
-// Discipline that is used to accumulates elements from the input channel into a
-// slice and writes it to the output channel when the maximum size or timeout is
-// reached.
+// Discipline used to accumulate elements from an input channel into a slice and
+// write that slice to an output channel when the maximum slice size or timeout
+// for its accumulation is reached.
 package join
 
 import (

@@ -1,8 +1,8 @@
-// Discipline that is used to accumulates slices elements from the input channel into a
-// one slice and writes it to the output channel when the maximum size or timeout is
-// reached. It works like a join discipline but accepts slices as input and unite
-// their elements into one slice. Moreover, the input slices are not divided between
-// the output slices.
+// Discipline used to accumulate slices elements from an input channel into a one slice
+// and write that slice to an output channel when the maximum slice size or timeout for
+// its accumulation is reached. It works like a join discipline but accepts slices as
+// input and unite their elements into one slice. Moreover, the input slices are not
+// divided between the output slices.
 package unite
 
 import (

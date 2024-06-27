@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Accumulates elements from the input channel into a slice and writes it to the output channel when the maximum size or timeout is reached
+Accumulates elements from an input channel into a slice and write that slice to an output channel when the maximum slice size or timeout for its accumulation is reached
 
 Works in two modes:
 
