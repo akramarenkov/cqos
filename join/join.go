@@ -12,7 +12,6 @@ import (
 	"github.com/akramarenkov/cqos/join/internal/common"
 
 	"github.com/akramarenkov/breaker"
-	"github.com/akramarenkov/spinner"
 )
 
 var (
@@ -30,17 +29,6 @@ type Opts[Type any] struct {
 	// Maximum size of the output slice. Actual size of the output slice may be
 	// smaller due to the timeout or closure of the input channel
 	JoinSize uint
-	// Disables double buffering. Double buffering is implemented through two
-	// accumulation buffers, an additional goroutine of sending the accumulated
-	// buffer and an intermediate channel between the goroutines of accumulation and
-	// sending. Double buffering allows you to reduce processing time (increase
-	// performance) by 15-80% if the data accumulation and sending times are
-	// comparable, i.e. they correspond in the range from about 1:4 to 4:1 and these
-	// times are longer than the time spent on transferring the buffer between the
-	// accumulation and sending goroutines. Disabling double buffering can reduce
-	// processing time (increase performance) in other cases by 5-15% at low
-	// system load, and up to 70% at high system load
-	NoDoubleBuffering bool
 	// By default, to the output channel is written a copy of the accumulated slice
 	// If the Released channel is set, then to the output channel will be directly
 	// written the accumulated slice. In this case, after the accumulated slice is
@@ -92,10 +80,8 @@ type Discipline[Type any] struct {
 
 	breaker *breaker.Breaker
 
-	id                *spinner.Spinner
-	interim           chan []Type
 	interruptInterval time.Duration
-	joins             [][]Type
+	join              []Type
 	output            chan []Type
 	passAt            time.Time
 }
@@ -121,33 +107,16 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		breaker: breaker.New(),
 
-		id:                prepareSpinner(opts),
-		interim:           make(chan []Type, common.InterimCapacity),
 		interruptInterval: interval,
-		joins:             make([][]Type, common.BuffersQuantity),
+		join:              make([]Type, 0, opts.JoinSize),
 		output:            make(chan []Type, 1),
 	}
 
-	dsc.initJoins()
 	dsc.resetPassAt()
 
 	go dsc.main()
 
 	return dsc, nil
-}
-
-func prepareSpinner[Type any](opts Opts[Type]) *spinner.Spinner {
-	if opts.NoDoubleBuffering {
-		return spinner.New(0, 0)
-	}
-
-	return spinner.New(0, common.BuffersQuantity-1)
-}
-
-func (dsc *Discipline[Type]) initJoins() {
-	for id := range dsc.joins {
-		dsc.joins[id] = make([]Type, 0, dsc.opts.JoinSize)
-	}
 }
 
 // Returns output channel.
@@ -168,36 +137,19 @@ func (dsc *Discipline[Type]) main() {
 	defer dsc.breaker.Complete()
 	defer close(dsc.output)
 
-	closing := dsc.runSender()
-	defer closing()
-
 	if dsc.interruptInterval == 0 {
-		dsc.accumulatorUntimeouted()
+		dsc.loopUntimeouted()
 		return
 	}
 
-	dsc.accumulator()
+	dsc.loop()
 }
 
-func (dsc *Discipline[Type]) runSender() func() {
-	if dsc.opts.NoDoubleBuffering {
-		return func() {}
-	}
+func (dsc *Discipline[Type]) loop() {
+	defer dsc.pass()
 
-	complete := make(chan struct{})
-
-	closing := func() {
-		close(dsc.interim)
-		<-complete
-	}
-
-	go dsc.sender(complete)
-
-	return closing
-}
-
-func (dsc *Discipline[Type]) sender(complete chan struct{}) {
-	defer close(complete)
+	ticker := time.NewTicker(dsc.interruptInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -205,14 +157,58 @@ func (dsc *Discipline[Type]) sender(complete chan struct{}) {
 			return
 		case <-dsc.opts.Ctx.Done():
 			return
-		case item, opened := <-dsc.interim:
+		case <-ticker.C:
+			if dsc.isTimeouted() {
+				dsc.pass()
+			}
+		case item, opened := <-dsc.opts.Input:
 			if !opened {
 				return
 			}
 
-			dsc.send(item)
+			dsc.process(item)
 		}
 	}
+}
+
+func (dsc *Discipline[Type]) loopUntimeouted() {
+	defer dsc.pass()
+
+	for {
+		select {
+		case <-dsc.breaker.IsBreaked():
+			return
+		case <-dsc.opts.Ctx.Done():
+			return
+		case item, opened := <-dsc.opts.Input:
+			if !opened {
+				return
+			}
+
+			dsc.process(item)
+		}
+	}
+}
+
+func (dsc *Discipline[Type]) process(item Type) {
+	dsc.join = append(dsc.join, item)
+
+	if len(dsc.join) < int(dsc.opts.JoinSize) {
+		return
+	}
+
+	dsc.pass()
+}
+
+func (dsc *Discipline[Type]) pass() {
+	defer dsc.resetPassAt()
+
+	if len(dsc.join) == 0 {
+		return
+	}
+
+	dsc.send(dsc.join)
+	dsc.resetJoin()
 }
 
 func (dsc *Discipline[Type]) send(item []Type) {
@@ -245,92 +241,8 @@ func (dsc *Discipline[Type]) prepareItem(item []Type) []Type {
 	return slices.Clone(item)
 }
 
-func (dsc *Discipline[Type]) accumulator() {
-	defer dsc.passActual()
-
-	ticker := time.NewTicker(dsc.interruptInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-dsc.breaker.IsBreaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
-		case <-ticker.C:
-			if dsc.isTimeouted() {
-				dsc.passActual()
-			}
-		case item, opened := <-dsc.opts.Input:
-			if !opened {
-				return
-			}
-
-			dsc.process(item)
-		}
-	}
-}
-
-func (dsc *Discipline[Type]) accumulatorUntimeouted() {
-	defer dsc.passActual()
-
-	for {
-		select {
-		case <-dsc.breaker.IsBreaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
-		case item, opened := <-dsc.opts.Input:
-			if !opened {
-				return
-			}
-
-			dsc.process(item)
-		}
-	}
-}
-
-func (dsc *Discipline[Type]) process(item Type) {
-	id := dsc.id.Actual()
-
-	dsc.joins[id] = append(dsc.joins[id], item)
-
-	if len(dsc.joins[id]) < int(dsc.opts.JoinSize) {
-		return
-	}
-
-	dsc.passActual()
-}
-
-func (dsc *Discipline[Type]) passActual() {
-	defer dsc.resetPassAt()
-
-	id := dsc.id.Actual()
-
-	if len(dsc.joins[id]) == 0 {
-		return
-	}
-
-	if dsc.opts.NoDoubleBuffering {
-		dsc.send(dsc.joins[id])
-	} else {
-		select {
-		case <-dsc.breaker.IsBreaked():
-			return
-		case <-dsc.opts.Ctx.Done():
-			return
-		case dsc.interim <- dsc.joins[id]:
-		}
-	}
-
-	dsc.resetActual()
-	dsc.id.Spin()
-}
-
-func (dsc *Discipline[Type]) resetActual() {
-	id := dsc.id.Actual()
-
-	dsc.joins[id] = dsc.joins[id][:0]
+func (dsc *Discipline[Type]) resetJoin() {
+	dsc.join = dsc.join[:0]
 }
 
 func (dsc *Discipline[Type]) resetPassAt() {

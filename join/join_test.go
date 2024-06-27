@@ -59,22 +59,19 @@ func TestOptsValidation(t *testing.T) {
 
 func TestDiscipline(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, false, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 10, false, common.DefaultTestTimeout, true)
+		testDiscipline(t, quantity, 10, false, common.DefaultTestTimeout)
 	}
 }
 
 func TestDisciplineRelease(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, true, common.DefaultTestTimeout, false)
-		testDiscipline(t, quantity, 10, true, common.DefaultTestTimeout, true)
+		testDiscipline(t, quantity, 10, true, common.DefaultTestTimeout)
 	}
 }
 
 func TestDisciplineUntimeouted(t *testing.T) {
 	for quantity := 100; quantity <= 125; quantity++ {
-		testDiscipline(t, quantity, 10, false, 0, false)
-		testDiscipline(t, quantity, 10, false, 0, true)
+		testDiscipline(t, quantity, 10, false, 0)
 	}
 }
 
@@ -84,7 +81,6 @@ func testDiscipline(
 	joinSize uint,
 	useReleased bool,
 	timeout time.Duration,
-	noDoubleBuffering bool,
 ) {
 	input := make(chan int)
 
@@ -92,10 +88,9 @@ func testDiscipline(
 	defer close(released)
 
 	opts := Opts[int]{
-		Input:             input,
-		JoinSize:          joinSize,
-		NoDoubleBuffering: noDoubleBuffering,
-		Timeout:           timeout,
+		Input:    input,
+		JoinSize: joinSize,
+		Timeout:  timeout,
 	}
 
 	if useReleased {
@@ -136,22 +131,18 @@ func testDiscipline(
 	}
 
 	require.Equal(t, inSequence, outSequence,
-		"quantity: %v, join size: %v, use released: %v, "+
-			"timeout: %v, no double buffering: %v",
+		"quantity: %v, join size: %v, use released: %v, timeout: %v",
 		quantity,
 		joinSize,
 		useReleased,
 		timeout,
-		noDoubleBuffering,
 	)
 	require.Equal(t, expectedOutput, output,
-		"quantity: %v, join size: %v, use released: %v, "+
-			"timeout: %v, no double buffering: %v",
+		"quantity: %v, join size: %v, use released: %v, timeout: %v",
 		quantity,
 		joinSize,
 		useReleased,
 		timeout,
-		noDoubleBuffering,
 	)
 }
 
@@ -234,19 +225,15 @@ func testDisciplineTimeout(
 }
 
 func TestDisciplineStop(t *testing.T) {
-	testDisciplineStop(t, 105, 10, 52, false, false, common.DefaultTestTimeout, false)
-	testDisciplineStop(t, 105, 10, 52, false, false, common.DefaultTestTimeout, true)
-	testDisciplineStop(t, 105, 10, 52, false, false, 0, false)
-	testDisciplineStop(t, 105, 10, 52, false, false, 0, true)
-	testDisciplineStop(t, 105, 10, 52, false, true, 0, false)
+	testDisciplineStop(t, 105, 10, 52, false, false, common.DefaultTestTimeout)
+	testDisciplineStop(t, 105, 10, 52, false, false, 0)
+	testDisciplineStop(t, 105, 10, 52, false, true, 0)
 }
 
 func TestDisciplineStopByCtx(t *testing.T) {
-	testDisciplineStop(t, 105, 10, 52, true, false, common.DefaultTestTimeout, false)
-	testDisciplineStop(t, 105, 10, 52, true, false, common.DefaultTestTimeout, true)
-	testDisciplineStop(t, 105, 10, 52, true, false, 0, false)
-	testDisciplineStop(t, 105, 10, 52, true, false, 0, true)
-	testDisciplineStop(t, 105, 10, 52, true, true, 0, false)
+	testDisciplineStop(t, 105, 10, 52, true, false, common.DefaultTestTimeout)
+	testDisciplineStop(t, 105, 10, 52, true, false, 0)
+	testDisciplineStop(t, 105, 10, 52, true, true, 0)
 }
 
 func testDisciplineStop(
@@ -257,7 +244,6 @@ func testDisciplineStop(
 	byCtx bool,
 	useReleased bool,
 	timeout time.Duration,
-	noDoubleBuffering bool,
 ) {
 	input := make(chan int)
 
@@ -268,11 +254,10 @@ func testDisciplineStop(
 	defer cancel()
 
 	opts := Opts[int]{
-		Ctx:               ctx,
-		Input:             input,
-		JoinSize:          joinSize,
-		NoDoubleBuffering: noDoubleBuffering,
-		Timeout:           timeout,
+		Ctx:      ctx,
+		Input:    input,
+		JoinSize: joinSize,
+		Timeout:  timeout,
 	}
 
 	if useReleased {
@@ -336,7 +321,8 @@ func testDisciplineStop(
 	wg.Wait()
 
 	if useReleased {
-		require.Len(t, outSequence, int(opts.JoinSize))
+		require.Less(t, len(outSequence), quantity)
+		require.GreaterOrEqual(t, len(outSequence), int(opts.JoinSize))
 	} else {
 		require.Less(
 			t,
@@ -353,91 +339,15 @@ func testDisciplineStop(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, false, common.DefaultTestTimeout, 0, false, false)
-}
-
-func BenchmarkDisciplineNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, false, common.DefaultTestTimeout, 0, false, true)
+	benchmarkDiscipline(b, false, common.DefaultTestTimeout, 0, false)
 }
 
 func BenchmarkDisciplineRelease(b *testing.B) {
-	benchmarkDiscipline(b, true, common.DefaultTestTimeout, 0, false, false)
-}
-
-func BenchmarkDisciplineReleaseNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, common.DefaultTestTimeout, 0, false, true)
+	benchmarkDiscipline(b, true, common.DefaultTestTimeout, 0, false)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, false, false)
-}
-
-func BenchmarkDisciplineUntimeoutedNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, false, true)
-}
-
-func BenchmarkDisciplineStress(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, true, false)
-}
-
-func BenchmarkDisciplineStressNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, true, true)
-}
-
-func BenchmarkDisciplineNoStress(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, false, false)
-}
-
-func BenchmarkDisciplineNoStressNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0, false, true)
-}
-
-func BenchmarkDisciplineOutputDelayIsSame(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 1, false, false)
-}
-
-func BenchmarkDisciplineOutputDelayIsSameNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 1, false, true)
-}
-
-func BenchmarkDisciplineOutputDelayIsSameStress(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 1, true, false)
-}
-
-func BenchmarkDisciplineOutputDelayIsSameNoDoubleBufferingStress(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 1, true, true)
-}
-
-func BenchmarkDisciplineOutputDelayIs4TimesLess(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.25, false, false)
-}
-
-func BenchmarkDisciplineOutputDelayIs4TimesLessNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.25, false, true)
-}
-
-func BenchmarkDisciplineOutputDelayIs2TimesLess(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.5, false, false)
-}
-
-func BenchmarkDisciplineOutputDelayIs2TimesLessNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 0.5, false, true)
-}
-
-func BenchmarkDisciplineOutputDelayIs2TimesLonger(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 2, false, false)
-}
-
-func BenchmarkDisciplineOutputDelayIs2TimesLongerNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 2, false, true)
-}
-
-func BenchmarkDisciplineOutputDelayIs4TimesLonger(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 4, false, false)
-}
-
-func BenchmarkDisciplineOutputDelayIs4TimesLongerNoDoubleBuffering(b *testing.B) {
-	benchmarkDiscipline(b, true, 0, 4, false, true)
+	benchmarkDiscipline(b, true, 0, 0, false)
 }
 
 func benchmarkDiscipline(
@@ -446,7 +356,6 @@ func benchmarkDiscipline(
 	timeout time.Duration,
 	outputDelayFactor float64,
 	stressSystem bool,
-	noDoubleBuffering bool,
 ) {
 	joinsQuantity := b.N
 	joinSize := uint(10)
@@ -469,10 +378,9 @@ func benchmarkDiscipline(
 	defer close(released)
 
 	opts := Opts[int]{
-		Input:             input,
-		JoinSize:          joinSize,
-		NoDoubleBuffering: noDoubleBuffering,
-		Timeout:           timeout,
+		Input:    input,
+		JoinSize: joinSize,
+		Timeout:  timeout,
 	}
 
 	if useReleased {

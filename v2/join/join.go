@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/join/internal/common"
-
-	"github.com/akramarenkov/spinner"
 )
 
 var (
@@ -32,17 +30,6 @@ type Opts[Type any] struct {
 	// no longer used it is necessary to inform the discipline about it by calling
 	// Release() method
 	NoCopy bool
-	// Disables double buffering. Double buffering is implemented through two
-	// accumulation buffers, an additional goroutine of sending the accumulated
-	// buffer and an intermediate channel between the goroutines of accumulation and
-	// sending. Double buffering allows you to reduce processing time (increase
-	// performance) by 15-80% if the data accumulation and sending times are
-	// comparable, i.e. they correspond in the range from about 1:4 to 4:1 and these
-	// times are longer than the time spent on transferring the buffer between the
-	// accumulation and sending goroutines. Disabling double buffering can reduce
-	// processing time (increase performance) in other cases by 5-15% at low
-	// system load, and up to 70% at high system load
-	NoDoubleBuffering bool
 	// Timeout for slice accumulation. If the slice has not been filled completely
 	// in the allotted time, the data accumulated during this time is written to
 	// the output channel. A zero or negative value means that discipline will wait
@@ -82,10 +69,8 @@ func (opts Opts[Type]) normalize() Opts[Type] {
 type Discipline[Type any] struct {
 	opts Opts[Type]
 
-	id                *spinner.Spinner
-	interim           chan []Type
 	interruptInterval time.Duration
-	joins             [][]Type
+	join              []Type
 	output            chan []Type
 	passAt            time.Time
 	release           chan struct{}
@@ -110,34 +95,17 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		id:                prepareSpinner(opts),
-		interim:           make(chan []Type, common.InterimCapacity),
 		interruptInterval: interval,
-		joins:             make([][]Type, common.BuffersQuantity),
+		join:              make([]Type, 0, opts.JoinSize),
 		output:            make(chan []Type, 1),
 		release:           make(chan struct{}),
 	}
 
-	dsc.initJoins()
 	dsc.resetPassAt()
 
 	go dsc.main()
 
 	return dsc, nil
-}
-
-func prepareSpinner[Type any](opts Opts[Type]) *spinner.Spinner {
-	if opts.NoDoubleBuffering {
-		return spinner.New(0, 0)
-	}
-
-	return spinner.New(0, common.BuffersQuantity-1)
-}
-
-func (dsc *Discipline[Type]) initJoins() {
-	for id := range dsc.joins {
-		dsc.joins[id] = make([]Type, 0, dsc.opts.JoinSize)
-	}
 }
 
 // Returns output channel.
@@ -158,40 +126,63 @@ func (dsc *Discipline[Type]) main() {
 	defer close(dsc.output)
 	defer close(dsc.release)
 
-	closing := dsc.runSender()
-	defer closing()
-
 	if dsc.interruptInterval == 0 {
-		dsc.accumulatorUntimeouted()
+		dsc.loopUntimeouted()
 		return
 	}
 
-	dsc.accumulator()
+	dsc.loop()
 }
 
-func (dsc *Discipline[Type]) runSender() func() {
-	if dsc.opts.NoDoubleBuffering {
-		return func() {}
+func (dsc *Discipline[Type]) loop() {
+	defer dsc.pass()
+
+	ticker := time.NewTicker(dsc.interruptInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if dsc.isTimeouted() {
+				dsc.pass()
+			}
+		case item, opened := <-dsc.opts.Input:
+			if !opened {
+				return
+			}
+
+			dsc.process(item)
+		}
 	}
-
-	complete := make(chan struct{})
-
-	closing := func() {
-		close(dsc.interim)
-		<-complete
-	}
-
-	go dsc.sender(complete)
-
-	return closing
 }
 
-func (dsc *Discipline[Type]) sender(complete chan struct{}) {
-	defer close(complete)
+func (dsc *Discipline[Type]) loopUntimeouted() {
+	defer dsc.pass()
 
-	for item := range dsc.interim {
-		dsc.send(item)
+	for item := range dsc.opts.Input {
+		dsc.process(item)
 	}
+}
+
+func (dsc *Discipline[Type]) process(item Type) {
+	dsc.join = append(dsc.join, item)
+
+	if len(dsc.join) < int(dsc.opts.JoinSize) {
+		return
+	}
+
+	dsc.pass()
+}
+
+func (dsc *Discipline[Type]) pass() {
+	defer dsc.resetPassAt()
+
+	if len(dsc.join) == 0 {
+		return
+	}
+
+	dsc.send(dsc.join)
+	dsc.resetJoin()
 }
 
 func (dsc *Discipline[Type]) send(item []Type) {
@@ -212,71 +203,8 @@ func (dsc *Discipline[Type]) prepareItem(item []Type) []Type {
 	return slices.Clone(item)
 }
 
-func (dsc *Discipline[Type]) accumulator() {
-	defer dsc.passActual()
-
-	ticker := time.NewTicker(dsc.interruptInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if dsc.isTimeouted() {
-				dsc.passActual()
-			}
-		case item, opened := <-dsc.opts.Input:
-			if !opened {
-				return
-			}
-
-			dsc.process(item)
-		}
-	}
-}
-
-func (dsc *Discipline[Type]) accumulatorUntimeouted() {
-	defer dsc.passActual()
-
-	for item := range dsc.opts.Input {
-		dsc.process(item)
-	}
-}
-
-func (dsc *Discipline[Type]) process(item Type) {
-	id := dsc.id.Actual()
-
-	dsc.joins[id] = append(dsc.joins[id], item)
-
-	if len(dsc.joins[id]) < int(dsc.opts.JoinSize) {
-		return
-	}
-
-	dsc.passActual()
-}
-
-func (dsc *Discipline[Type]) passActual() {
-	defer dsc.resetPassAt()
-
-	id := dsc.id.Actual()
-
-	if len(dsc.joins[id]) == 0 {
-		return
-	}
-
-	if dsc.opts.NoDoubleBuffering {
-		dsc.send(dsc.joins[id])
-	} else {
-		dsc.interim <- dsc.joins[id]
-	}
-
-	dsc.resetActual()
-	dsc.id.Spin()
-}
-
-func (dsc *Discipline[Type]) resetActual() {
-	id := dsc.id.Actual()
-
-	dsc.joins[id] = dsc.joins[id][:0]
+func (dsc *Discipline[Type]) resetJoin() {
+	dsc.join = dsc.join[:0]
 }
 
 func (dsc *Discipline[Type]) resetPassAt() {

@@ -5,7 +5,6 @@ go 1.22.4
 require (
 	github.com/akramarenkov/breaker v0.1.0
 	github.com/akramarenkov/safe v0.2.3
-	github.com/akramarenkov/spinner v0.0.1
 	github.com/akramarenkov/starter v0.1.0
 	github.com/akramarenkov/stressor v0.0.6
 	github.com/go-echarts/go-echarts/v2 v2.3.3
