@@ -85,6 +85,8 @@ type Discipline[Type any] struct {
 	join              []Type
 	output            chan []Type
 	passAt            time.Time
+
+	unreleased bool
 }
 
 // Creates and runs discipline.
@@ -192,6 +194,10 @@ func (dsc *Discipline[Type]) loopUntimeouted() {
 }
 
 func (dsc *Discipline[Type]) process(item Type) {
+	if dsc.unreleased {
+		return
+	}
+
 	dsc.join = append(dsc.join, item)
 
 	if len(dsc.join) < int(dsc.opts.JoinSize) {
@@ -202,6 +208,10 @@ func (dsc *Discipline[Type]) process(item Type) {
 }
 
 func (dsc *Discipline[Type]) pass() {
+	if dsc.unreleased {
+		return
+	}
+
 	defer dsc.resetPassAt()
 
 	if len(dsc.join) == 0 {
@@ -226,8 +236,10 @@ func (dsc *Discipline[Type]) send(item []Type) {
 	if dsc.opts.Released != nil {
 		select {
 		case <-dsc.breaker.IsBreaked():
+			dsc.unreleased = true
 			return
 		case <-dsc.opts.Ctx.Done():
+			dsc.unreleased = true
 			return
 		case <-dsc.opts.Released:
 		}
@@ -243,6 +255,10 @@ func (dsc *Discipline[Type]) prepareItem(item []Type) []Type {
 }
 
 func (dsc *Discipline[Type]) resetJoin() {
+	if dsc.unreleased {
+		return
+	}
+
 	dsc.join = dsc.join[:0]
 }
 
