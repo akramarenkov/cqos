@@ -3,7 +3,6 @@ package priority
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"testing"
 	"time"
 
@@ -20,13 +19,24 @@ import (
 )
 
 func TestReadmeGraph(t *testing.T) {
-	t.Run("equaling", func(t *testing.T) { testReadmeGraph(t, true) })
-	t.Run("unmanaged", func(t *testing.T) { testReadmeGraph(t, false) })
+	t.Run(
+		"equaling",
+		func(t *testing.T) {
+			t.Parallel()
+			testReadmeGraph(t, true)
+		},
+	)
+
+	t.Run(
+		"unmanaged",
+		func(t *testing.T) {
+			t.Parallel()
+			testReadmeGraph(t, false)
+		},
+	)
 }
 
 func testReadmeGraph(t *testing.T, equaling bool) {
-	t.Parallel()
-
 	if os.Getenv(general.EnvEnableGraphs) == "" {
 		t.SkipNow()
 	}
@@ -63,8 +73,6 @@ func testReadmeGraph(t *testing.T, equaling bool) {
 			t,
 			"./doc/different-processing-time-equaling.svg",
 			msr.Play(discipline),
-			measurerOpts.HandlersQuantity,
-			msr.GetExpectedItemsQuantity(),
 			overTimeResolution,
 			overTimeUnit,
 			overTimeUnitName,
@@ -84,8 +92,6 @@ func testReadmeGraph(t *testing.T, equaling bool) {
 		t,
 		"./doc/different-processing-time-unmanagement.svg",
 		msr.Play(unmanaged),
-		measurerOpts.HandlersQuantity,
-		msr.GetExpectedItemsQuantity(),
 		overTimeResolution,
 		overTimeUnit,
 		overTimeUnitName,
@@ -96,8 +102,6 @@ func createReadmeGraph(
 	t *testing.T,
 	fileName string,
 	measures []measurer.Measure,
-	handlersQuantity uint,
-	itemsQuantity uint,
 	overTimeResolution time.Duration,
 	overTimeUnit time.Duration,
 	overTimeUnitName string,
@@ -135,11 +139,7 @@ func createReadmeGraph(
 	}
 
 	graph := chart.Chart{
-		Title: "Data retrieval graph" +
-			". " +
-			"Total amount of data: " + strconv.FormatUint(uint64(itemsQuantity), 10) +
-			", " +
-			"handlers quantity: " + strconv.FormatUint(uint64(handlersQuantity), 10),
+		Title:        "Data retrieval graph",
 		ColorPalette: readmeColorPalette{},
 		Background: chart.Style{
 			Padding: chart.Box{

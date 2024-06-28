@@ -20,7 +20,7 @@ Also may be used to equaling distribution of data with different processing time
 
 If different times are spent processing data of different priorities, then we will get different processing speeds in the case of using the priority discipline and without it.
 
-For example, suppose that data from channel of priority 3 is processed in time **T**, data from channel of priority 2 is processed in time 5\***T**, and data from channel of priority 1 is processed in time 10\***T**, then we will get the following results:
+For example, suppose that data from channel of priority 3 is processed in time **T**, data from channel of priority 2 is processed in time 5\***T**, and data from channel of priority 1 is processed in time 10\***T**, then we will get the following results (number of processed data and the number of handlers are the same in both cases):
 
 * equaling by priority discipline:
 
