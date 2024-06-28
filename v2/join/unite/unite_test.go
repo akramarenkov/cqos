@@ -55,39 +55,30 @@ func TestOptsValidation(t *testing.T) {
 }
 
 func TestDiscipline(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		for blockSize := 1; blockSize <= 21; blockSize++ {
-			testDiscipline(
-				t,
-				quantity,
-				blockSize,
-				10,
-				false,
-				common.DefaultTestTimeout,
-			)
-		}
-	}
-}
+	for quantity := 100; quantity <= 200; quantity++ {
+		for blockSize := 1; blockSize <= 25; blockSize++ {
+			for joinSize := uint(1); joinSize <= 20; joinSize++ {
+				testDiscipline(
+					t,
+					quantity,
+					blockSize,
+					joinSize,
+					false,
+					common.DefaultTestTimeout,
+				)
 
-func TestDisciplineNoCopy(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		for blockSize := 1; blockSize <= 21; blockSize++ {
-			testDiscipline(
-				t,
-				quantity,
-				blockSize,
-				10,
-				true,
-				common.DefaultTestTimeout,
-			)
-		}
-	}
-}
+				testDiscipline(
+					t,
+					quantity,
+					blockSize,
+					joinSize,
+					true,
+					common.DefaultTestTimeout,
+				)
 
-func TestDisciplineUntimeouted(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		for blockSize := 1; blockSize <= 21; blockSize++ {
-			testDiscipline(t, quantity, blockSize, 10, false, 0)
+				testDiscipline(t, quantity, blockSize, joinSize, false, 0)
+				testDiscipline(t, quantity, blockSize, joinSize, true, 0)
+			}
 		}
 	}
 }
@@ -100,7 +91,7 @@ func testDiscipline(
 	noCopy bool,
 	timeout time.Duration,
 ) {
-	input := make(chan []int)
+	input := make(chan []int, joinSize)
 
 	opts := Opts[int]{
 		Input:    input,
@@ -110,48 +101,70 @@ func testDiscipline(
 	}
 
 	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	inSequence := make([]int, 0, quantity)
-	outSequence := make([]int, 0, quantity)
-
-	expectedOutput := inspect.Expected(quantity, blockSize, opts.JoinSize)
-	output := make([][]int, 0, len(expectedOutput))
-
-	go func() {
-		defer close(input)
-
-		for _, slice := range inspect.Input(quantity, blockSize) {
-			inSequence = append(inSequence, slice...)
-
-			input <- slice
-		}
-	}()
-
-	for slice := range discipline.Output() {
-		require.NotEmpty(t, slice)
-
-		outSequence = append(outSequence, slice...)
-
-		output = append(output, append([]int(nil), slice...))
-
-		if noCopy {
-			discipline.Release()
-		}
-	}
-
-	require.Equal(t, inSequence, outSequence,
-		"quantity: %v, block size: %v, join size: %v, "+
-			"no copy: %v, timeout: %v",
+	require.NoError(
+		t,
+		err,
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v",
 		quantity,
 		blockSize,
 		joinSize,
 		noCopy,
 		timeout,
 	)
-	require.Equal(t, expectedOutput, output,
-		"quantity: %v, block size: %v, join size: %v, "+
-			"no copy: %v, timeout: %v",
+
+	inSequence := make([]int, 0, quantity)
+	outSequence := make([]int, 0, quantity)
+
+	expected := inspect.Expected(quantity, blockSize, joinSize)
+	output := make([][]int, 0, len(expected))
+
+	go func() {
+		defer close(input)
+
+		for _, block := range inspect.Input(quantity, blockSize) {
+			inSequence = append(inSequence, block...)
+
+			input <- block
+		}
+	}()
+
+	for join := range discipline.Output() {
+		require.NotEmpty(
+			t,
+			join,
+			"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v",
+			quantity,
+			blockSize,
+			joinSize,
+			noCopy,
+			timeout,
+		)
+
+		output = append(output, append([]int(nil), join...))
+		outSequence = append(outSequence, join...)
+
+		if noCopy {
+			discipline.Release()
+		}
+	}
+
+	require.Equal(
+		t,
+		inSequence,
+		outSequence,
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v",
+		quantity,
+		blockSize,
+		joinSize,
+		noCopy,
+		timeout,
+	)
+
+	require.Equal(
+		t,
+		expected,
+		output,
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v",
 		quantity,
 		blockSize,
 		joinSize,
@@ -161,8 +174,40 @@ func testDiscipline(
 }
 
 func TestDisciplineTimeout(t *testing.T) {
-	for quantity := 100; quantity <= 125; quantity++ {
-		testDisciplineTimeout(t, quantity, 4, 10, 53)
+	for pauseAt := 50; pauseAt <= 70; pauseAt++ {
+		for _, blockSize := range []int{3, 4} {
+			t.Run(
+				"",
+				func(t *testing.T) {
+					t.Parallel()
+					testDisciplineTimeout(
+						t,
+						100,
+						blockSize,
+						10,
+						false,
+						500*time.Millisecond,
+						pauseAt,
+					)
+				},
+			)
+
+			t.Run(
+				"",
+				func(t *testing.T) {
+					t.Parallel()
+					testDisciplineTimeout(
+						t,
+						100,
+						blockSize,
+						10,
+						true,
+						500*time.Millisecond,
+						pauseAt,
+					)
+				},
+			)
+		}
 	}
 }
 
@@ -171,72 +216,120 @@ func testDisciplineTimeout(
 	quantity int,
 	blockSize int,
 	joinSize uint,
+	noCopy bool,
+	timeout time.Duration,
 	pauseAt int,
 ) {
-	input := make(chan []int)
+	input := make(chan []int, joinSize)
 
 	opts := Opts[int]{
 		Input:    input,
 		JoinSize: joinSize,
-		Timeout:  100 * time.Millisecond,
+		NoCopy:   noCopy,
+		Timeout:  timeout,
 	}
 
-	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, blockSize, opts.JoinSize)
-	require.NotEqual(t, 0, pauseAt)
+	require.NotZero(t, timeout)
 
-	pausetAtDuration := inspect.CalcPauseAtDuration(opts.Timeout)
+	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, blockSize, joinSize)
+	require.NotZero(
+		t,
+		pauseAt,
+		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+			"pause at: %v",
+		quantity,
+		blockSize,
+		joinSize,
+		noCopy,
+		timeout,
+		pauseAt,
+	)
+
+	pausetAtDuration := inspect.CalcPauseAtDuration(timeout)
 
 	discipline, err := New(opts)
-	require.NoError(t, err)
+	require.NoError(
+		t,
+		err,
+		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+			"pause at: %v",
+		quantity,
+		blockSize,
+		joinSize,
+		noCopy,
+		timeout,
+		pauseAt,
+	)
 
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
 
-	expectedOutput := inspect.ExpectedWithTimeout(
-		quantity,
-		pauseAt,
-		blockSize,
-		opts.JoinSize,
-	)
-
-	output := make([][]int, 0, len(expectedOutput))
+	expected := inspect.ExpectedWithTimeout(quantity, pauseAt, blockSize, joinSize)
+	output := make([][]int, 0, len(expected))
 
 	go func() {
 		defer close(input)
 
-		for _, slice := range inspect.Input(quantity, blockSize) {
-			for _, item := range slice {
+		for _, block := range inspect.Input(quantity, blockSize) {
+			for _, item := range block {
 				if item == pauseAt {
 					time.Sleep(pausetAtDuration)
 				}
 			}
 
-			inSequence = append(inSequence, slice...)
+			inSequence = append(inSequence, block...)
 
-			input <- slice
+			input <- block
 		}
 	}()
 
-	for slice := range discipline.Output() {
-		require.NotEmpty(t, slice)
+	for join := range discipline.Output() {
+		require.NotEmpty(
+			t,
+			join,
+			"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+				"pause at: %v",
+			quantity,
+			blockSize,
+			joinSize,
+			noCopy,
+			timeout,
+			pauseAt,
+		)
 
-		outSequence = append(outSequence, slice...)
+		output = append(output, append([]int(nil), join...))
+		outSequence = append(outSequence, join...)
 
-		output = append(output, append([]int(nil), slice...))
+		if noCopy {
+			discipline.Release()
+		}
 	}
 
-	require.Equal(t, inSequence, outSequence,
-		"quantity: %v, block size: %v, join size: %v, pause at: %v",
+	require.Equal(
+		t,
+		inSequence,
+		outSequence,
+		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+			"pause at: %v",
 		quantity,
 		blockSize,
 		joinSize,
+		noCopy,
+		timeout,
 		pauseAt,
 	)
-	require.Equal(t, expectedOutput, output,
-		"quantity: %v, block size: %v, join size: %v, pause at: %v",
+
+	require.Equal(
+		t,
+		expected,
+		output,
+		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+			"pause at: %v",
 		quantity,
 		blockSize,
 		joinSize,
+		noCopy,
+		timeout,
 		pauseAt,
 	)
 }
@@ -267,19 +360,19 @@ func TestDisciplineManually(t *testing.T) {
 		{28, 29, 30},
 	}
 
-	testDisciplineByDataSet(t, nil, 5, [][]int{}, true, common.DefaultTestTimeout)
-	testDisciplineByDataSet(t, dataSet, 5, expected, true, common.DefaultTestTimeout)
+	testDisciplineByDataSet(t, nil, [][]int{}, 5, true, common.DefaultTestTimeout)
+	testDisciplineByDataSet(t, dataSet, expected, 5, true, common.DefaultTestTimeout)
 }
 
 func testDisciplineByDataSet(
 	t *testing.T,
 	dataSet [][]int,
+	expected [][]int,
 	joinSize uint,
-	expectedOutput [][]int,
 	noCopy bool,
 	timeout time.Duration,
 ) {
-	input := make(chan []int)
+	input := make(chan []int, joinSize)
 
 	opts := Opts[int]{
 		Input:    input,
@@ -289,43 +382,65 @@ func testDisciplineByDataSet(
 	}
 
 	discipline, err := New(opts)
-	require.NoError(t, err)
-
-	inSequence := make([]int, 0)
-	outSequence := make([]int, 0)
-
-	output := make([][]int, 0)
-
-	go func() {
-		defer close(input)
-
-		for _, slice := range dataSet {
-			inSequence = append(inSequence, slice...)
-
-			input <- slice
-		}
-	}()
-
-	for slice := range discipline.Output() {
-		require.NotEmpty(t, slice)
-
-		outSequence = append(outSequence, slice...)
-
-		output = append(output, append([]int(nil), slice...))
-
-		if noCopy {
-			discipline.Release()
-		}
-	}
-
-	require.Equal(t, inSequence, outSequence,
+	require.NoError(
+		t,
+		err,
 		"data set: %v, join size: %v, no copy: %v, timeout: %v",
 		dataSet,
 		joinSize,
 		noCopy,
 		timeout,
 	)
-	require.Equal(t, expectedOutput, output,
+
+	inSequence := make([]int, 0)
+	outSequence := make([]int, 0)
+
+	output := make([][]int, 0, len(expected))
+
+	go func() {
+		defer close(input)
+
+		for _, block := range dataSet {
+			inSequence = append(inSequence, block...)
+
+			input <- block
+		}
+	}()
+
+	for join := range discipline.Output() {
+		require.NotEmpty(
+			t,
+			join,
+			"data set: %v, join size: %v, no copy: %v, timeout: %v",
+			dataSet,
+			joinSize,
+			noCopy,
+			timeout,
+		)
+
+		output = append(output, append([]int(nil), join...))
+		outSequence = append(outSequence, join...)
+
+		if noCopy {
+			discipline.Release()
+		}
+	}
+
+	require.Equal(
+		t,
+		inSequence,
+		outSequence,
+		"data set: %v, join size: %v, no copy: %v, timeout: %v",
+		dataSet,
+		joinSize,
+		noCopy,
+		timeout,
+	)
+
+	require.Equal(
+		t,
+		expected,
+		output,
 		"data set: %v, join size: %v, no copy: %v, timeout: %v",
 		dataSet,
 		joinSize,

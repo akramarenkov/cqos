@@ -82,7 +82,15 @@ func testDiscipline(
 	}
 
 	discipline, err := New(opts)
-	require.NoError(t, err)
+	require.NoError(
+		t,
+		err,
+		"quantity: %v, join size: %v, no copy: %v, timeout: %v",
+		quantity,
+		joinSize,
+		noCopy,
+		timeout,
+	)
 
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
@@ -103,7 +111,15 @@ func testDiscipline(
 	}()
 
 	for join := range discipline.Output() {
-		require.NotEmpty(t, join)
+		require.NotEmpty(
+			t,
+			join,
+			"quantity: %v, join size: %v, no copy: %v, timeout: %v",
+			quantity,
+			joinSize,
+			noCopy,
+			timeout,
+		)
 
 		output = append(output, append([]int(nil), join...))
 		outSequence = append(outSequence, join...)
@@ -123,6 +139,7 @@ func testDiscipline(
 		noCopy,
 		timeout,
 	)
+
 	require.Equal(
 		t,
 		expected,
@@ -137,8 +154,21 @@ func testDiscipline(
 
 func TestDisciplineTimeout(t *testing.T) {
 	for pauseAt := 50; pauseAt <= 70; pauseAt++ {
-		testDisciplineTimeout(t, 100, 10, false, 200*time.Millisecond, pauseAt)
-		testDisciplineTimeout(t, 100, 10, true, 200*time.Millisecond, pauseAt)
+		t.Run(
+			"",
+			func(t *testing.T) {
+				t.Parallel()
+				testDisciplineTimeout(t, 100, 10, false, 500*time.Millisecond, pauseAt)
+			},
+		)
+
+		t.Run(
+			"",
+			func(t *testing.T) {
+				t.Parallel()
+				testDisciplineTimeout(t, 100, 10, true, 500*time.Millisecond, pauseAt)
+			},
+		)
 	}
 }
 
@@ -162,12 +192,30 @@ func testDisciplineTimeout(
 	require.NotZero(t, timeout)
 
 	pauseAt = inspect.PickUpPauseAt(quantity, pauseAt, 1, joinSize)
-	require.NotEqual(t, 0, pauseAt)
+	require.NotZero(
+		t,
+		pauseAt,
+		"quantity: %v, join size: %v, no copy: %v, timeout: %v, pause at: %v",
+		quantity,
+		joinSize,
+		noCopy,
+		timeout,
+		pauseAt,
+	)
 
 	pausetAtDuration := inspect.CalcPauseAtDuration(timeout)
 
 	discipline, err := New(opts)
-	require.NoError(t, err)
+	require.NoError(
+		t,
+		err,
+		"quantity: %v, join size: %v, no copy: %v, timeout: %v, pause at: %v",
+		quantity,
+		joinSize,
+		noCopy,
+		timeout,
+		pauseAt,
+	)
 
 	inSequence := make([]int, 0, quantity)
 	outSequence := make([]int, 0, quantity)
@@ -192,7 +240,16 @@ func testDisciplineTimeout(
 	}()
 
 	for join := range discipline.Output() {
-		require.NotEmpty(t, join)
+		require.NotEmpty(
+			t,
+			join,
+			"quantity: %v, join size: %v, no copy: %v, timeout: %v, pause at: %v",
+			quantity,
+			joinSize,
+			noCopy,
+			timeout,
+			pauseAt,
+		)
 
 		output = append(output, append([]int(nil), join...))
 		outSequence = append(outSequence, join...)
@@ -213,6 +270,7 @@ func testDisciplineTimeout(
 		timeout,
 		pauseAt,
 	)
+
 	require.Equal(
 		t,
 		expected,
