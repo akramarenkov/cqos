@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -199,7 +199,7 @@ func TestCalcWriteToFeedbackLatency(t *testing.T) {
 
 	interval := 5 * time.Microsecond
 
-	expected := map[uint][]general.QOT{
+	expected := map[uint][]qot.QOT{
 		1: {
 			{
 				RelativeTime: 0,
@@ -244,10 +244,10 @@ func TestCalcWriteToFeedbackLatency(t *testing.T) {
 
 func TestCalcWriteToFeedbackLatencyInput(t *testing.T) {
 	quantities := CalcWriteToFeedbackLatency(nil, 5*time.Microsecond)
-	require.Equal(t, map[uint][]general.QOT(nil), quantities)
+	require.Equal(t, map[uint][]qot.QOT(nil), quantities)
 
 	quantities = CalcWriteToFeedbackLatency([]measurer.Measure{}, 5*time.Microsecond)
-	require.Equal(t, map[uint][]general.QOT(nil), quantities)
+	require.Equal(t, map[uint][]qot.QOT(nil), quantities)
 }
 
 func TestProcessLatencies(t *testing.T) {
@@ -271,7 +271,7 @@ func TestProcessLatencies(t *testing.T) {
 
 	interval := 5 * time.Microsecond
 
-	expected := map[uint][]general.QOT{
+	expected := map[uint][]qot.QOT{
 		1: {
 			{
 				RelativeTime: 0,
@@ -335,7 +335,7 @@ func TestProcessLatencies(t *testing.T) {
 func TestConvertToBarEcharts(t *testing.T) {
 	resolution := 5 * time.Microsecond
 
-	quantities := map[uint][]general.QOT{
+	quantities := map[uint][]qot.QOT{
 		1: {
 			{
 				RelativeTime: -resolution,

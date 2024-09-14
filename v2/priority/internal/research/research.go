@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -45,7 +45,7 @@ func sortByRelativeTime(measures []measurer.Measure) {
 func CalcDataQuantity(
 	measures []measurer.Measure,
 	resolution time.Duration,
-) map[uint][]general.QOT {
+) map[uint][]qot.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -63,14 +63,14 @@ func CalcDataQuantity(
 
 	capacity := (max - min) / resolution
 
-	quantities := make(map[uint][]general.QOT)
+	quantities := make(map[uint][]qot.QOT)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]general.QOT, 0, capacity)
+		quantities[measure.Priority] = make([]qot.QOT, 0, capacity)
 	}
 
 	measuresEdge := 0
@@ -94,7 +94,7 @@ func CalcDataQuantity(
 		}
 
 		for priority, quantity := range intervalQuantities {
-			item := general.QOT{
+			item := qot.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - resolution,
 			}
@@ -107,7 +107,7 @@ func CalcDataQuantity(
 				continue
 			}
 
-			item := general.QOT{
+			item := qot.QOT{
 				Quantity:     0,
 				RelativeTime: span - resolution,
 			}
@@ -122,7 +122,7 @@ func CalcDataQuantity(
 func CalcInProcessing(
 	measures []measurer.Measure,
 	resolution time.Duration,
-) map[uint][]general.QOT {
+) map[uint][]qot.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -140,14 +140,14 @@ func CalcInProcessing(
 
 	capacity := (max - min) / resolution
 
-	quantities := make(map[uint][]general.QOT)
+	quantities := make(map[uint][]qot.QOT)
 
 	for _, measure := range measures {
 		if _, exists := quantities[measure.Priority]; exists {
 			continue
 		}
 
-		quantities[measure.Priority] = make([]general.QOT, 0, capacity)
+		quantities[measure.Priority] = make([]qot.QOT, 0, capacity)
 	}
 
 	measuresEdge := 0
@@ -186,7 +186,7 @@ func CalcInProcessing(
 				quantity += amount
 			}
 
-			item := general.QOT{
+			item := qot.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - resolution,
 			}
@@ -201,7 +201,7 @@ func CalcInProcessing(
 func CalcWriteToFeedbackLatency(
 	measures []measurer.Measure,
 	interval time.Duration,
-) map[uint][]general.QOT {
+) map[uint][]qot.QOT {
 	if len(measures) == 0 {
 		return nil
 	}
@@ -244,7 +244,7 @@ func CalcWriteToFeedbackLatency(
 func processLatencies(
 	latencies map[uint][]time.Duration,
 	interval time.Duration,
-) map[uint][]general.QOT {
+) map[uint][]qot.QOT {
 	for priority := range latencies {
 		slices.Sort(latencies[priority])
 	}
@@ -269,10 +269,10 @@ func processLatencies(
 
 	capacity := (max - min) / interval
 
-	quantities := make(map[uint][]general.QOT)
+	quantities := make(map[uint][]qot.QOT)
 
 	for priority := range latencies {
-		quantities[priority] = make([]general.QOT, 0, capacity)
+		quantities[priority] = make([]qot.QOT, 0, capacity)
 	}
 
 	edges := make(map[uint]int)
@@ -298,7 +298,7 @@ func processLatencies(
 		}
 
 		for priority, quantity := range spanQuantities {
-			item := general.QOT{
+			item := qot.QOT{
 				Quantity:     quantity,
 				RelativeTime: span - interval,
 			}
@@ -311,7 +311,7 @@ func processLatencies(
 				continue
 			}
 
-			item := general.QOT{
+			item := qot.QOT{
 				Quantity:     0,
 				RelativeTime: span - interval,
 			}
@@ -324,7 +324,7 @@ func processLatencies(
 }
 
 func ConvertToLineEcharts(
-	quantities map[uint][]general.QOT,
+	quantities map[uint][]qot.QOT,
 	relativeTimeUnit time.Duration,
 ) (map[uint][]chartsopts.LineData, []int) {
 	serieses := make(map[uint][]chartsopts.LineData)
@@ -357,7 +357,7 @@ func ConvertToLineEcharts(
 }
 
 func ConvertToBarEcharts(
-	quantities map[uint][]general.QOT,
+	quantities map[uint][]qot.QOT,
 ) (map[uint][]chartsopts.BarData, []int) {
 	serieses := make(map[uint][]chartsopts.BarData)
 	xaxis := []int(nil)

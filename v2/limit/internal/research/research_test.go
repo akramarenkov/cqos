@@ -4,8 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
-
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +23,7 @@ func TestCalcIntervalQuantitiesSplitByInterval(t *testing.T) {
 
 	interval := 10 * time.Millisecond
 
-	expected := []general.QOT{
+	expected := []qot.QOT{
 		{
 			Quantity:     5,
 			RelativeTime: 0,
@@ -84,7 +83,7 @@ func TestCalcIntervalQuantitiesSplitByIntervalEntirely(t *testing.T) {
 
 	interval := 10 * time.Millisecond
 
-	expected := []general.QOT{
+	expected := []qot.QOT{
 		{
 			Quantity:     5,
 			RelativeTime: 0,
@@ -124,7 +123,7 @@ func TestCalcIntervalQuantitiesSplitByIntervalsQuantity(t *testing.T) {
 
 	expectedCalcInterval := 8*time.Millisecond + 500*time.Microsecond + time.Nanosecond
 
-	expected := []general.QOT{
+	expected := []qot.QOT{
 		{
 			Quantity:     4,
 			RelativeTime: 0,
@@ -150,7 +149,7 @@ func TestCalcIntervalQuantitiesZeroInput(t *testing.T) {
 		0,
 		time.Second,
 	)
-	require.Equal(t, []general.QOT(nil), quantities)
+	require.Equal(t, []qot.QOT(nil), quantities)
 	require.Equal(t, time.Duration(0), calcInterval)
 
 	quantities, calcInterval = CalcIntervalQuantities(
@@ -158,7 +157,7 @@ func TestCalcIntervalQuantitiesZeroInput(t *testing.T) {
 		0,
 		time.Second,
 	)
-	require.Equal(t, []general.QOT(nil), quantities)
+	require.Equal(t, []qot.QOT(nil), quantities)
 	require.Equal(t, time.Duration(0), calcInterval)
 }
 
@@ -168,7 +167,7 @@ func TestCalcIntervalQuantitiesZeroSplit(t *testing.T) {
 		0,
 		0,
 	)
-	require.Equal(t, []general.QOT(nil), quantities)
+	require.Equal(t, []qot.QOT(nil), quantities)
 	require.Equal(t, time.Duration(0), calcInterval)
 }
 
@@ -184,7 +183,7 @@ func TestCalcIntervalQuantitiesSmallRatio(t *testing.T) {
 
 	expectedCalcInterval := time.Nanosecond
 
-	expected := []general.QOT{
+	expected := []qot.QOT{
 		{
 			Quantity:     1,
 			RelativeTime: 0,

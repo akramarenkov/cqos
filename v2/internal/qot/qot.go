@@ -1,4 +1,4 @@
-package general
+package qot
 
 import (
 	"time"

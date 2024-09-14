@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
 )
@@ -17,7 +18,7 @@ func CalcIntervalQuantities(
 	relativeTimes []time.Duration,
 	intervalsQuantity int,
 	interval time.Duration,
-) ([]general.QOT, time.Duration) {
+) ([]qot.QOT, time.Duration) {
 	if len(relativeTimes) == 0 {
 		return nil, 0
 	}
@@ -50,7 +51,7 @@ func CalcIntervalQuantities(
 		intervalsQuantity = int(maxRelativeTime/interval) + 1
 	}
 
-	quantities := make([]general.QOT, 0, intervalsQuantity)
+	quantities := make([]qot.QOT, 0, intervalsQuantity)
 
 	edge := 0
 
@@ -74,7 +75,7 @@ func CalcIntervalQuantities(
 			}
 		}
 
-		item := general.QOT{
+		item := qot.QOT{
 			Quantity:     spanQuantities,
 			RelativeTime: span - interval,
 		}
@@ -85,7 +86,7 @@ func CalcIntervalQuantities(
 	// Padding with zero values ​​in case intervals quantity multiplied by
 	// interval is greater than max relative time
 	for addition := range intervalsQuantity - len(quantities) {
-		item := general.QOT{
+		item := qot.QOT{
 			Quantity:     0,
 			RelativeTime: maxRelativeTime + interval*time.Duration(addition+1),
 		}
@@ -97,7 +98,7 @@ func CalcIntervalQuantities(
 }
 
 func ConvertQuantityOverTimeToBarEcharts(
-	quantities []general.QOT,
+	quantities []qot.QOT,
 ) ([]chartsopts.BarData, []int) {
 	serieses := make([]chartsopts.BarData, 0, len(quantities))
 	xaxis := make([]int, 0, len(quantities))
