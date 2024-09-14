@@ -323,7 +323,7 @@ func testDisciplineTimeout(
 		t,
 		expected,
 		output,
-		"quantity: %v, block size: %v, join size: %v  no copy: %v, timeout: %v, "+
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v, "+
 			"pause at: %v",
 		quantity,
 		blockSize,
