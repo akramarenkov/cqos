@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/env"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
@@ -187,7 +187,7 @@ func createGraphs(
 }
 
 func testGraphFairEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -252,7 +252,7 @@ func TestGraphFairEven(t *testing.T) {
 }
 
 func testGraphFairUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -317,7 +317,7 @@ func TestGraphFairUneven(t *testing.T) {
 }
 
 func testGraphRateEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -382,7 +382,7 @@ func TestGraphRateEven(t *testing.T) {
 }
 
 func testGraphRateUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -447,7 +447,7 @@ func TestGraphRateUneven(t *testing.T) {
 }
 
 func testGraphUnmanagedEven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -510,7 +510,7 @@ func TestGraphUnmanagedEven(t *testing.T) {
 }
 
 func testGraphUnmanagedUneven(t *testing.T, factor uint, unbufferedInput bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
@@ -573,7 +573,7 @@ func TestGraphUnmanagedUneven(t *testing.T) {
 }
 
 func testGraphFairEvenDividingError(t *testing.T, handlersQuantity uint) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 

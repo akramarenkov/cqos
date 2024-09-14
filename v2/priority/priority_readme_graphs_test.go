@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/env"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 	"github.com/akramarenkov/cqos/v2/priority/internal/measurer"
@@ -37,7 +37,7 @@ func TestReadmeGraph(t *testing.T) {
 }
 
 func testReadmeGraph(t *testing.T, equaling bool) {
-	if os.Getenv(general.EnvEnableGraphs) == "" {
+	if os.Getenv(env.EnableGraphs) == "" {
 		t.SkipNow()
 	}
 
