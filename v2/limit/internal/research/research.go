@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/qot"
 
 	chartsopts "github.com/go-echarts/go-echarts/v2/opts"
@@ -145,14 +145,14 @@ func CalcRelativeDeviations(
 	calc := func(next time.Duration, current time.Duration) {
 		diff := next - current
 
-		deviation := ((diff - expected) * general.HundredPercent) / expected
+		deviation := ((diff - expected) * consts.HundredPercent) / expected
 
-		if deviation > general.HundredPercent {
-			deviation = general.HundredPercent
+		if deviation > consts.HundredPercent {
+			deviation = consts.HundredPercent
 		}
 
-		if deviation < -general.HundredPercent {
-			deviation = -general.HundredPercent
+		if deviation < -consts.HundredPercent {
+			deviation = -consts.HundredPercent
 		}
 
 		deviations[int(deviation)]++

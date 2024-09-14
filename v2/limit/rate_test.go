@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -132,7 +132,7 @@ func TestOptimize(t *testing.T) {
 	require.Equal(
 		t,
 		Rate{
-			Interval: general.ReliablyMeasurableDuration,
+			Interval: consts.ReliablyMeasurableDuration,
 			Quantity: 100,
 		},
 		optimized,

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -24,7 +24,7 @@ func calcInterruptInterval(
 		return 0, ErrTimeoutInaccuracyZero
 	}
 
-	divider := general.HundredPercent / inaccuracy
+	divider := consts.HundredPercent / inaccuracy
 
 	if divider == 0 {
 		return 0, ErrTimeoutInaccuracyTooBig
@@ -32,7 +32,7 @@ func calcInterruptInterval(
 
 	interval := timeout / time.Duration(divider)
 
-	if interval < general.ReliablyMeasurableDuration {
+	if interval < consts.ReliablyMeasurableDuration {
 		return 0, ErrTimeoutTooSmall
 	}
 

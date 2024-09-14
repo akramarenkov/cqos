@@ -5,7 +5,7 @@ package utils
 import (
 	"math"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/priority/divider"
 	"github.com/akramarenkov/cqos/v2/priority/internal/common"
 )
@@ -180,7 +180,7 @@ func isDistributionSuitable(
 
 		diff := 1.0 - (ratio*float64(distribution[priority]))/float64(referenceQuantity)
 
-		diff = general.HundredPercent * math.Abs(diff)
+		diff = consts.HundredPercent * math.Abs(diff)
 
 		if diff > diffLimit {
 			return false

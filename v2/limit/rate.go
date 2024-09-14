@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/safe"
 )
 
@@ -54,7 +54,7 @@ func (rate Rate) Flatten() (Rate, error) {
 // Increases the uniformity of the distribution of data elements over time,
 // almost without reducing the productivity of the discipline.
 func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(general.ReliablyMeasurableDuration)
+	return rate.recalc(consts.ReliablyMeasurableDuration)
 }
 
 func (rate Rate) recalc(min time.Duration) (Rate, error) {
