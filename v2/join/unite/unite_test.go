@@ -235,7 +235,7 @@ func testDisciplineTimeout(
 	require.NotZero(
 		t,
 		pauseAt,
-		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v, "+
 			"pause at: %v",
 		quantity,
 		blockSize,
@@ -251,7 +251,7 @@ func testDisciplineTimeout(
 	require.NoError(
 		t,
 		err,
-		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v, "+
 			"pause at: %v",
 		quantity,
 		blockSize,
@@ -287,7 +287,7 @@ func testDisciplineTimeout(
 		require.NotEmpty(
 			t,
 			join,
-			"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+			"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v, "+
 				"pause at: %v",
 			quantity,
 			blockSize,
@@ -309,7 +309,7 @@ func testDisciplineTimeout(
 		t,
 		inSequence,
 		outSequence,
-		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+		"quantity: %v, block size: %v, join size: %v, no copy: %v, timeout: %v, "+
 			"pause at: %v",
 		quantity,
 		blockSize,
@@ -323,7 +323,7 @@ func testDisciplineTimeout(
 		t,
 		expected,
 		output,
-		"quantity: %v, block size: %v, join size: %v,  no copy: %v, timeout: %v, "+
+		"quantity: %v, block size: %v, join size: %v  no copy: %v, timeout: %v, "+
 			"pause at: %v",
 		quantity,
 		blockSize,
