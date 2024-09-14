@@ -1,3 +1,4 @@
+// Internal package describing the quantity over time structure.
 package qot
 
 import (
