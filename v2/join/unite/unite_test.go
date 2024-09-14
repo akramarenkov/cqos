@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/join/internal/common"
+	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
 	"github.com/akramarenkov/cqos/v2/join/internal/inspect"
 
 	"github.com/akramarenkov/stressor"
@@ -39,7 +39,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan []int),
 		JoinSize: 10,
-		Timeout:  common.DefaultMinTimeout,
+		Timeout:  defaults.MinTimeout,
 	}
 
 	_, err = New(opts)
@@ -64,7 +64,7 @@ func TestDiscipline(t *testing.T) {
 					blockSize,
 					joinSize,
 					false,
-					common.DefaultTestTimeout,
+					defaults.TestTimeout,
 				)
 
 				testDiscipline(
@@ -73,7 +73,7 @@ func TestDiscipline(t *testing.T) {
 					blockSize,
 					joinSize,
 					true,
-					common.DefaultTestTimeout,
+					defaults.TestTimeout,
 				)
 
 				testDiscipline(t, quantity, blockSize, joinSize, false, 0)
@@ -360,8 +360,8 @@ func TestDisciplineManually(t *testing.T) {
 		{28, 29, 30},
 	}
 
-	testDisciplineByDataSet(t, nil, [][]int{}, 5, true, common.DefaultTestTimeout)
-	testDisciplineByDataSet(t, dataSet, expected, 5, true, common.DefaultTestTimeout)
+	testDisciplineByDataSet(t, nil, [][]int{}, 5, true, defaults.TestTimeout)
+	testDisciplineByDataSet(t, dataSet, expected, 5, true, defaults.TestTimeout)
 }
 
 func testDisciplineByDataSet(
@@ -450,19 +450,19 @@ func testDisciplineByDataSet(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, common.DefaultTestTimeout, 0, false)
+	benchmarkDiscipline(b, 10, 4, false, defaults.TestTimeout, 0, false)
 }
 
 func BenchmarkDisciplineInputCapIsFullJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, common.DefaultTestTimeout, 1, false)
+	benchmarkDiscipline(b, 10, 4, false, defaults.TestTimeout, 1, false)
 }
 
 func BenchmarkDisciplineNoCopy(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, common.DefaultTestTimeout, 0, false)
+	benchmarkDiscipline(b, 10, 4, true, defaults.TestTimeout, 0, false)
 }
 
 func BenchmarkDisciplineNoCopyInputCapIsFullJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, common.DefaultTestTimeout, 1, false)
+	benchmarkDiscipline(b, 10, 4, true, defaults.TestTimeout, 1, false)
 }
 
 func BenchmarkDisciplineNoCopyUntimeouted(b *testing.B) {

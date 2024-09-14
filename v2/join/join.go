@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/join/internal/common"
+	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
 )
 
 var (
@@ -60,7 +60,7 @@ func (opts Opts[Type]) isValid() error {
 
 func (opts Opts[Type]) normalize() Opts[Type] {
 	if opts.TimeoutInaccuracy == 0 {
-		opts.TimeoutInaccuracy = common.DefaultTimeoutInaccuracy
+		opts.TimeoutInaccuracy = defaults.TimeoutInaccuracy
 	}
 
 	return opts

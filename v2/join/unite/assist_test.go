@@ -5,42 +5,42 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/join/internal/common"
+	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestCalcInterruptInterval(t *testing.T) {
 	interval, err := calcInterruptInterval(
-		10*common.DefaultMinTimeout,
-		common.DefaultTimeoutInaccuracy,
+		10*defaults.MinTimeout,
+		defaults.TimeoutInaccuracy,
 	)
 	require.NoError(t, err)
 	require.Equal(t, 10*consts.ReliablyMeasurableDuration, interval)
 
 	interval, err = calcInterruptInterval(
-		common.DefaultMinTimeout,
-		common.DefaultTimeoutInaccuracy,
+		defaults.MinTimeout,
+		defaults.TimeoutInaccuracy,
 	)
 	require.NoError(t, err)
 	require.Equal(t, consts.ReliablyMeasurableDuration, interval)
 
 	interval, err = calcInterruptInterval(
 		consts.ReliablyMeasurableDuration,
-		common.DefaultTimeoutInaccuracy,
+		defaults.TimeoutInaccuracy,
 	)
 	require.Error(t, err)
 	require.Equal(t, time.Duration(0), interval)
 
 	interval, err = calcInterruptInterval(
-		common.DefaultMinTimeout,
+		defaults.MinTimeout,
 		0,
 	)
 	require.Error(t, err)
 	require.Equal(t, time.Duration(0), interval)
 
 	interval, err = calcInterruptInterval(
-		common.DefaultMinTimeout,
+		defaults.MinTimeout,
 		101,
 	)
 	require.Error(t, err)
@@ -50,14 +50,14 @@ func TestCalcInterruptInterval(t *testing.T) {
 func TestCalcInterruptIntervalNonPositiveAllowed(t *testing.T) {
 	interval, err := calcInterruptIntervalNonPositiveAllowed(
 		0,
-		common.DefaultTimeoutInaccuracy,
+		defaults.TimeoutInaccuracy,
 	)
 	require.NoError(t, err)
 	require.Equal(t, time.Duration(0), interval)
 
 	interval, err = calcInterruptIntervalNonPositiveAllowed(
-		-common.DefaultMinTimeout,
-		common.DefaultTimeoutInaccuracy,
+		-defaults.MinTimeout,
+		defaults.TimeoutInaccuracy,
 	)
 	require.NoError(t, err)
 	require.Equal(t, time.Duration(0), interval)
