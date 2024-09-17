@@ -103,7 +103,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		interruptInterval: interval,
 		join:              make([]Type, 0, opts.JoinSize),
-		output:            make(chan []Type, 1),
+		output:            make(chan []Type, 1+cap(opts.Input)),
 		release:           make(chan struct{}),
 	}
 
