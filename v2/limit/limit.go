@@ -16,7 +16,9 @@ var (
 // Options of the created discipline.
 type Opts[Type any] struct {
 	// Input data channel. For terminate discipline it is necessary and sufficient to
-	// close the input channel
+	// close the input channel. Preferably input channel should be buffered for
+	// performance reasons. Optimal capacity is in the range of 1e2 to 1e6 and
+	// should be determined using benchmarks
 	//
 	// Note that if the number of data elements written to the input channel before it
 	// is closed is a multiple of the Quantity field in the rate limit structure, the
@@ -52,7 +54,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
-		output: make(chan Type, cap(opts.Input)),
+		output: make(chan Type, 1+cap(opts.Input)),
 	}
 
 	go dsc.main()
