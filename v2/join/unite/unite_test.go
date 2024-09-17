@@ -8,7 +8,6 @@ import (
 	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
 	"github.com/akramarenkov/cqos/v2/join/internal/inspect"
 
-	"github.com/akramarenkov/stressor"
 	"github.com/stretchr/testify/require"
 )
 
@@ -450,55 +449,39 @@ func testDisciplineByDataSet(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, defaults.TestTimeout, 0, false)
-}
-
-func BenchmarkDisciplineInputCapIsFullJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, defaults.TestTimeout, 1, false)
+	benchmarkDiscipline(b, 10, 4, false, defaults.TestTimeout, 1)
 }
 
 func BenchmarkDisciplineNoCopy(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, defaults.TestTimeout, 0, false)
+	benchmarkDiscipline(b, 10, 4, true, defaults.TestTimeout, 1)
 }
 
-func BenchmarkDisciplineNoCopyInputCapIsFullJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, defaults.TestTimeout, 1, false)
+func BenchmarkDisciplineUntimeouted(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, false, 0, 1)
 }
 
 func BenchmarkDisciplineNoCopyUntimeouted(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 0, false)
+	benchmarkDiscipline(b, 10, 4, true, 0, 1)
 }
 
-func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsHalfJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 0.5, false)
+func BenchmarkDisciplineInputCapacity0(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, true, 0, 0)
 }
 
-func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsFullJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 1, false)
+func BenchmarkDisciplineInputCapacity50(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, true, 0, 0.5)
 }
 
-func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsTwiceJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 2, false)
+func BenchmarkDisciplineInputCapacity100(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, true, 0, 1)
 }
 
-func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsTripleJoinSize(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 3, false)
+func BenchmarkDisciplineInputCapacity200(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, true, 0, 2)
 }
 
-func BenchmarkDisciplineNoCopyUntimeoutedStress(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 0, true)
-}
-
-func BenchmarkDisciplineNoCopyUntimeoutedInputCapIsFullJoinSizeStress(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, true, 0, 1, true)
-}
-
-func BenchmarkDisciplineUntimeoutedStress(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, 0, 0, true)
-}
-
-func BenchmarkDisciplineUntimeoutedInputCapIsFullJoinSizeStress(b *testing.B) {
-	benchmarkDiscipline(b, 10, 4, false, 0, 1, true)
+func BenchmarkDisciplineInputCapacity300(b *testing.B) {
+	benchmarkDiscipline(b, 10, 4, true, 0, 3)
 }
 
 func benchmarkDiscipline(
@@ -508,7 +491,6 @@ func benchmarkDiscipline(
 	noCopy bool,
 	timeout time.Duration,
 	inputCapFactor float64,
-	stressSystem bool,
 ) {
 	joinsQuantity := b.N
 	effectiveJoinSize := blockSize * (int(joinSize) / blockSize)
@@ -526,13 +508,6 @@ func benchmarkDiscipline(
 
 	discipline, err := New(opts)
 	require.NoError(b, err)
-
-	if stressSystem {
-		stress := stressor.New(stressor.Opts{})
-		defer stress.Stop()
-
-		time.Sleep(time.Second)
-	}
 
 	blocks := inspect.Input(quantity, blockSize)
 
