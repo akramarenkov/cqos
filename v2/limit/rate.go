@@ -2,37 +2,44 @@ package limit
 
 import (
 	"errors"
+	"math/big"
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/safe"
 )
 
 var (
-	ErrConvertedIntervalZero   = errors.New("converted interval is zero")
-	ErrConvertedQuantityZero   = errors.New("converted quantity is zero")
-	ErrIntervalZeroNegative    = errors.New("interval is zero or negative")
-	ErrMinimumIntervalNegative = errors.New("minimum interval is negative")
-	ErrQuantityZero            = errors.New("quantity is zero")
+	ErrConvertedIntervalZero            = errors.New("converted interval is zero, quantity is too large")
+	ErrConvertedQuantityUnrepresentable = errors.New("converted quantity is unrepresentable by used type")
+	ErrIntervalNegative                 = errors.New("interval is negative")
+	ErrIntervalZero                     = errors.New("interval is zero")
+	ErrMinimumIntervalNegative          = errors.New("minimum interval is negative")
+	ErrQuantityZero                     = errors.New("quantity is zero")
 )
 
-// Quantity data elements per time Interval.
+var (
+	// Deprecated.
+	ErrConvertedQuantityZero = errors.New("converted quantity is zero")
+)
+
+// Quantity of data elements passed per time Interval.
 type Rate struct {
 	Interval time.Duration
 	Quantity uint64
 }
 
-// Validates field values.
-//
-// Interval cannot be negative or equal to zero.
-//
-// Quantity cannot be equal to zero.
-func (rate Rate) IsValid() error {
-	if rate.Interval <= 0 {
-		return ErrIntervalZeroNegative
+// Validates field values. Interval cannot be negative or equal to zero. Quantity
+// cannot be equal to zero.
+func (rt Rate) IsValid() error {
+	if rt.Interval < 0 {
+		return ErrIntervalNegative
 	}
 
-	if rate.Quantity == 0 {
+	if rt.Interval == 0 {
+		return ErrIntervalZero
+	}
+
+	if rt.Quantity == 0 {
 		return ErrQuantityZero
 	}
 
@@ -42,23 +49,25 @@ func (rate Rate) IsValid() error {
 // Recalculates the units of measurement of the Interval so that the Quantity is
 // equal to 1.
 //
-// Maximizes the uniformity of the distribution of data elements over time by
+// Maximizes the uniformity of the distribution of output data elements over time by
 // reducing the productivity of the discipline.
-func (rate Rate) Flatten() (Rate, error) {
-	return rate.recalc(0)
+func (rt Rate) Flatten() (Rate, error) {
+	return rt.Recalculate(0)
 }
 
-// Recalculates the units of measurement of the interval so that the Quantity is
+// Recalculates the units of measurement of the Interval so that the Quantity is
 // as small as possible but the Interval is not less than the recommended value.
 //
-// Increases the uniformity of the distribution of data elements over time,
+// Increases the uniformity of the distribution of output data elements over time,
 // almost without reducing the productivity of the discipline.
-func (rate Rate) Optimize() (Rate, error) {
-	return rate.recalc(consts.ReliablyMeasurableDuration)
+func (rt Rate) Optimize() (Rate, error) {
+	return rt.Recalculate(consts.ReliablyMeasurableDuration)
 }
 
-func (rate Rate) recalc(min time.Duration) (Rate, error) {
-	if err := rate.IsValid(); err != nil {
+// Recalculates the units of measurement of an Interval with a limitation on its
+// minimum value.
+func (rt Rate) Recalculate(min time.Duration) (Rate, error) {
+	if err := rt.IsValid(); err != nil {
 		return Rate{}, err
 	}
 
@@ -66,31 +75,50 @@ func (rate Rate) recalc(min time.Duration) (Rate, error) {
 		return Rate{}, ErrMinimumIntervalNegative
 	}
 
-	divider, err := safe.UnsignedToSigned[uint64, time.Duration](rate.Quantity)
+	// integer overflows are not possible given the checks above
+	interval := time.Duration(uint64(rt.Interval) / rt.Quantity)
+
+	if interval > min {
+		recalculated := Rate{
+			Interval: interval,
+			Quantity: 1,
+		}
+
+		return recalculated, nil
+	}
+
+	if min == 0 {
+		return Rate{}, ErrConvertedIntervalZero
+	}
+
+	quantity, err := recalculateQuantity(rt.Quantity, min, rt.Interval)
 	if err != nil {
 		return Rate{}, err
 	}
 
-	interval := rate.Interval / divider
-	quantity := uint64(1)
-
-	if interval <= min {
-		if min == 0 {
-			return Rate{}, ErrConvertedIntervalZero
-		}
-
-		interval = min
-
-		product, err := safe.ProductInt(rate.Quantity, uint64(min))
-		if err != nil {
-			return Rate{}, err
-		}
-
-		quantity = product / uint64(rate.Interval)
+	recalculated := Rate{
+		Interval: min,
+		Quantity: quantity,
 	}
 
-	rate.Interval = interval
-	rate.Quantity = quantity
+	return recalculated, nil
+}
 
-	return rate, nil
+func recalculateQuantity(
+	quantity uint64,
+	min time.Duration,
+	interval time.Duration,
+) (uint64, error) {
+	qb := new(big.Int).SetUint64(quantity)
+	mb := new(big.Int).SetInt64(int64(min))
+	ib := new(big.Int).SetInt64(int64(interval))
+
+	product := new(big.Int).Mul(qb, mb)
+	quotient := new(big.Int).Quo(product, ib)
+
+	if !quotient.IsUint64() {
+		return 0, ErrConvertedQuantityUnrepresentable
+	}
+
+	return quotient.Uint64(), nil
 }

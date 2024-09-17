@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/env"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 
@@ -21,9 +22,6 @@ func TestGraphTicker(t *testing.T) {
 	testGraphTicker(t, 1e2, 100*time.Millisecond, false)
 	testGraphTicker(t, 1e3, 10*time.Millisecond, false)
 	testGraphTicker(t, 1e3, 5*time.Millisecond, false)
-	testGraphTicker(t, 1e3, 4*time.Millisecond, false)
-	testGraphTicker(t, 1e3, 3*time.Millisecond, false)
-	testGraphTicker(t, 1e3, 2*time.Millisecond, false)
 	testGraphTicker(t, 1e3, time.Millisecond, false)
 	testGraphTicker(t, 1e3, 100*time.Microsecond, false)
 
@@ -31,9 +29,6 @@ func TestGraphTicker(t *testing.T) {
 	testGraphTicker(t, 1e2, 100*time.Millisecond, true)
 	testGraphTicker(t, 1e3, 10*time.Millisecond, true)
 	testGraphTicker(t, 1e3, 5*time.Millisecond, true)
-	testGraphTicker(t, 1e3, 4*time.Millisecond, true)
-	testGraphTicker(t, 1e3, 3*time.Millisecond, true)
-	testGraphTicker(t, 1e3, 2*time.Millisecond, true)
 	testGraphTicker(t, 1e3, time.Millisecond, true)
 	testGraphTicker(t, 1e3, 100*time.Microsecond, true)
 }
@@ -79,9 +74,6 @@ func TestGraphSleep(t *testing.T) {
 	testGraphSleep(t, 1e2, 100*time.Millisecond, false)
 	testGraphSleep(t, 1e3, 10*time.Millisecond, false)
 	testGraphSleep(t, 1e3, 5*time.Millisecond, false)
-	testGraphSleep(t, 1e3, 4*time.Millisecond, false)
-	testGraphSleep(t, 1e3, 3*time.Millisecond, false)
-	testGraphSleep(t, 1e3, 2*time.Millisecond, false)
 	testGraphSleep(t, 1e3, time.Millisecond, false)
 	testGraphSleep(t, 1e3, 100*time.Microsecond, false)
 
@@ -89,9 +81,6 @@ func TestGraphSleep(t *testing.T) {
 	testGraphSleep(t, 1e2, 100*time.Millisecond, true)
 	testGraphSleep(t, 1e3, 10*time.Millisecond, true)
 	testGraphSleep(t, 1e3, 5*time.Millisecond, true)
-	testGraphSleep(t, 1e3, 4*time.Millisecond, true)
-	testGraphSleep(t, 1e3, 3*time.Millisecond, true)
-	testGraphSleep(t, 1e3, 2*time.Millisecond, true)
 	testGraphSleep(t, 1e3, time.Millisecond, true)
 	testGraphSleep(t, 1e3, 100*time.Microsecond, true)
 }
@@ -199,124 +188,60 @@ func TestGraphDiscipline(t *testing.T) {
 	testGraphDiscipline(
 		t,
 		1e4+1,
-		Rate{Interval: time.Second, Quantity: 1e3},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e4+1,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 1e2},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e4+1,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 1e1},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e4+1,
-		Rate{Interval: time.Millisecond, Quantity: 1},
-		false,
-	)
-
-	testGraphDiscipline(
-		t,
-		1e5+1,
-		Rate{Interval: time.Second, Quantity: 1e4},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e5+1,
-		Rate{Interval: 100 * time.Microsecond, Quantity: 1},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e6+1,
-		Rate{Interval: time.Second, Quantity: 1e5},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		1e7+1,
-		Rate{Interval: time.Second, Quantity: 1e6},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		2.6e7+1,
-		Rate{Interval: time.Second, Quantity: 2.6e6},
-		false,
-	)
-	testGraphDiscipline(
-		t,
-		3e7+1,
-		Rate{Interval: time.Second, Quantity: 3e6},
+		Rate{
+			Interval: time.Second,
+			Quantity: 1e3,
+		},
 		false,
 	)
 
 	testGraphDiscipline(
 		t,
 		1e4+1,
-		Rate{Interval: time.Second, Quantity: 1e3},
-		true,
+		Rate{
+			Interval: consts.ReliablyMeasurableDuration,
+			Quantity: 1e1,
+		},
+		false,
 	)
+
 	testGraphDiscipline(
 		t,
 		1e4+1,
-		Rate{Interval: 100 * time.Millisecond, Quantity: 1e2},
-		true,
+		Rate{
+			Interval: time.Nanosecond,
+			Quantity: 1,
+		},
+		false,
 	)
+
 	testGraphDiscipline(
 		t,
 		1e4+1,
-		Rate{Interval: 10 * time.Millisecond, Quantity: 1e1},
-		true,
-	)
-	testGraphDiscipline(
-		t,
-		1e4+1,
-		Rate{Interval: time.Millisecond, Quantity: 1},
+		Rate{
+			Interval: time.Second,
+			Quantity: 1e3,
+		},
 		true,
 	)
 
 	testGraphDiscipline(
 		t,
-		1e5+1,
-		Rate{Interval: time.Second, Quantity: 1e4},
+		1e4+1,
+		Rate{
+			Interval: consts.ReliablyMeasurableDuration,
+			Quantity: 1e1,
+		},
 		true,
 	)
+
 	testGraphDiscipline(
 		t,
-		1e5+1,
-		Rate{Interval: 100 * time.Microsecond, Quantity: 1},
-		true,
-	)
-	testGraphDiscipline(
-		t,
-		1e6+1,
-		Rate{Interval: time.Second, Quantity: 1e5},
-		true,
-	)
-	testGraphDiscipline(
-		t,
-		1e7+1,
-		Rate{Interval: time.Second, Quantity: 1e6},
-		true,
-	)
-	testGraphDiscipline(
-		t,
-		2.6e7+1,
-		Rate{Interval: time.Second, Quantity: 2.6e6},
-		true,
-	)
-	testGraphDiscipline(
-		t,
-		3e7+1,
-		Rate{Interval: time.Second, Quantity: 3e6},
+		1e4+1,
+		Rate{
+			Interval: time.Nanosecond,
+			Quantity: 1,
+		},
 		true,
 	)
 }
@@ -338,7 +263,7 @@ func testGraphDiscipline(
 		time.Sleep(time.Second)
 	}
 
-	input := make(chan int)
+	input := make(chan int, quantity)
 
 	opts := Opts[int]{
 		Input: input,
@@ -355,8 +280,8 @@ func testGraphDiscipline(
 	go func() {
 		defer close(input)
 
-		for stage := range quantity {
-			input <- stage
+		for item := range quantity {
+			input <- item
 		}
 	}()
 

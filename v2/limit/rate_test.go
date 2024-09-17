@@ -10,124 +10,77 @@ import (
 )
 
 func TestRateIsValid(t *testing.T) {
-	zeroInterval := Rate{
-		Interval: 0,
+	rate := Rate{
+		Interval: time.Second,
 		Quantity: 10,
 	}
+	require.NoError(t, rate.IsValid())
 
-	negativeInterval := Rate{
+	rate = Rate{
 		Interval: -time.Second,
 		Quantity: 10,
 	}
+	require.Error(t, rate.IsValid())
 
-	zeroQuantity := Rate{
+	rate = Rate{
+		Interval: 0,
+		Quantity: 10,
+	}
+	require.Error(t, rate.IsValid())
+
+	rate = Rate{
 		Interval: time.Second,
 		Quantity: 0,
 	}
-
-	regular := Rate{
-		Interval: time.Second,
-		Quantity: 10,
-	}
-
-	require.Error(t, zeroInterval.IsValid())
-	require.Error(t, negativeInterval.IsValid())
-	require.Error(t, zeroQuantity.IsValid())
-	require.NoError(t, regular.IsValid())
+	require.Error(t, rate.IsValid())
 }
 
-func TestFlatten(t *testing.T) {
-	regular := Rate{
+func TestRateFlatten(t *testing.T) {
+	rate := Rate{
 		Interval: time.Second,
 		Quantity: 10,
 	}
+	flatten, err := rate.Flatten()
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		Rate{
+			Interval: 100 * time.Millisecond,
+			Quantity: 1,
+		},
+		flatten,
+	)
 
-	zeroInterval := Rate{
-		Interval: 0,
-		Quantity: 10,
-	}
-
-	negativeInterval := Rate{
-		Interval: -time.Second,
-		Quantity: 10,
-	}
-
-	zeroQuantity := Rate{
-		Interval: time.Second,
-		Quantity: 0,
-	}
-
-	negativeConvertedQuantity := Rate{
-		Interval: time.Second,
-		Quantity: math.MaxUint64,
-	}
-
-	zeroConvertedInterval := Rate{
+	rate = Rate{
 		Interval: time.Second,
 		Quantity: math.MaxInt64,
 	}
-
-	flatten, err := regular.Flatten()
-	require.NoError(t, err)
-	require.Equal(t, Rate{Interval: 100 * time.Millisecond, Quantity: 1}, flatten)
-
-	_, err = zeroInterval.Flatten()
+	flatten, err = rate.Flatten()
 	require.Error(t, err)
-
-	_, err = negativeInterval.Flatten()
-	require.Error(t, err)
-
-	_, err = zeroQuantity.Flatten()
-	require.Error(t, err)
-
-	_, err = negativeConvertedQuantity.Flatten()
-	require.Error(t, err)
-
-	_, err = zeroConvertedInterval.Flatten()
-	require.Error(t, err)
+	require.Equal(t, Rate{}, flatten)
 }
 
-func TestOptimize(t *testing.T) {
-	regular := Rate{
+func TestRateOptimize(t *testing.T) {
+	rate := Rate{
 		Interval: time.Second,
 		Quantity: 10,
 	}
+	optimized, err := rate.Optimize()
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		Rate{
+			Interval: 100 * time.Millisecond,
+			Quantity: 1,
+		},
+		optimized,
+	)
 
-	regularLessMinimum := Rate{
+	rate = Rate{
 		Interval: time.Second,
 		Quantity: 1e4,
 	}
-
-	zeroInterval := Rate{
-		Interval: 0,
-		Quantity: 10,
-	}
-
-	negativeInterval := Rate{
-		Interval: -time.Second,
-		Quantity: 10,
-	}
-
-	zeroQuantity := Rate{
-		Interval: time.Second,
-		Quantity: 0,
-	}
-
-	negativeConvertedQuantity := Rate{
-		Interval: time.Second,
-		Quantity: math.MaxUint64,
-	}
-
-	zeroConvertedInterval := Rate{
-		Interval: time.Second,
-		Quantity: math.MaxInt64,
-	}
-
-	optimized, err := regular.Optimize()
-	require.NoError(t, err)
-	require.Equal(t, Rate{Interval: 100 * time.Millisecond, Quantity: 1}, optimized)
-
-	optimized, err = regularLessMinimum.Optimize()
+	optimized, err = rate.Optimize()
 	require.NoError(t, err)
 	require.Equal(
 		t,
@@ -138,84 +91,44 @@ func TestOptimize(t *testing.T) {
 		optimized,
 	)
 
-	_, err = zeroInterval.Optimize()
-	require.Error(t, err)
-
-	_, err = negativeInterval.Optimize()
-	require.Error(t, err)
-
-	_, err = zeroQuantity.Optimize()
-	require.Error(t, err)
-
-	_, err = negativeConvertedQuantity.Optimize()
-	require.Error(t, err)
-
-	_, err = zeroConvertedInterval.Optimize()
-	require.Error(t, err)
-}
-
-func TestRecalc(t *testing.T) {
-	regular := Rate{
-		Interval: time.Second,
-		Quantity: 10,
-	}
-
-	regularLessMinimum := Rate{
-		Interval: time.Second,
-		Quantity: 1e4,
-	}
-
-	zeroInterval := Rate{
-		Interval: 0,
-		Quantity: 10,
-	}
-
-	negativeInterval := Rate{
-		Interval: -time.Second,
-		Quantity: 10,
-	}
-
-	zeroQuantity := Rate{
-		Interval: time.Second,
-		Quantity: 0,
-	}
-
-	negativeConvertedQuantity := Rate{
+	rate = Rate{
 		Interval: time.Second,
 		Quantity: math.MaxUint64,
 	}
+	optimized, err = rate.Optimize()
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		Rate{
+			Interval: consts.ReliablyMeasurableDuration,
+			Quantity: 184467440737095516,
+		},
+		optimized,
+	)
 
-	zeroConvertedInterval := Rate{
-		Interval: time.Second,
-		Quantity: math.MaxInt64,
+	rate = Rate{
+		Interval: time.Millisecond,
+		Quantity: math.MaxUint64,
 	}
-
-	recalced, err := regular.recalc(time.Millisecond)
-	require.NoError(t, err)
-	require.Equal(t, Rate{Interval: 100 * time.Millisecond, Quantity: 1}, recalced)
-
-	recalced, err = regularLessMinimum.recalc(time.Millisecond)
-	require.NoError(t, err)
-	require.Equal(t, Rate{Interval: 1 * time.Millisecond, Quantity: 10}, recalced)
-
-	_, err = regular.recalc(-time.Second)
+	optimized, err = rate.Optimize()
 	require.Error(t, err)
+	require.Equal(t, Rate{}, optimized)
+}
 
-	_, err = zeroInterval.recalc(0)
+func TestRateRecalculate(t *testing.T) {
+	rate := Rate{
+		Interval: -time.Second,
+		Quantity: 10,
+	}
+	recalculated, err := rate.Recalculate(time.Millisecond)
 	require.Error(t, err)
+	require.Equal(t, Rate{}, recalculated)
 
-	_, err = negativeInterval.recalc(0)
+	rate = Rate{
+		Interval: time.Second,
+		Quantity: 10,
+	}
+	recalculated, err = rate.Recalculate(-time.Millisecond)
 	require.Error(t, err)
-
-	_, err = zeroQuantity.recalc(0)
-	require.Error(t, err)
-
-	_, err = negativeConvertedQuantity.recalc(0)
-	require.Error(t, err)
-
-	_, err = zeroConvertedInterval.recalc(0)
-	require.Error(t, err)
-
-	_, err = zeroConvertedInterval.recalc(time.Millisecond)
-	require.Error(t, err)
+	require.Equal(t, Rate{}, recalculated)
 }

@@ -22,6 +22,8 @@ Thus, when choosing units of measurement, you can balance between the uniform di
 
 Based on measurements, specifying a time interval of less than 10 milliseconds significantly reduces performance and accuracy
 
+Under heavy system load, it is not advisable to specify an time interval less than 1 second
+
 ## Usage
 
 Example:
@@ -39,7 +41,10 @@ import (
 func main() {
     quantity := 10
 
-    input := make(chan int)
+    // Preferably input channel should be buffered for performance reasons.
+    // Optimal capacity is in the range of 1e2 to 1e6 and should be determined
+    // using benchmarks
+    input := make(chan int, 100)
 
     opts := limit.Opts[int]{
         Input: input,
@@ -61,8 +66,8 @@ func main() {
     go func() {
         defer close(input)
 
-        for stage := 1; stage <= quantity; stage++ {
-            input <- stage
+        for item := 1; item <= quantity; item++ {
+            input <- item
         }
     }()
 
@@ -71,12 +76,13 @@ func main() {
     }
 
     duration := time.Since(startedAt)
-    expected := (time.Duration(quantity) * opts.Limit.Interval) / time.Duration(opts.Limit.Quantity)
+    expected := (time.Duration(quantity) / time.Duration(opts.Limit.Quantity)) * opts.Limit.Interval
     deviation := 0.01
 
     fmt.Println(duration <= time.Duration(float64(expected)*(1.0+deviation)))
     fmt.Println(duration >= time.Duration(float64(expected)*(1.0-deviation)))
     fmt.Println(outSequence)
+
     // Output:
     // true
     // true

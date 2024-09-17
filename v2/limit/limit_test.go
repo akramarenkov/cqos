@@ -1,12 +1,10 @@
 package limit
 
 import (
-	"math"
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/general"
-
+	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,49 +23,14 @@ func TestOptsValidation(t *testing.T) {
 
 	opts = Opts[int]{
 		Input: make(chan int),
-		Limit: Rate{Interval: time.Second, Quantity: 1},
+		Limit: Rate{
+			Interval: time.Second,
+			Quantity: 1,
+		},
 	}
 
 	_, err = New(opts)
 	require.NoError(t, err)
-}
-
-func TestIncreaseDelay(t *testing.T) {
-	require.Equal(
-		t,
-		time.Duration(math.MinInt64+1),
-		increaseDelay(time.Duration(math.MinInt64), 1),
-	)
-
-	require.Equal(
-		t,
-		time.Duration(math.MinInt64),
-		increaseDelay(time.Duration(math.MinInt64+1), -1),
-	)
-
-	require.Equal(
-		t,
-		time.Duration(0),
-		increaseDelay(time.Duration(math.MinInt64), -1),
-	)
-
-	require.Equal(
-		t,
-		time.Duration(math.MaxInt64-1),
-		increaseDelay(time.Duration(math.MaxInt64), -1),
-	)
-
-	require.Equal(
-		t,
-		time.Duration(math.MaxInt64),
-		increaseDelay(time.Duration(math.MaxInt64-1), 1),
-	)
-
-	require.Equal(
-		t,
-		time.Duration(0),
-		increaseDelay(time.Duration(math.MaxInt64), 1),
-	)
 }
 
 func TestDiscipline(t *testing.T) {
@@ -78,69 +41,39 @@ func TestDiscipline(t *testing.T) {
 		Quantity: 1000,
 	}
 
-	disciplined := testDiscipline(t, quantity, limit, false, 0.1)
-	undisciplined := testUndisciplined(t, quantity)
-
-	require.Less(t, undisciplined, disciplined)
+	duration := testDiscipline(t, quantity, limit)
+	expected := calcExpectedDuration(quantity, limit)
+	require.InEpsilon(t, expected, duration, 0.1)
 }
 
-func TestDisciplineOptimize(t *testing.T) {
+func TestDisciplineDeferredDelay(t *testing.T) {
 	quantity := 10000
 
 	limit := Rate{
-		Interval: time.Second,
-		Quantity: 1000,
+		Interval: consts.ReliablyMeasurableDuration,
+		Quantity: 10,
 	}
 
-	disciplined := testDiscipline(t, quantity, limit, true, 0.1)
-	undisciplined := testUndisciplined(t, quantity)
-
-	require.Less(t, undisciplined, disciplined)
+	duration := testDiscipline(t, quantity, limit)
+	expected := calcExpectedDuration(quantity, limit)
+	require.InEpsilon(t, expected, duration, 0.1)
 }
 
-func BenchmarkDiscipline(b *testing.B) {
-	quantity := int(11e6)
+func TestDisciplineResetDelay(t *testing.T) {
+	quantity := 10000
 
 	limit := Rate{
-		Interval: time.Second,
-		Quantity: uint64(quantity),
+		Interval: time.Nanosecond,
+		Quantity: 1,
 	}
 
-	benchmarkDiscipline(b, quantity, limit, false, 0.1)
+	duration := testDiscipline(t, quantity, limit)
+	expected := calcExpectedDuration(quantity, limit)
+	require.Greater(t, duration, expected)
 }
 
-func BenchmarkDisciplineOptimize(b *testing.B) {
-	quantity := int(11e6)
-
-	limit := Rate{
-		Interval: time.Second,
-		Quantity: uint64(quantity),
-	}
-
-	benchmarkDiscipline(b, quantity, limit, true, 0.1)
-}
-
-func testDiscipline(
-	t *testing.T,
-	quantity int,
-	limit Rate,
-	optimize bool,
-	maxRelativeDeviation float64,
-) time.Duration {
-	if optimize {
-		optimized, err := limit.Optimize()
-		require.NoError(t, err)
-
-		limit = optimized
-	}
-
-	capacity := general.DivideWithMin(
-		quantity,
-		defaultCapacityDivider,
-		1,
-	)
-
-	input := make(chan int, capacity)
+func testDiscipline(t *testing.T, quantity int, limit Rate) time.Duration {
+	input := make(chan int, quantity)
 
 	opts := Opts[int]{
 		Input: input,
@@ -158,10 +91,10 @@ func testDiscipline(
 	go func() {
 		defer close(input)
 
-		for stage := range quantity {
-			inSequence = append(inSequence, stage)
+		for item := range quantity {
+			inSequence = append(inSequence, item)
 
-			input <- stage
+			input <- item
 		}
 	}()
 
@@ -171,83 +104,78 @@ func testDiscipline(
 
 	duration := time.Since(startedAt)
 
-	expectedDuration, acceptableDeviation := calcExpectedDuration(
-		quantity,
-		limit,
-		maxRelativeDeviation,
-	)
-
-	require.Equal(t, inSequence, outSequence)
-	require.InDelta(t, expectedDuration, duration, acceptableDeviation)
-
-	return duration
-}
-
-func calcExpectedDuration(
-	quantity int,
-	limit Rate,
-	relativeDeviation float64,
-) (time.Duration, float64) {
-	duration := (time.Duration(quantity) * limit.Interval) / time.Duration(limit.Quantity)
-	deviation := relativeDeviation * float64(duration)
-
-	return duration, deviation
-}
-
-func testUndisciplined(t *testing.T, quantity int) time.Duration {
-	capacity := general.DivideWithMin(
-		quantity,
-		defaultCapacityDivider,
-		1,
-	)
-
-	input := make(chan int, capacity)
-
-	inSequence := make([]int, 0, quantity)
-	outSequence := make([]int, 0, quantity)
-
-	startedAt := time.Now()
-
-	go func() {
-		defer close(input)
-
-		for stage := range quantity {
-			inSequence = append(inSequence, stage)
-
-			input <- stage
-		}
-	}()
-
-	for item := range input {
-		outSequence = append(outSequence, item)
-	}
-
-	duration := time.Since(startedAt)
-
 	require.Equal(t, inSequence, outSequence)
 
 	return duration
 }
 
-func benchmarkDiscipline(
-	b *testing.B,
-	quantity int,
-	limit Rate,
-	optimize bool,
-	maxRelativeDurationDeviation float64,
-) {
-	if optimize {
-		optimized, err := limit.Optimize()
-		require.NoError(b, err)
+func calcExpectedDuration(quantity int, limit Rate) time.Duration {
+	// Accuracy of calculations is deliberately roughened (first division is performed
+	// and only then multiplication) because such a calculation corresponds to the work
+	// of the discipline when closing the input channel: if the number of data elements
+	// written to the input channel is not a multiple of the Quantity field in rate
+	// limit structure, then the delay after the transmission of the last data is not
+	// performed
+	ratio := time.Duration(quantity) / time.Duration(limit.Quantity)
 
-		limit = optimized
+	return ratio * limit.Interval
+}
+
+func BenchmarkDisciplineInputCapacity0(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 0)
+}
+
+func BenchmarkDisciplineInputCapacity1e0(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1)
+}
+
+func BenchmarkDisciplineInputCapacity1e1(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e1)
+}
+
+func BenchmarkDisciplineInputCapacity1e2(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e2)
+}
+
+func BenchmarkDisciplineInputCapacity1e3(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e3)
+}
+
+func BenchmarkDisciplineInputCapacity1e4(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e4)
+}
+
+func BenchmarkDisciplineInputCapacity1e5(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e5)
+}
+
+func BenchmarkDisciplineInputCapacity1e6(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e6)
+}
+
+func BenchmarkDisciplineInputCapacity1e7(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, 1e7)
+}
+
+func BenchmarkDisciplineInputCapacityQuantity(b *testing.B) {
+	benchmarkDisciplineInputCapacity(b, -1)
+}
+
+// This benchmark is used to test the impact of input channel capacity on
+// performance. Therefore, the value of Quantity field in rate limit structure is
+// always set to be greater than the number of data elements written to the input
+// channel so that there is no delay after data transfer.
+func benchmarkDisciplineInputCapacity(b *testing.B, capacity int) {
+	quantity := b.N
+
+	limit := Rate{
+		Interval: time.Second,
+		Quantity: uint64(b.N) + 1,
 	}
 
-	capacity := general.DivideWithMin(
-		quantity,
-		defaultCapacityDivider,
-		1,
-	)
+	if capacity < 0 {
+		capacity = quantity
+	}
 
 	input := make(chan int, capacity)
 
@@ -259,26 +187,53 @@ func benchmarkDiscipline(
 	discipline, err := New(opts)
 	require.NoError(b, err)
 
-	startedAt := time.Now()
+	b.ResetTimer()
 
 	go func() {
 		defer close(input)
 
-		for stage := range quantity {
-			input <- stage
+		for item := range quantity {
+			input <- item
 		}
 	}()
 
-	for range discipline.Output() { //nolint:revive
+	for item := range discipline.Output() {
+		_ = item
+	}
+}
+
+// Here we model the worst case: when the number of operations for measuring time and
+// calculating delays is equal to the number of operations for transmitting data
+// elements.
+func BenchmarkDiscipline(b *testing.B) {
+	quantity := b.N
+
+	limit := Rate{
+		Interval: time.Nanosecond,
+		Quantity: 1,
 	}
 
-	duration := time.Since(startedAt)
+	input := make(chan int, b.N)
 
-	expectedDuration, acceptableDeviation := calcExpectedDuration(
-		quantity,
-		limit,
-		maxRelativeDurationDeviation,
-	)
+	opts := Opts[int]{
+		Input: input,
+		Limit: limit,
+	}
 
-	require.InDelta(b, expectedDuration, duration, acceptableDeviation)
+	discipline, err := New(opts)
+	require.NoError(b, err)
+
+	b.ResetTimer()
+
+	go func() {
+		defer close(input)
+
+		for item := range quantity {
+			input <- item
+		}
+	}()
+
+	for item := range discipline.Output() {
+		_ = item
+	}
 }
