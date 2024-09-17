@@ -20,7 +20,7 @@ var (
 type Opts[Type any] struct {
 	// Input data channel. For terminate discipline it is necessary and sufficient to
 	// close the input channel. Preferably input channel should be buffered for
-	// performance reasons. Optimal capacity is in the range of one to two JoinSize
+	// performance reasons. Optimal capacity is in the range of one to three JoinSize
 	Input <-chan Type
 	// Maximum size of the output slice. Actual size of the output slice may be
 	// smaller due to the timeout or closure of the input channel

@@ -33,7 +33,7 @@ func main() {
     }
 
     // Preferably input channel should be buffered for performance reasons.
-    // Optimal capacity is in the range of one to two JoinSize
+    // Optimal capacity is in the range of one to three JoinSize
     input := make(chan int, 10)
 
     opts := join.Opts[int]{
