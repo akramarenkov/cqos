@@ -30,6 +30,8 @@ func calcInterruptInterval(
 		return 0, ErrTimeoutInaccuracyTooBig
 	}
 
+	// Integer overflow is impossible because the values ​​of divider are between
+	// 1 and 100 (as a result of dividing 100% by a number of type uint)
 	interval := timeout / time.Duration(divider)
 
 	if interval < consts.ReliablyMeasurableDuration {

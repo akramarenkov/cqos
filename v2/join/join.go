@@ -98,8 +98,12 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 		interruptInterval: interval,
 		join:              make([]Type, 0, opts.JoinSize),
-		output:            make(chan []Type, 1+cap(opts.Input)),
-		release:           make(chan struct{}),
+		// Value returned by the cap() function is always positive and, in the case of
+		// integer overflow due to adding one, the resulting value can only become
+		// negative, which will cause a panic when executing make() as same as when
+		// specifying a large positive value
+		output:  make(chan []Type, 1+cap(opts.Input)),
+		release: make(chan struct{}),
 	}
 
 	dsc.resetPassAt()
@@ -168,7 +172,10 @@ func (dsc *Discipline[Type]) loopUntimeouted() {
 func (dsc *Discipline[Type]) process(item Type) {
 	dsc.join = append(dsc.join, item)
 
-	if len(dsc.join) < int(dsc.opts.JoinSize) {
+	// Integer overflow is impossible because len() function returns only positive
+	// values ​​for type int and the maximum value for type int is less than the
+	// maximum value for type uint
+	if uint(len(dsc.join)) < dsc.opts.JoinSize {
 		return
 	}
 

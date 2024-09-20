@@ -54,6 +54,10 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 	dsc := &Discipline[Type]{
 		opts: opts,
 
+		// Value returned by the cap() function is always positive and, in the case of
+		// integer overflow due to adding one, the resulting value can only become
+		// negative, which will cause a panic when executing make() as same as when
+		// specifying a large positive value
 		output: make(chan Type, 1+cap(opts.Input)),
 	}
 
