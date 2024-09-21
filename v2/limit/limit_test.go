@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,32 +43,6 @@ func TestDiscipline(t *testing.T) {
 	duration := testDiscipline(t, quantity, limit)
 	expected := calcExpectedDuration(quantity, limit)
 	require.InEpsilon(t, expected, duration, 0.1)
-}
-
-func TestDisciplineDeferredDelay(t *testing.T) {
-	quantity := 10000
-
-	limit := Rate{
-		Interval: consts.ReliablyMeasurableDuration,
-		Quantity: 10,
-	}
-
-	duration := testDiscipline(t, quantity, limit)
-	expected := calcExpectedDuration(quantity, limit)
-	require.InEpsilon(t, expected, duration, 0.1)
-}
-
-func TestDisciplineResetDelay(t *testing.T) {
-	quantity := 10000
-
-	limit := Rate{
-		Interval: time.Nanosecond,
-		Quantity: 1,
-	}
-
-	duration := testDiscipline(t, quantity, limit)
-	expected := calcExpectedDuration(quantity, limit)
-	require.Greater(t, duration, expected)
 }
 
 func testDiscipline(t *testing.T, quantity int, limit Rate) time.Duration {

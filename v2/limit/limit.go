@@ -5,8 +5,6 @@ package limit
 import (
 	"errors"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -80,15 +78,13 @@ func (dsc *Discipline[Type]) main() {
 }
 
 func (dsc *Discipline[Type]) loop() {
-	delay := time.Duration(0)
-
 	for {
 		duration, stop := dsc.transfer()
 		if stop {
 			return
 		}
 
-		delay = dsc.delay(delay, duration)
+		dsc.delay(duration)
 	}
 }
 
@@ -121,37 +117,10 @@ func (dsc *Discipline[Type]) send(item Type) {
 	dsc.output <- item
 }
 
-func (dsc *Discipline[Type]) delay(delay, duration time.Duration) time.Duration {
+func (dsc *Discipline[Type]) delay(duration time.Duration) {
 	// Integer overflow is impossible, because values of Interval field in rate limit
 	// structure and transfer duration are greater than zero
 	remainder := dsc.opts.Limit.Interval - duration
 
-	// Integer overflow is impossible in practice since it can only occur with large
-	// values ​​of Interval field in rate limit structure and transfer duration that
-	// cannot be tested
-	delay += remainder
-
-	// Reset to zero is performed to prevent situations where the rate limit is not
-	// present after the data transfer duration has been exceeding the value of
-	// Interval field in rate limit structure for a long time (for example, due to an
-	// external load on the system) and the subsequent reduction of the data transfer
-	// duration compared to the value of Interval field in rate limit structure
-	// (after the external load on the system has decreased)
-	//
-	// Integer overflow when negating is impossible, because value of Interval field
-	// in rate limit structure are greater than zero i.e. less than the minimum
-	// negative value for given type in absolute value
-	if delay < -dsc.opts.Limit.Interval {
-		return 0
-	}
-
-	// Delay accumulates and is deferred until it becomes sufficient to execute with
-	// acceptable accuracy
-	if delay < consts.ReliablyMeasurableDuration {
-		return delay
-	}
-
-	time.Sleep(delay)
-
-	return 0
+	time.Sleep(remainder)
 }

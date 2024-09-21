@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/internal/env"
 	"github.com/akramarenkov/cqos/v2/limit/internal/research"
 
@@ -199,7 +198,27 @@ func TestGraphDiscipline(t *testing.T) {
 		t,
 		1e4+1,
 		Rate{
-			Interval: consts.ReliablyMeasurableDuration,
+			Interval: 100 * time.Millisecond,
+			Quantity: 1e2,
+		},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{
+			Interval: 10 * time.Millisecond,
+			Quantity: 1e1,
+		},
+		false,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{
+			Interval: time.Millisecond,
 			Quantity: 1e1,
 		},
 		false,
@@ -229,7 +248,27 @@ func TestGraphDiscipline(t *testing.T) {
 		t,
 		1e4+1,
 		Rate{
-			Interval: consts.ReliablyMeasurableDuration,
+			Interval: 100 * time.Millisecond,
+			Quantity: 1e2,
+		},
+		true,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e4+1,
+		Rate{
+			Interval: 10 * time.Millisecond,
+			Quantity: 1e1,
+		},
+		true,
+	)
+
+	testGraphDiscipline(
+		t,
+		1e5+1,
+		Rate{
+			Interval: time.Millisecond,
 			Quantity: 1e1,
 		},
 		true,
