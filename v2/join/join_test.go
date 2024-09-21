@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
 	"github.com/akramarenkov/cqos/v2/join/internal/inspect"
 
@@ -29,7 +28,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  consts.ReliablyMeasurableDuration,
+		Timeout:  3 * time.Nanosecond,
 	}
 
 	_, err = New(opts)

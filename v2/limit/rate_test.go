@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -85,7 +84,7 @@ func TestRateOptimize(t *testing.T) {
 	require.Equal(
 		t,
 		Rate{
-			Interval: consts.ReliablyMeasurableDuration,
+			Interval: OptimizationInterval,
 			Quantity: 100,
 		},
 		optimized,
@@ -100,7 +99,7 @@ func TestRateOptimize(t *testing.T) {
 	require.Equal(
 		t,
 		Rate{
-			Interval: consts.ReliablyMeasurableDuration,
+			Interval: OptimizationInterval,
 			Quantity: 184467440737095516,
 		},
 		optimized,

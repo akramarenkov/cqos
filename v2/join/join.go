@@ -85,10 +85,7 @@ func New[Type any](opts Opts[Type]) (*Discipline[Type], error) {
 
 	opts = opts.normalize()
 
-	interval, err := calcInterruptIntervalNonPositiveAllowed(
-		opts.Timeout,
-		opts.TimeoutInaccuracy,
-	)
+	interval, err := calcInterruptInterval(opts.Timeout, opts.TimeoutInaccuracy)
 	if err != nil {
 		return nil, err
 	}

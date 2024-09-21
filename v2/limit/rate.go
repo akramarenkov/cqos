@@ -4,8 +4,6 @@ import (
 	"errors"
 	"math/big"
 	"time"
-
-	"github.com/akramarenkov/cqos/v2/internal/consts"
 )
 
 var (
@@ -61,7 +59,7 @@ func (rt Rate) Flatten() (Rate, error) {
 // Increases the uniformity of the distribution of output data elements over time,
 // almost without reducing the productivity of the discipline.
 func (rt Rate) Optimize() (Rate, error) {
-	return rt.Recalculate(consts.ReliablyMeasurableDuration)
+	return rt.Recalculate(OptimizationInterval)
 }
 
 // Recalculates the units of measurement of an Interval with a limitation on its

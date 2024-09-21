@@ -20,6 +20,10 @@ func calcInterruptInterval(
 	timeout time.Duration,
 	inaccuracy uint,
 ) (time.Duration, error) {
+	if timeout <= 0 {
+		return 0, nil
+	}
+
 	if inaccuracy == 0 {
 		return 0, ErrTimeoutInaccuracyZero
 	}
@@ -34,20 +38,9 @@ func calcInterruptInterval(
 	// 1 and 100 (as a result of dividing 100% by a number of type uint)
 	interval := timeout / time.Duration(divider)
 
-	if interval < consts.ReliablyMeasurableDuration {
+	if interval == 0 {
 		return 0, ErrTimeoutTooSmall
 	}
 
 	return interval, nil
-}
-
-func calcInterruptIntervalNonPositiveAllowed(
-	timeout time.Duration,
-	inaccuracy uint,
-) (time.Duration, error) {
-	if timeout <= 0 {
-		return 0, nil
-	}
-
-	return calcInterruptInterval(timeout, inaccuracy)
 }
