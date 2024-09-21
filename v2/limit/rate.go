@@ -64,19 +64,19 @@ func (rt Rate) Optimize() (Rate, error) {
 
 // Recalculates the units of measurement of an Interval with a limitation on its
 // minimum value.
-func (rt Rate) Recalculate(min time.Duration) (Rate, error) {
+func (rt Rate) Recalculate(minimum time.Duration) (Rate, error) {
 	if err := rt.IsValid(); err != nil {
 		return Rate{}, err
 	}
 
-	if min < 0 {
+	if minimum < 0 {
 		return Rate{}, ErrMinimumIntervalNegative
 	}
 
 	// integer overflows are not possible given the checks above
 	interval := time.Duration(uint64(rt.Interval) / rt.Quantity)
 
-	if interval > min {
+	if interval > minimum {
 		recalculated := Rate{
 			Interval: interval,
 			Quantity: 1,
@@ -85,17 +85,17 @@ func (rt Rate) Recalculate(min time.Duration) (Rate, error) {
 		return recalculated, nil
 	}
 
-	if min == 0 {
+	if minimum == 0 {
 		return Rate{}, ErrConvertedIntervalZero
 	}
 
-	quantity, err := recalculateQuantity(rt.Quantity, min, rt.Interval)
+	quantity, err := recalculateQuantity(rt.Quantity, minimum, rt.Interval)
 	if err != nil {
 		return Rate{}, err
 	}
 
 	recalculated := Rate{
-		Interval: min,
+		Interval: minimum,
 		Quantity: quantity,
 	}
 
@@ -104,11 +104,11 @@ func (rt Rate) Recalculate(min time.Duration) (Rate, error) {
 
 func recalculateQuantity(
 	quantity uint64,
-	min time.Duration,
+	minimum time.Duration,
 	interval time.Duration,
 ) (uint64, error) {
 	qb := new(big.Int).SetUint64(quantity)
-	mb := new(big.Int).SetInt64(int64(min))
+	mb := new(big.Int).SetInt64(int64(minimum))
 	ib := new(big.Int).SetInt64(int64(interval))
 
 	product := new(big.Int).Mul(qb, mb)
