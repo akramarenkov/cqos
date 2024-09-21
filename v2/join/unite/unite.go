@@ -202,14 +202,15 @@ func (dsc *Discipline[Type]) process(item []Type) {
 }
 
 func (dsc *Discipline[Type]) pass() {
-	defer dsc.resetPassAt()
-
 	if len(dsc.join) == 0 {
+		// defer statement is not used to allow inlining of the current function
+		dsc.resetPassAt()
 		return
 	}
 
 	dsc.send(dsc.join)
 	dsc.resetJoin()
+	dsc.resetPassAt()
 }
 
 func (dsc *Discipline[Type]) forward(item []Type) {
