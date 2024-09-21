@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
+	"github.com/akramarenkov/cqos/v2/join/defaults"
 )
 
 var (

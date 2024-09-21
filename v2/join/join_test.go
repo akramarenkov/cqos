@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
+	"github.com/akramarenkov/cqos/v2/join/internal/defs"
 	"github.com/akramarenkov/cqos/v2/join/internal/inspect"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func TestOptsValidation(t *testing.T) {
 	opts = Opts[int]{
 		Input:    make(chan int),
 		JoinSize: 10,
-		Timeout:  defaults.MinTimeout,
+		Timeout:  defs.MinTimeout,
 	}
 
 	_, err = New(opts)
@@ -55,8 +55,8 @@ func TestOptsValidation(t *testing.T) {
 func TestDiscipline(t *testing.T) {
 	for quantity := 100; quantity <= 200; quantity++ {
 		for joinSize := uint(1); joinSize <= 20; joinSize++ {
-			testDiscipline(t, quantity, joinSize, false, defaults.TestTimeout)
-			testDiscipline(t, quantity, joinSize, true, defaults.TestTimeout)
+			testDiscipline(t, quantity, joinSize, false, defs.TestTimeout)
+			testDiscipline(t, quantity, joinSize, true, defs.TestTimeout)
 			testDiscipline(t, quantity, joinSize, false, 0)
 			testDiscipline(t, quantity, joinSize, true, 0)
 		}
@@ -283,11 +283,11 @@ func testDisciplineTimeout(
 }
 
 func BenchmarkDiscipline(b *testing.B) {
-	benchmarkDiscipline(b, 10, false, defaults.TestTimeout, 1)
+	benchmarkDiscipline(b, 10, false, defs.TestTimeout, 1)
 }
 
 func BenchmarkDisciplineNoCopy(b *testing.B) {
-	benchmarkDiscipline(b, 10, true, defaults.TestTimeout, 1)
+	benchmarkDiscipline(b, 10, true, defs.TestTimeout, 1)
 }
 
 func BenchmarkDisciplineUntimeouted(b *testing.B) {

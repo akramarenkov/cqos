@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/akramarenkov/cqos/v2/internal/consts"
-	"github.com/akramarenkov/cqos/v2/join/internal/defaults"
+	"github.com/akramarenkov/cqos/v2/join/defaults"
 
 	"github.com/stretchr/testify/require"
 )
