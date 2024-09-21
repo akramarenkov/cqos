@@ -47,7 +47,8 @@ type Opts[Type any] struct {
 	// the timeout is used and to determine the expiration of the timeout,
 	// the current time is compared with the time of the last writing to
 	// the output channel. This method has an inaccuracy that can be set by
-	// this parameter in percents
+	// this parameter in percents. The lower this value, the lower the performance of
+	// the discipline (due to frequent interruptions to check for timeout expiration)
 	TimeoutInaccuracy uint
 }
 
